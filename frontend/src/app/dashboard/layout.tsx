@@ -1,0 +1,84 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import Sidebar from '@/components/Sidebar';
+import Navbar from '@/components/Navbar';
+import MobileBottomNav from '@/components/MobileBottomNav';
+import { WabaProvider } from '@/context/WabaContext';
+import { useAuth } from '@/hooks/useAuth';
+import { usePermission } from '@/hooks/usePermission';
+
+const DRAWER_WIDTH = 256;
+
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [desktopOpen, setDesktopOpen] = useState(true);
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const handleMobileClose = () => setMobileOpen(false);
+  const handleDesktopToggle = () => setDesktopOpen((prev) => !prev);
+  const handleMenuToggle = () => {
+    setMobileOpen((prev) => !prev);
+    setDesktopOpen((prev) => !prev);
+  };
+
+  const { isAdmin } = usePermission();
+  const noWaba = !loading && user && (user.wabaAccounts || []).length === 0;
+
+  useEffect(() => {
+    if (noWaba && isAdmin && pathname !== '/dashboard/settings') {
+      router.replace('/dashboard/settings');
+    }
+  }, [noWaba, isAdmin, pathname, router]);
+
+  return (
+    <WabaProvider wabaAccounts={user?.wabaAccounts || []}>
+      <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
+        <Navbar onMenuClick={handleMenuToggle} sidebarOpen={desktopOpen} />
+        <Sidebar
+          mobileOpen={mobileOpen}
+          onMobileClose={handleMobileClose}
+          onDesktopToggle={handleDesktopToggle}
+          desktopOpen={desktopOpen}
+        />
+        <main
+          className={`flex-1 overflow-x-hidden p-4 pt-20 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:ml-0 md:p-6 md:pb-6 md:pt-20 ${
+            desktopOpen ? 'md:ml-[256px]' : 'md:ml-0'
+          }`}
+        >
+          {noWaba && !isAdmin ? (
+            <div className="flex h-[calc(100vh-5rem)] items-center justify-center">
+              <div className="panel max-w-md p-8 text-center">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                    <line x1="12" y1="9" x2="12" y2="13" />
+                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                  </svg>
+                </div>
+                <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                  WhatsApp Business Account Required
+                </h2>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  No WhatsApp Business Account (WABA) has been configured for your organization yet.
+                  Please contact your admin to set one up.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto max-w-7xl">{children}</div>
+          )}
+        </main>
+
+        <MobileBottomNav />
+      </div>
+    </WabaProvider>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return <DashboardLayoutInner>{children}</DashboardLayoutInner>;
+}

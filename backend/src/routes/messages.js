@@ -1,0 +1,207 @@
+const express = require('express');
+const { query } = require('../db');
+const { authenticate, resolveWabaAccount } = require('../middleware/auth');
+const { messageQueue } = require('../queues');
+const logger = require('../utils/logger');
+const camelize = require('../utils/camelize');
+
+const router = express.Router();
+
+router.use(authenticate);
+router.use(resolveWabaAccount);
+
+// GET /?conversation_id=... - list messages for a conversation
+router.get('/', async (req, res, next) => {
+  try {
+    const conversation_id = req.query.conversation_id || req.query.conversationId;
+    if (!conversation_id) {
+      return res.status(400).json({ error: 'conversation_id is required' });
+    }
+
+    let convSql = 'SELECT id FROM conversations WHERE id = $1 AND org_id = $2';
+    const convParams = [conversation_id, req.user.org_id];
+    if (req.wabaAccountId) {
+      convSql += ' AND waba_account_id = $3';
+      convParams.push(req.wabaAccountId);
+    }
+
+    const convCheck = await query(convSql, convParams);
+    if (convCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.created_at
+                  FROM messages m
+                  JOIN conversations c ON c.id = m.conversation_id
+                  WHERE m.conversation_id = $1 AND c.org_id = $2`;
+    const msgParams = [conversation_id, req.user.org_id];
+    if (req.wabaAccountId) {
+      msgSql += ' AND c.waba_account_id = $3';
+      msgParams.push(req.wabaAccountId);
+    }
+    msgSql += ' ORDER BY m.created_at ASC';
+
+    const result = await query(msgSql, msgParams);
+    res.json({ messages: camelize(result.rows) });
+  } catch (err) {
+    logger.error('List messages error', err);
+    next(err);
+  }
+});
+
+// POST / - send message (enqueue BullMQ job)
+router.post('/', async (req, res, next) => {
+  try {
+    const body = req.body;
+    const conversation_id = body.conversation_id || body.conversationId;
+    const content = body.content;
+    const message_type = body.message_type || body.messageType || 'text';
+    const media_url = body.media_url || body.mediaUrl;
+    const address_options = body.address_options || body.addressOptions;
+    const contactsData = body.contacts || body.contactsData;
+    const ctaUrlOptions = body.cta_url_options || body.ctaUrlOptions;
+    const listOptions = body.list_options || body.listOptions;
+    const productListOptions = body.product_list_options || body.productListOptions;
+    const replyButtonsOptions = body.reply_buttons_options || body.replyButtonsOptions;
+    const locationOptions = body.location_options || body.locationOptions;
+    const locationRequestOptions = body.location_request_options || body.locationRequestOptions;
+    const reactionOptions = body.reaction_options || body.reactionOptions;
+    const preview_url = body.preview_url || body.previewUrl;
+    const filename = body.filename;
+
+    if (!conversation_id) {
+      return res.status(400).json({ error: 'conversation_id is required' });
+    }
+    if (message_type === 'address_message' && !address_options) {
+      return res.status(400).json({ error: 'address_options is required for address_message type' });
+    }
+    if (message_type === 'cta_url' && (!ctaUrlOptions || !ctaUrlOptions.url)) {
+      return res.status(400).json({ error: 'cta_url_options with url is required for cta_url type' });
+    }
+    if (message_type === 'list' && (!listOptions || !Array.isArray(listOptions.sections))) {
+      return res.status(400).json({ error: 'list_options with sections array is required for list type' });
+    }
+    if (message_type === 'product_list' && (!productListOptions || !productListOptions.catalog_id || !Array.isArray(productListOptions.sections))) {
+      return res.status(400).json({ error: 'product_list_options with catalog_id and sections is required for product_list type' });
+    }
+    if (message_type === 'button' && (!replyButtonsOptions || !Array.isArray(replyButtonsOptions.buttons) || replyButtonsOptions.buttons.length === 0)) {
+      return res.status(400).json({ error: 'reply_buttons_options with at least one button is required for button type' });
+    }
+    if (message_type === 'location' && (!locationOptions || locationOptions.latitude == null || locationOptions.longitude == null)) {
+      return res.status(400).json({ error: 'location_options with latitude and longitude is required for location type' });
+    }
+    if (message_type === 'reaction' && (!reactionOptions || !reactionOptions.message_id || !reactionOptions.emoji)) {
+      return res.status(400).json({ error: 'reaction_options with message_id and emoji is required for reaction type' });
+    }
+    if (message_type === 'sticker' && !media_url) {
+      return res.status(400).json({ error: 'media_url is required for sticker type' });
+    }
+    if (message_type === 'contacts' && (!contactsData || !Array.isArray(contactsData))) {
+      return res.status(400).json({ error: 'contacts array is required for contacts message type' });
+    }
+    if (!content && !media_url && message_type !== 'address_message' && message_type !== 'contacts' && message_type !== 'cta_url' && message_type !== 'list' && message_type !== 'product_list' && message_type !== 'button' && message_type !== 'location' && message_type !== 'location_request_message' && message_type !== 'reaction') {
+      return res.status(400).json({ error: 'content or media_url is required' });
+    }
+
+    let convSql = `SELECT c.id, con.phone as contact_phone, c.waba_account_id
+                   FROM conversations c
+                   JOIN contacts con ON con.id = c.contact_id
+                   WHERE c.id = $1 AND c.org_id = $2`;
+    const convParams = [conversation_id, req.user.org_id];
+    if (req.wabaAccountId) {
+      convSql += ' AND c.waba_account_id = $3';
+      convParams.push(req.wabaAccountId);
+    }
+
+    const convCheck = await query(convSql, convParams);
+    if (convCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const conv = convCheck.rows[0];
+
+    // Save message in DB
+    const msgResult = await query(
+      `INSERT INTO messages (conversation_id, sender_type, content, media_url, message_type, filename, status)
+       VALUES ($1, 'agent', $2, $3, $4, $5, 'sent')
+       RETURNING id, conversation_id, sender_type, content, media_url, message_type, filename, status, created_at`,
+      [conversation_id, content, media_url, message_type, filename]
+    );
+    const message = msgResult.rows[0];
+
+    // Update conversation last_message_at
+    await query(
+      'UPDATE conversations SET last_message_at = NOW() WHERE id = $1',
+      [conversation_id]
+    );
+
+    // Look up WABA account credentials
+    let phoneNumberId = null;
+    let accessToken = null;
+    if (conv.waba_account_id) {
+      const wabaResult = await query(
+        'SELECT phone_number_id, access_token FROM waba_accounts WHERE id = $1 AND org_id = $2',
+        [conv.waba_account_id, req.user.org_id]
+      );
+      if (wabaResult.rows.length > 0) {
+        phoneNumberId = wabaResult.rows[0].phone_number_id;
+        accessToken = wabaResult.rows[0].access_token;
+      }
+    }
+
+    // Enqueue job to send via WhatsApp
+    if (phoneNumberId && accessToken && conv.contact_phone) {
+      const jobData = {
+        phoneNumberId: phoneNumberId,
+        accessToken: accessToken,
+        to: conv.contact_phone,
+        content,
+        mediaUrl: media_url,
+        messageType: message_type,
+        messageId: message.id,
+        wabaAccountId: conv.waba_account_id || null,
+      };
+      if (message_type === 'address_message' && address_options) {
+        jobData.addressOptions = address_options;
+      }
+      if (message_type === 'cta_url' && ctaUrlOptions) {
+        jobData.ctaUrlOptions = ctaUrlOptions;
+      }
+      if (message_type === 'list' && listOptions) {
+        jobData.listOptions = listOptions;
+      }
+      if (message_type === 'product_list' && productListOptions) {
+        jobData.productListOptions = productListOptions;
+      }
+      if (message_type === 'button' && replyButtonsOptions) {
+        jobData.replyButtonsOptions = replyButtonsOptions;
+      }
+      if (message_type === 'location' && locationOptions) {
+        jobData.locationOptions = locationOptions;
+      }
+      if (message_type === 'location_request_message' && locationRequestOptions) {
+        jobData.locationRequestOptions = locationRequestOptions;
+      }
+      if (message_type === 'reaction' && reactionOptions) {
+        jobData.reactionOptions = reactionOptions;
+      }
+      if (message_type === 'text' && preview_url === true) {
+        jobData.previewUrl = true;
+      }
+      if (message_type === 'contacts' && contactsData) {
+        jobData.contactsData = contactsData;
+      }
+      if (filename) {
+        jobData.filename = filename;
+      }
+      await messageQueue.add('send-whatsapp-message', jobData);
+    }
+
+    res.status(201).json({ message: camelize(message) });
+  } catch (err) {
+    logger.error('Send message error', err);
+    next(err);
+  }
+});
+
+module.exports = router;
