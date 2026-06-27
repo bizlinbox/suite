@@ -6,7 +6,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.11
     container_name: bizlinbox-traefik
     restart: unless-stopped
     command:
@@ -103,14 +103,16 @@ services:
     labels:
       # Traefik routing: same container, different ports
       - "traefik.enable=true"
-      # API routes → backend port 4000
+      # API routes → backend port 4000 (higher priority = checked first)
       - "traefik.http.routers.bizlinbox-api.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/socket.io`) || PathPrefix(`/uploads`))"
+      - "traefik.http.routers.bizlinbox-api.priority=100"
       - "traefik.http.routers.bizlinbox-api.entrypoints=websecure"
       - "traefik.http.routers.bizlinbox-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bizlinbox-api.service=bizlinbox-api"
       - "traefik.http.services.bizlinbox-api.loadbalancer.server.port=4000"
-      # Frontend routes → frontend port 3000
+      # Frontend routes → frontend port 3000 (lower priority = fallback)
       - "traefik.http.routers.bizlinbox-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.bizlinbox-web.priority=10"
       - "traefik.http.routers.bizlinbox-web.entrypoints=websecure"
       - "traefik.http.routers.bizlinbox-web.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bizlinbox-web.service=bizlinbox-web"

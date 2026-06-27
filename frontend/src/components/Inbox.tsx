@@ -125,7 +125,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   return (
     <div className="h-[calc(100vh-136px)] md:h-[calc(100vh-96px)]">
       <div className="panel flex h-full overflow-hidden">
-        <div className={`w-full flex-shrink-0 md:block md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
+        <div className={`w-full flex-shrink-0 md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
@@ -134,7 +134,7 @@ export default function Inbox({ selectedId }: InboxProps) {
           />
         </div>
 
-        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 ${selectedId ? 'flex' : 'hidden'} md:flex`}>
+        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 ${selectedId ? 'flex' : 'hidden'}`}>
           {selectedConversation ? (
             <ChatWindow
               conversationId={selectedConversation.id}

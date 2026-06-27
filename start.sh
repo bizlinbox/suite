@@ -14,7 +14,7 @@ BACKEND_PID=$!
 # Start Frontend (port 3000)
 echo "[BizlInbox] Starting frontend on port 3000..."
 cd /app/frontend
-node server.js &
+PORT=3000 node server.js &
 FRONTEND_PID=$!
 
 # Graceful shutdown handler

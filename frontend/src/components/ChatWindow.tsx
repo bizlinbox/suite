@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useSocket } from '@/hooks/useSocket';
 
 export interface Message {
   id: string;
@@ -15,6 +16,7 @@ export interface Message {
   mediaMimeType?: string;
   filename?: string;
   voice?: boolean;
+  reactionToMessageId?: string | null;
 }
 
 export interface Agent {
@@ -27,6 +29,16 @@ export interface CannedResponse {
   id: string;
   shortcut: string;
   content: string;
+  messageType?: string;
+  metadata?: {
+    mediaUrl?: string;
+    filename?: string;
+    buttons?: { type: 'reply'; title: string; id?: string }[];
+    listOptions?: {
+      button: string;
+      sections: { title: string; rows: { id: string; title: string; description?: string }[] }[];
+    };
+  };
 }
 
 interface ChatWindowProps {
@@ -34,6 +46,41 @@ interface ChatWindowProps {
   contactName: string;
   onAssignAgent?: (agentId: string) => void;
   onBack?: () => void;
+}
+
+function formatMessageDate(createdAt: string): string {
+  const date = new Date(createdAt);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  if (isToday) {
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+  if (isYesterday) {
+    return `Yesterday, ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  }
+  return date.toLocaleString([], {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function formatDateSeparator(createdAt: string): string {
+  const date = new Date(createdAt);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+
+  if (isToday) return 'Today';
+  if (isYesterday) return 'Yesterday';
+  return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
 }
 
 function getMessageTypeFromMime(mime: string): string {
@@ -80,9 +127,12 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [locationForm, setLocationForm] = useState({ latitude: '', longitude: '', name: '', address: '' });
   const [locationError, setLocationError] = useState('');
+  const [reactingTo, setReactingTo] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
+  const { socket } = useSocket();
+  const reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
   useEffect(() => {
     if (!conversationId) return;
@@ -90,6 +140,26 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
       setMessages(res.data.messages || []);
     });
   }, [conversationId]);
+
+  // Real-time socket: join conversation room and listen for new messages
+  useEffect(() => {
+    if (!socket || !conversationId) return;
+
+    socket.emit('join_conversation', conversationId);
+
+    const handleNewMessage = (message: Message) => {
+      if (message.conversationId === conversationId) {
+        setMessages((prev) => [...prev, message]);
+      }
+    };
+
+    socket.on('new_message', handleNewMessage);
+
+    return () => {
+      socket.off('new_message', handleNewMessage);
+      socket.emit('leave_conversation', conversationId);
+    };
+  }, [socket, conversationId]);
 
   useEffect(() => {
     api.get('/agents').then((res) => {
@@ -199,6 +269,36 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     }
   };
 
+  const handleSendReaction = async (targetMessageId: string, emoji: string) => {
+    if (!conversationId) return;
+    setReactingTo(null);
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversationId,
+      content: emoji,
+      senderType: 'agent',
+      createdAt: new Date().toISOString(),
+      messageType: 'reaction',
+      reactionToMessageId: targetMessageId,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    try {
+      await api.post('/messages', {
+        conversationId,
+        messageType: 'reaction',
+        content: emoji,
+        reactionOptions: {
+          target_message_id: targetMessageId,
+          emoji,
+        },
+      });
+    } catch {
+      // Optionally handle send error
+    }
+  };
+
   const handleSend = async () => {
     if (pendingMediaId) {
       await handleSendMedia();
@@ -222,7 +322,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
       if (e.key === 'Enter') {
         e.preventDefault();
         if (filteredCanned.length > 0) {
-          insertCanned(filteredCanned[slashIndex].content);
+          insertCanned(filteredCanned[slashIndex]);
         }
         return;
       }
@@ -279,19 +379,82 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     onAssignAgent?.(agentId);
   };
 
-  const handleSelectCanned = (content: string) => {
-    setCannedOpen(false);
-    setInput(content);
+  const sendCannedResponse = async (canned: CannedResponse) => {
+    if (!conversationId) return;
+    const mt = canned.messageType || 'text';
+
+    // Text type: just insert into input for editing
+    if (mt === 'text') {
+      setInput(canned.content);
+      return;
+    }
+
+    // Build temp message for optimistic UI
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversationId,
+      content: canned.content,
+      senderType: 'agent',
+      createdAt: new Date().toISOString(),
+      messageType: mt,
+      mediaUrl: canned.metadata?.mediaUrl,
+      filename: canned.metadata?.filename,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    try {
+      const payload: Record<string, unknown> = {
+        conversationId,
+        content: canned.content,
+        messageType: mt,
+      };
+
+      if (['image', 'video', 'document', 'audio'].includes(mt)) {
+        payload.mediaUrl = canned.metadata?.mediaUrl;
+        if (mt === 'document') payload.filename = canned.metadata?.filename;
+      }
+
+      if (mt === 'button' && canned.metadata?.buttons) {
+        payload.replyButtonsOptions = {
+          buttons: canned.metadata.buttons.map((b, i) => ({
+            type: b.type || 'reply',
+            title: b.title,
+            id: b.id || `btn-${i}`,
+          })),
+        };
+      }
+
+      if (mt === 'list' && canned.metadata?.listOptions) {
+        payload.listOptions = canned.metadata.listOptions;
+      }
+
+      await api.post('/messages', payload);
+    } catch {
+      // Optionally handle send error
+    }
   };
 
-  const insertCanned = (content: string) => {
+  const handleSelectCanned = (canned: CannedResponse) => {
+    setCannedOpen(false);
+    sendCannedResponse(canned);
+  };
+
+  const insertCanned = (canned: CannedResponse) => {
+    const mt = canned.messageType || 'text';
+    if (mt !== 'text') {
+      sendCannedResponse(canned);
+      setSlashOpen(false);
+      setSlashQuery('');
+      setSlashIndex(0);
+      return;
+    }
     const lastSlashIndex = input.lastIndexOf('/' + slashQuery);
     if (lastSlashIndex !== -1) {
       const before = input.slice(0, lastSlashIndex);
       const after = input.slice(lastSlashIndex + 1 + slashQuery.length);
-      setInput(before + content + after);
+      setInput(before + canned.content + after);
     } else {
-      setInput(content);
+      setInput(canned.content);
     }
     setSlashOpen(false);
     setSlashQuery('');
@@ -352,7 +515,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                 {cannedResponses.map((c) => (
                   <li
                     key={c.id}
-                    onClick={() => handleSelectCanned(c.content)}
+                    onClick={() => handleSelectCanned(c)}
                     className="cursor-pointer px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     {c.shortcut}
@@ -395,64 +558,132 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
 
       {/* Messages */}
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-4">
-        {messages.map((msg) => {
-          const isUser = msg.senderType === 'agent';
-          const hasMedia = msg.mediaUrl && msg.messageType && msg.messageType !== 'text';
-          return (
-            <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              <div
-                className={`max-w-[75%] px-3.5 py-2 ${
-                  isUser
-                    ? 'rounded-2xl rounded-br-sm bg-primary-600 text-white'
-                    : 'rounded-2xl rounded-bl-sm bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
-                }`}
-              >
-                {hasMedia && (
-                  <div className="mb-1.5">
-                    {msg.messageType === 'image' && (
-                      <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
-                        <ImageIcon size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
-                        <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
-                      </div>
-                    )}
-                    {msg.messageType === 'video' && (
-                      <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
-                        <Video size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
-                        <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
-                      </div>
-                    )}
-                    {msg.messageType === 'audio' && (
-                      <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
-                        <Music size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
-                        <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>{msg.voice ? 'Voice message' : 'Audio'}</span>
-                      </div>
-                    )}
-                    {msg.messageType === 'document' && (
-                      <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
-                        <FileText size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
-                        <div className="min-w-0 flex-1">
-                          <span className={`block truncate text-xs font-medium ${isUser ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
-                            {msg.filename || 'Document'}
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    {msg.messageType === 'location' && (
-                      <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
-                        <MapPin size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
-                        <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
+        {(() => {
+          // Separate reactions from regular messages
+          const reactionsByTarget: Record<string, Message[]> = {};
+          const regularMessages: Message[] = [];
+          messages.forEach((m) => {
+            if (m.messageType === 'reaction' && m.reactionToMessageId) {
+              if (!reactionsByTarget[m.reactionToMessageId]) reactionsByTarget[m.reactionToMessageId] = [];
+              reactionsByTarget[m.reactionToMessageId].push(m);
+            } else {
+              regularMessages.push(m);
+            }
+          });
+
+          return regularMessages.map((msg, index) => {
+            const isUser = msg.senderType === 'agent';
+            const hasMedia = msg.mediaUrl && msg.messageType && msg.messageType !== 'text';
+            const prevMsg = regularMessages[index - 1];
+            const showDateSeparator = !prevMsg || new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
+            const msgReactions = reactionsByTarget[msg.id] || [];
+
+            return (
+              <div key={msg.id} className="flex flex-col">
+                {showDateSeparator && (
+                  <div className="my-3 flex items-center justify-center">
+                    <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                      {formatDateSeparator(msg.createdAt)}
+                    </span>
+                  </div>
+                )}
+                <div className={`group flex items-end gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                  {/* Reaction picker button — shown on hover, on the outer edge */}
+                  <div className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
+                    <button
+                      onClick={() => setReactingTo(reactingTo === msg.id ? null : msg.id)}
+                      className="mb-2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                      title="React"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+                    </button>
+                    {reactingTo === msg.id && (
+                      <div className={`absolute bottom-full z-50 mb-1 flex gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900 ${isUser ? 'right-0' : 'left-0'}`}>
+                        {reactionEmojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() => handleSendReaction(msg.id, emoji)}
+                            className="rounded-full p-1 text-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                          >
+                            {emoji}
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
-                )}
-                {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
-                <span className={`mt-1 block text-right text-[10px] ${isUser ? 'text-primary-200' : 'text-gray-400 dark:text-gray-500'}`}>
-                  {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
+
+                  <div className="flex flex-col">
+                    <div
+                      className={`max-w-[75%] px-3.5 py-2 ${
+                        isUser
+                          ? 'rounded-2xl rounded-br-sm bg-primary-600 text-white'
+                          : 'rounded-2xl rounded-bl-sm bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                      }`}
+                    >
+                      {hasMedia && (
+                        <div className="mb-1.5">
+                          {msg.messageType === 'image' && (
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
+                              <ImageIcon size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
+                              <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
+                            </div>
+                          )}
+                          {msg.messageType === 'video' && (
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
+                              <Video size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
+                              <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
+                            </div>
+                          )}
+                          {msg.messageType === 'audio' && (
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
+                              <Music size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
+                              <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>{msg.voice ? 'Voice message' : 'Audio'}</span>
+                            </div>
+                          )}
+                          {msg.messageType === 'document' && (
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
+                              <FileText size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
+                              <div className="min-w-0 flex-1">
+                                <span className={`block truncate text-xs font-medium ${isUser ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                  {msg.filename || 'Document'}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                          {msg.messageType === 'location' && (
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-primary-500/30' : 'bg-white dark:bg-gray-900/60'}`}>
+                              <MapPin size={18} className={isUser ? 'text-primary-200' : 'text-primary-600 dark:text-primary-400'} />
+                              <span className={`text-xs ${isUser ? 'text-primary-200' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
+                      <span className={`mt-1 block text-right text-[10px] ${isUser ? 'text-primary-200' : 'text-gray-400 dark:text-gray-500'}`}>
+                        {formatMessageDate(msg.createdAt)}
+                      </span>
+                    </div>
+
+                    {/* Reactions row */}
+                    {msgReactions.length > 0 && (
+                      <div className={`mt-1 flex flex-wrap gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                        {msgReactions.map((r) => (
+                          <span
+                            key={r.id}
+                            className="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-0.5 text-sm dark:bg-gray-800"
+                            title={`Reacted ${formatMessageDate(r.createdAt)}`}
+                          >
+                            {r.content}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          });
+        })()}
         <div ref={messagesEndRef} />
       </div>
 
@@ -534,7 +765,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                 {filteredCanned.map((c, idx) => (
                   <li
                     key={c.id}
-                    onClick={() => insertCanned(c.content)}
+                    onClick={() => insertCanned(c)}
                     className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
                       idx === slashIndex
                         ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'

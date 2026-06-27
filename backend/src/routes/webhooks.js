@@ -383,12 +383,24 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       );
     }
 
+    // For reactions, look up the target message by its WhatsApp external_id
+    let reactionToMessageId = null;
+    if (msg.reaction && msg.reaction.message_id) {
+      const targetResult = await query(
+        'SELECT id FROM messages WHERE external_id = $1 AND conversation_id = $2',
+        [msg.reaction.message_id, conversationId]
+      );
+      if (targetResult.rows.length > 0) {
+        reactionToMessageId = targetResult.rows[0].id;
+      }
+    }
+
     // Save message
     const msgResult = await query(
-      `INSERT INTO messages (conversation_id, sender_type, content, media_url, media_mime_type, message_type, status, external_id, voice, created_at)
-       VALUES ($1, 'contact', $2, $3, $4, $5, 'delivered', $6, $7, $8)
-       RETURNING id, conversation_id, sender_type, content, media_url, media_mime_type, message_type, status, external_id, voice, created_at`,
-      [conversationId, content, mediaUrl, mediaMimeType, messageType, externalId, voice, timestamp]
+      `INSERT INTO messages (conversation_id, sender_type, content, media_url, media_mime_type, message_type, status, external_id, voice, reaction_to_message_id, created_at)
+       VALUES ($1, 'contact', $2, $3, $4, $5, 'delivered', $6, $7, $8, $9)
+       RETURNING id, conversation_id, sender_type, content, media_url, media_mime_type, message_type, status, external_id, voice, reaction_to_message_id, created_at`,
+      [conversationId, content, mediaUrl, mediaMimeType, messageType, externalId, voice, reactionToMessageId, timestamp]
     );
     const message = msgResult.rows[0];
 

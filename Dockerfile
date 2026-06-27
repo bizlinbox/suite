@@ -17,8 +17,6 @@ RUN npm run build
 # ---- Stage 2: Build Backend ----
 FROM node:20-alpine AS backend-builder
 
-RUN apk add --no-cache dumb-init
-
 WORKDIR /app/backend
 
 COPY backend/package*.json ./
@@ -41,7 +39,6 @@ RUN addgroup -g 1001 -S nodejs && \
 WORKDIR /app/backend
 COPY --from=backend-builder /app/backend/node_modules ./node_modules
 COPY --from=backend-builder /app/backend/src ./src
-COPY --from=backend-builder /usr/bin/dumb-init /usr/bin/dumb-init
 RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app
 
 # Frontend setup

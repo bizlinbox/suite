@@ -7,7 +7,6 @@ import {
   MessageSquare,
   Users,
   BarChart3,
-  Settings,
   ChevronLeft,
   ChevronRight,
   Megaphone,
@@ -17,6 +16,7 @@ import {
   Shield,
   X,
   LogOut,
+  Plug,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -31,12 +31,13 @@ const allNavItems = [
   { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, permission: 'campaigns.read' as string | null },
   { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' as string | null },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' as string | null },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings, permission: 'settings.read' as string | null },
+  { label: 'Canned Responses', href: '/dashboard/canned-responses', icon: MessageSquare, permission: 'settings.read' as string | null },
+  { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
 ];
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/settings'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/canned-responses', '/dashboard/waba-accounts'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }
@@ -46,9 +47,10 @@ interface SidebarProps {
   onMobileClose: () => void;
   onDesktopToggle?: () => void;
   desktopOpen?: boolean;
+  collapsed?: boolean;
 }
 
-function WabaSwitcher() {
+function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
   const { user } = useAuth();
   const { selectedWabaId, setSelectedWabaId } = useWaba();
   const [open, setOpen] = useState(false);
@@ -70,18 +72,25 @@ function WabaSwitcher() {
   if (wabaAccounts.length === 0) return null;
 
   return (
-    <div className="relative px-3 pb-3" ref={ref}>
+    <div className={`relative pb-3 ${collapsed ? 'px-2' : 'px-3'}`} ref={ref}>
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex w-full items-center gap-2.5 rounded-lg border border-blue-800/40 bg-blue-900/40 px-3 py-2.5 text-sm text-blue-100 hover:border-blue-700 hover:bg-blue-800/50"
+        className={`flex w-full items-center rounded-lg border border-blue-800/40 bg-blue-900/40 text-blue-100 hover:border-blue-700 hover:bg-blue-800/50 ${
+          collapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-2.5'
+        }`}
         aria-label="Select WABA account"
+        title={selectedWaba?.name || 'Select WABA'}
       >
         <Building2 size={16} className="shrink-0 text-blue-400" />
-        <span className="flex-1 truncate text-left font-medium">{selectedWaba?.name || 'Select WABA'}</span>
+        {!collapsed && (
+          <span className="flex-1 truncate text-left text-sm font-medium">{selectedWaba?.name || 'Select WABA'}</span>
+        )}
       </button>
 
       {open && (
-        <div className="absolute left-3 right-3 top-14 z-50 rounded-xl border border-blue-800/40 bg-[#0f172a] shadow-lg ring-1 ring-black/5">
+        <div className={`absolute z-50 rounded-xl border border-blue-800/40 bg-[#0f172a] shadow-lg ring-1 ring-black/5 ${
+          collapsed ? 'left-14 top-0 w-56' : 'left-3 right-3 top-14'
+        }`}>
           <div className="px-1 py-1">
             {wabaAccounts.map((waba) => (
               <button
@@ -97,10 +106,7 @@ function WabaSwitcher() {
                 }`}
               >
                 <Building2 size={16} className="shrink-0 text-blue-400" />
-                <div className="flex-1 min-w-0">
-                  <div className="font-medium truncate">{waba.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-500">{waba.businessAccountId}</div>
-                </div>
+                <span className="flex-1 truncate font-medium">{waba.name}</span>
                 {waba.id === selectedWabaId && (
                   <Check size={16} className="shrink-0 text-white" />
                 )}
@@ -113,7 +119,7 @@ function WabaSwitcher() {
   );
 }
 
-export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, desktopOpen = true }: SidebarProps) {
+export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, desktopOpen = true, collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -123,42 +129,50 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
     return perms.includes(item.permission);
   });
 
+  const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
+
   const drawerContent = (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between px-4 py-3.5">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-700 text-white">
+      {/* Header */}
+      <div className={`flex items-center py-3.5 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+        <Link href="/dashboard" className={`flex items-center ${collapsed ? 'gap-0' : 'gap-2.5'}`}>
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-700 text-white">
             <MessageSquare size={18} />
           </div>
-          <span className="text-lg font-bold tracking-tight text-white">BizlInbox</span>
+          {!collapsed && (
+            <span className="text-lg font-bold tracking-tight text-white">BizlInbox</span>
+          )}
         </Link>
-        <div className="flex items-center gap-1">
-          {onDesktopToggle && (
-            <button
-              onClick={onDesktopToggle}
-              className="hidden rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
-              aria-label="Collapse sidebar"
-            >
-              <ChevronLeft size={18} />
-            </button>
-          )}
-          {mobileOpen && (
-            <button
-              onClick={onMobileClose}
-              className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
-              aria-label="Close sidebar"
-            >
-              <X size={18} />
-            </button>
-          )}
-        </div>
+        {!collapsed && (
+          <div className="flex items-center gap-1">
+            {onDesktopToggle && (
+              <button
+                onClick={onDesktopToggle}
+                className="hidden rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
+                aria-label="Collapse sidebar"
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+            {mobileOpen && (
+              <button
+                onClick={onMobileClose}
+                className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
+                aria-label="Close sidebar"
+              >
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
-      <WabaSwitcher />
+      <WabaSwitcher collapsed={collapsed} />
 
-      <div className="mx-3 mb-2 h-px bg-blue-800/40" />
+      <div className={`mb-2 h-px bg-blue-800/40 ${collapsed ? 'mx-2' : 'mx-3'}`} />
 
-      <nav className="flex-1 space-y-0.5 px-3 py-2">
+      {/* Nav */}
+      <nav className={`flex-1 space-y-0.5 py-2 ${collapsed ? 'px-2' : 'px-3'}`}>
         {navItems.map((item) => {
           const active = isActiveNav(pathname, item.href);
           const Icon = item.icon;
@@ -166,11 +180,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             <Link
               key={item.href}
               href={item.href}
-              className={`group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+              title={collapsed ? item.label : undefined}
+              className={`group flex items-center rounded-lg transition-colors ${
                 active
                   ? 'bg-blue-800 text-white'
                   : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
-              }`}
+              } ${collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
             >
               <Icon
                 size={18}
@@ -180,29 +195,35 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                     : 'text-blue-400 group-hover:text-white'
                 }`}
               />
-              {item.label}
+              {!collapsed && item.label}
             </Link>
           );
         })}
       </nav>
 
-      <div className="px-4 py-3">
-        <div className="rounded-lg border border-blue-800/40 bg-blue-900/40 px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-700 text-xs font-semibold text-white">
+      {/* User / Logout */}
+      <div className={`py-3 ${collapsed ? 'px-2' : 'px-4'}`}>
+        <div className={`rounded-lg border border-blue-800/40 bg-blue-900/40 ${collapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
+          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-semibold text-white" title={user?.name || 'User'}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-medium text-white">{user?.name}</div>
-              <div className="truncate text-[10px] text-blue-300">{user?.email}</div>
-            </div>
+            {!collapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-medium text-white">{user?.name}</div>
+                <div className="truncate text-[10px] text-blue-300">{user?.email}</div>
+              </div>
+            )}
           </div>
           <button
             onClick={() => logout()}
-            className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20"
+            className={`mt-2 flex w-full items-center justify-center rounded-md text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20 ${
+              collapsed ? 'gap-0 px-1 py-1.5' : 'gap-1.5 px-2 py-1.5'
+            }`}
+            title="Log out"
           >
             <LogOut size={12} />
-            Log out
+            {!collapsed && 'Log out'}
           </button>
         </div>
       </div>
@@ -219,14 +240,14 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
         />
       )}
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (always full width) */}
       <div
         className={`fixed left-0 top-0 z-50 h-full bg-[#0f172a] shadow-2xl transition-transform duration-300 ease-out md:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ width: DRAWER_WIDTH }}
       >
-        {drawerContent}
+        <div className="h-full w-full">{drawerContent}</div>
       </div>
 
       {/* Desktop drawer */}
@@ -234,12 +255,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
         className={`fixed left-0 top-0 z-30 hidden h-full border-r border-blue-800/30 bg-[#0f172a] transition-[width] duration-300 ease-out md:block ${
           desktopOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
-        style={{ width: DRAWER_WIDTH }}
+        style={{ width: sidebarWidth }}
       >
-        {drawerContent}
+        <div className="h-full w-full">{drawerContent}</div>
       </div>
 
-      {/* Desktop expand button */}
+      {/* Desktop expand button (when fully hidden) */}
       {!desktopOpen && onDesktopToggle && (
         <button
           onClick={onDesktopToggle}

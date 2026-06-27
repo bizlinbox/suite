@@ -80,17 +80,44 @@ CREATE TABLE IF NOT EXISTS messages (
     message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'unknown')),
     status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'read', 'failed')),
     external_id TEXT,
+    reaction_to_message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migrate: add reaction_to_message_id if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'messages' AND column_name = 'reaction_to_message_id') THEN
+    ALTER TABLE messages ADD COLUMN reaction_to_message_id UUID REFERENCES messages(id) ON DELETE CASCADE;
+    CREATE INDEX IF NOT EXISTS idx_messages_reaction_to ON messages(reaction_to_message_id);
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS canned_responses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     shortcut TEXT NOT NULL,
     content TEXT NOT NULL,
+    message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'video', 'document', 'audio', 'button', 'list')),
+    metadata JSONB DEFAULT '{}',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(org_id, shortcut)
 );
+
+-- Migrate: add message_type and metadata if they don't exist (for existing tables)
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'canned_responses' AND column_name = 'message_type') THEN
+    ALTER TABLE canned_responses ADD COLUMN message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'video', 'document', 'audio', 'button', 'list'));
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'canned_responses' AND column_name = 'metadata') THEN
+    ALTER TABLE canned_responses ADD COLUMN metadata JSONB DEFAULT '{}';
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS workflows (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

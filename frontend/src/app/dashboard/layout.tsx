@@ -14,39 +14,69 @@ const DRAWER_WIDTH = 256;
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [desktopOpen, setDesktopOpen] = useState(true);
+  const [collapsed, setCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
+  const isInbox = pathname === '/dashboard/inbox' || pathname.startsWith('/dashboard/inbox/');
+
   const handleMobileClose = () => setMobileOpen(false);
-  const handleDesktopToggle = () => setDesktopOpen((prev) => !prev);
+  const handleDesktopToggle = () => {
+    if (isInbox) {
+      setCollapsed((prev) => !prev);
+    } else {
+      setDesktopOpen((prev) => !prev);
+    }
+  };
   const handleMenuToggle = () => {
     setMobileOpen((prev) => !prev);
-    setDesktopOpen((prev) => !prev);
+    if (isInbox) {
+      setCollapsed((prev) => !prev);
+    } else {
+      setDesktopOpen((prev) => !prev);
+    }
   };
 
   const { isAdmin } = usePermission();
   const noWaba = !loading && user && (user.wabaAccounts || []).length === 0;
 
   useEffect(() => {
-    if (noWaba && isAdmin && pathname !== '/dashboard/settings') {
-      router.replace('/dashboard/settings');
+    if (noWaba && isAdmin && pathname !== '/dashboard/waba-accounts') {
+      router.replace('/dashboard/waba-accounts');
     }
   }, [noWaba, isAdmin, pathname, router]);
+
+  // Auto-collapse on inbox page, restore on leave
+  useEffect(() => {
+    if (isInbox) {
+      setCollapsed(true);
+    } else {
+      setCollapsed(false);
+      setDesktopOpen(true);
+    }
+  }, [isInbox]);
 
   return (
     <WabaProvider wabaAccounts={user?.wabaAccounts || []}>
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
-        <Navbar onMenuClick={handleMenuToggle} sidebarOpen={desktopOpen} />
+        <Navbar onMenuClick={handleMenuToggle} sidebarOpen={desktopOpen && !collapsed} />
         <Sidebar
           mobileOpen={mobileOpen}
           onMobileClose={handleMobileClose}
           onDesktopToggle={handleDesktopToggle}
           desktopOpen={desktopOpen}
+          collapsed={isInbox ? collapsed : false}
         />
         <main
-          className={`flex-1 overflow-x-hidden p-4 pt-20 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:ml-0 md:p-6 md:pb-6 md:pt-20 ${
-            desktopOpen ? 'md:ml-[256px]' : 'md:ml-0'
+          className={`flex-1 overflow-x-hidden p-4 pt-20 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:p-6 md:pb-6 md:pt-20 ${
+            isInbox
+              ? collapsed
+                ? 'md:ml-16'
+                : 'md:ml-[256px]'
+              : desktopOpen
+                ? 'md:ml-[256px]'
+                : 'md:ml-0'
           }`}
         >
           {noWaba && !isAdmin ? (

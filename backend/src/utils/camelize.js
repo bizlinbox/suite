@@ -2,6 +2,9 @@ function camelize(obj) {
   if (Array.isArray(obj)) {
     return obj.map(camelize);
   }
+  if (obj instanceof Date) {
+    return obj;
+  }
   if (obj !== null && typeof obj === 'object') {
     const result = {};
     for (const key of Object.keys(obj)) {

@@ -4,6 +4,7 @@ const { authenticate, resolveWabaAccount } = require('../middleware/auth');
 const { messageQueue } = require('../queues');
 const logger = require('../utils/logger');
 const camelize = require('../utils/camelize');
+const { emitToConversation, emitToOrg } = require('../services/socket');
 
 const router = express.Router();
 
@@ -30,7 +31,7 @@ router.get('/', async (req, res, next) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
 
-    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.created_at
+    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.reaction_to_message_id, m.created_at
                   FROM messages m
                   JOIN conversations c ON c.id = m.conversation_id
                   WHERE m.conversation_id = $1 AND c.org_id = $2`;
@@ -120,12 +121,26 @@ router.post('/', async (req, res, next) => {
 
     const conv = convCheck.rows[0];
 
+    // For reactions, look up target message external_id
+    let reactionToMessageId = null;
+    let reactionTargetExternalId = null;
+    if (message_type === 'reaction' && reactionOptions) {
+      const targetResult = await query(
+        'SELECT id, external_id FROM messages WHERE id = $1 AND conversation_id = $2',
+        [reactionOptions.target_message_id, conversation_id]
+      );
+      if (targetResult.rows.length > 0) {
+        reactionToMessageId = targetResult.rows[0].id;
+        reactionTargetExternalId = targetResult.rows[0].external_id;
+      }
+    }
+
     // Save message in DB
     const msgResult = await query(
-      `INSERT INTO messages (conversation_id, sender_type, content, media_url, message_type, filename, status)
-       VALUES ($1, 'agent', $2, $3, $4, $5, 'sent')
-       RETURNING id, conversation_id, sender_type, content, media_url, message_type, filename, status, created_at`,
-      [conversation_id, content, media_url, message_type, filename]
+      `INSERT INTO messages (conversation_id, sender_type, content, media_url, message_type, filename, status, reaction_to_message_id)
+       VALUES ($1, 'agent', $2, $3, $4, $5, 'sent', $6)
+       RETURNING id, conversation_id, sender_type, content, media_url, message_type, filename, status, reaction_to_message_id, created_at`,
+      [conversation_id, content, media_url, message_type, filename, reactionToMessageId]
     );
     const message = msgResult.rows[0];
 
@@ -134,6 +149,10 @@ router.post('/', async (req, res, next) => {
       'UPDATE conversations SET last_message_at = NOW() WHERE id = $1',
       [conversation_id]
     );
+
+    // Emit real-time events
+    emitToConversation(req.user.org_id, conversation_id, 'new_message', camelize(message));
+    emitToOrg(req.user.org_id, 'conversation_updated', camelize({ conversation_id: conversation_id, last_message_at: message.created_at }));
 
     // Look up WABA account credentials
     let phoneNumberId = null;
@@ -182,8 +201,11 @@ router.post('/', async (req, res, next) => {
       if (message_type === 'location_request_message' && locationRequestOptions) {
         jobData.locationRequestOptions = locationRequestOptions;
       }
-      if (message_type === 'reaction' && reactionOptions) {
-        jobData.reactionOptions = reactionOptions;
+      if (message_type === 'reaction' && reactionOptions && reactionTargetExternalId) {
+        jobData.reactionOptions = {
+          message_id: reactionTargetExternalId,
+          emoji: reactionOptions.emoji,
+        };
       }
       if (message_type === 'text' && preview_url === true) {
         jobData.previewUrl = true;

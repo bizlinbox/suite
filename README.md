@@ -61,7 +61,7 @@ networks:
 
 services:
   traefik:
-    image: traefik:v3.0
+    image: traefik:v2.11
     container_name: bizlinbox-traefik
     restart: unless-stopped
     command:

@@ -91,11 +91,20 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                     }`}>
                       {conversation.contactName}
                     </span>
-                    {conversation.unreadCount > 0 && (
-                      <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white">
-                        {conversation.unreadCount}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                      {conversation.lastMessageAt && (
+                        <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                          {new Date(conversation.lastMessageAt).toLocaleDateString() === new Date().toLocaleDateString()
+                            ? new Date(conversation.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                            : new Date(conversation.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                        </span>
+                      )}
+                      {conversation.unreadCount > 0 && (
+                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white">
+                          {conversation.unreadCount}
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <p className="truncate text-xs text-gray-500 dark:text-gray-400">{conversation.lastMessagePreview}</p>
                   {conversation.assignedAgentName && (

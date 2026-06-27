@@ -160,6 +160,12 @@ function gracefulShutdown(signal) {
 process.on('SIGTERM', gracefulShutdown('SIGTERM'));
 process.on('SIGINT', gracefulShutdown('SIGINT'));
 
+// Initialize Socket.IO
+initSocket(server, {
+  origin: config.corsOrigin,
+  credentials: true,
+});
+
 // Start server
 async function start() {
   try {
