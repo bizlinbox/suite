@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { X, Plus, Trash2 } from 'lucide-react';
 
-export type CannedMessageType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'button' | 'list';
+export type QuickMessageType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'button' | 'list';
 
-export interface CannedResponseFormData {
+export interface QuickResponseFormData {
   id?: string;
   shortcut: string;
   content: string;
-  messageType: CannedMessageType;
+  messageType: QuickMessageType;
   metadata: {
     mediaUrl?: string;
     filename?: string;
@@ -21,14 +21,14 @@ export interface CannedResponseFormData {
   };
 }
 
-interface CannedResponseDialogProps {
+interface QuickResponseDialogProps {
   open: boolean;
-  data: Partial<CannedResponseFormData> | null;
+  data: Partial<QuickResponseFormData> | null;
   onClose: () => void;
-  onSubmit: (data: CannedResponseFormData) => void;
+  onSubmit: (data: QuickResponseFormData) => void;
 }
 
-const messageTypeLabels: Record<CannedMessageType, string> = {
+const messageTypeLabels: Record<QuickMessageType, string> = {
   text: 'Text',
   image: 'Image',
   video: 'Video',
@@ -38,10 +38,10 @@ const messageTypeLabels: Record<CannedMessageType, string> = {
   list: 'List Message',
 };
 
-const messageTypes: CannedMessageType[] = ['text', 'image', 'video', 'document', 'audio', 'button', 'list'];
+const messageTypes: QuickMessageType[] = ['text', 'image', 'video', 'document', 'audio', 'button', 'list'];
 
-export default function CannedResponseDialog({ open, data, onClose, onSubmit }: CannedResponseDialogProps) {
-  const [form, setForm] = useState<CannedResponseFormData>({
+export default function QuickResponseDialog({ open, data, onClose, onSubmit }: QuickResponseDialogProps) {
+  const [form, setForm] = useState<QuickResponseFormData>({
     shortcut: '',
     content: '',
     messageType: 'text',
@@ -135,7 +135,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
       <div className="mx-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-900 p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {data?.id ? 'Edit Canned Response' : 'Create Canned Response'}
+            {data?.id ? 'Edit Quick Response' : 'Create Quick Response'}
           </h2>
           <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
             <X size={20} />
@@ -161,7 +161,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
             <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Message Type</label>
             <select
               value={form.messageType}
-              onChange={(e) => setForm((prev) => ({ ...prev, messageType: e.target.value as CannedMessageType, metadata: {} }))}
+              onChange={(e) => setForm((prev) => ({ ...prev, messageType: e.target.value as QuickMessageType, metadata: {} }))}
               className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
             >
               {messageTypes.map((t) => (

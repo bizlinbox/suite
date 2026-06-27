@@ -10,7 +10,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const canManageSettings = can('settings.manage');
 
   const tabs = [
-    { label: 'Canned Responses', href: '/dashboard/canned-responses' },
+    { label: 'Quick Responses', href: '/dashboard/quick-responses' },
     ...(canManageSettings ? [{ label: 'WABA Accounts', href: '/dashboard/waba-accounts' }] : []),
   ];
 

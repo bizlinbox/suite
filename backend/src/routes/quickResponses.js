@@ -8,17 +8,17 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// GET / - list canned responses for org
+// GET / - list quick responses for org
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
       `SELECT id, org_id, shortcut, content, message_type, metadata, created_at
-       FROM canned_responses WHERE org_id = $1 ORDER BY created_at DESC`,
+       FROM quick_responses WHERE org_id = $1 ORDER BY created_at DESC`,
       [req.user.org_id]
     );
-    res.json({ cannedResponses: camelize(result.rows) });
+    res.json({ quickResponses: camelize(result.rows) });
   } catch (err) {
-    logger.error('List canned responses error', err);
+    logger.error('List quick responses error', err);
     next(err);
   }
 });
@@ -28,15 +28,15 @@ router.get('/:id', async (req, res, next) => {
   try {
     const result = await query(
       `SELECT id, org_id, shortcut, content, message_type, metadata, created_at
-       FROM canned_responses WHERE id = $1 AND org_id = $2`,
+       FROM quick_responses WHERE id = $1 AND org_id = $2`,
       [req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Canned response not found' });
+      return res.status(404).json({ error: 'Quick response not found' });
     }
-    res.json({ cannedResponse: camelize(result.rows[0]) });
+    res.json({ quickResponse: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Get canned response error', err);
+    logger.error('Get quick response error', err);
     next(err);
   }
 });
@@ -51,14 +51,14 @@ router.post('/', async (req, res, next) => {
     const mt = messageType || 'text';
     const meta = metadata ? JSON.stringify(metadata) : '{}';
     const result = await query(
-      `INSERT INTO canned_responses (org_id, shortcut, content, message_type, metadata)
+      `INSERT INTO quick_responses (org_id, shortcut, content, message_type, metadata)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, org_id, shortcut, content, message_type, metadata, created_at`,
       [req.user.org_id, shortcut, content, mt, meta]
     );
-    res.status(201).json({ cannedResponse: camelize(result.rows[0]) });
+    res.status(201).json({ quickResponse: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Create canned response error', err);
+    logger.error('Create quick response error', err);
     next(err);
   }
 });
@@ -69,7 +69,7 @@ router.put('/:id', async (req, res, next) => {
     const { shortcut, content, messageType, metadata } = req.body;
     const meta = metadata ? JSON.stringify(metadata) : undefined;
     const result = await query(
-      `UPDATE canned_responses
+      `UPDATE quick_responses
        SET shortcut = COALESCE($1, shortcut),
            content = COALESCE($2, content),
            message_type = COALESCE($3, message_type),
@@ -79,11 +79,11 @@ router.put('/:id', async (req, res, next) => {
       [shortcut, content, messageType, meta, req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Canned response not found' });
+      return res.status(404).json({ error: 'Quick response not found' });
     }
-    res.json({ cannedResponse: camelize(result.rows[0]) });
+    res.json({ quickResponse: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Update canned response error', err);
+    logger.error('Update quick response error', err);
     next(err);
   }
 });
@@ -92,15 +92,15 @@ router.put('/:id', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
   try {
     const result = await query(
-      'DELETE FROM canned_responses WHERE id = $1 AND org_id = $2 RETURNING id',
+      'DELETE FROM quick_responses WHERE id = $1 AND org_id = $2 RETURNING id',
       [req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Canned response not found' });
+      return res.status(404).json({ error: 'Quick response not found' });
     }
-    res.json({ message: 'Canned response deleted' });
+    res.json({ message: 'Quick response deleted' });
   } catch (err) {
-    logger.error('Delete canned response error', err);
+    logger.error('Delete quick response error', err);
     next(err);
   }
 });

@@ -14,7 +14,7 @@ const PRECACHE_URLS = [
   '/dashboard/users',
   '/dashboard/roles',
   '/dashboard/automations',
-  '/dashboard/canned-responses',
+  '/dashboard/quick-responses',
   '/dashboard/waba-accounts',
   '/dashboard/settings',
   '/offline.html',
@@ -56,7 +56,7 @@ function isApiRequest(url) {
     url.pathname.startsWith('/roles') ||
     url.pathname.startsWith('/automations') ||
     url.pathname.startsWith('/analytics') ||
-    url.pathname.startsWith('/canned-responses') ||
+    url.pathname.startsWith('/quick-responses') ||
     url.pathname.startsWith('/waba-accounts') ||
     url.pathname.startsWith('/templates') ||
     url.pathname.startsWith('/media');

@@ -4,54 +4,54 @@ import { useEffect, useState } from 'react';
 import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
-import CannedResponseDialog, { CannedResponseFormData } from '@/components/CannedResponseDialog';
+import QuickResponseDialog, { QuickResponseFormData } from '@/components/QuickResponseDialog';
 
-interface CannedResponse {
+interface QuickResponse {
   id: string;
   shortcut: string;
   content: string;
 }
 
-export default function CannedResponsesPage() {
+export default function QuickResponsesPage() {
   const { can, loading: authLoading } = usePermission();
-  const [cannedResponses, setCannedResponses] = useState<CannedResponse[]>([]);
-  const [cannedDialogOpen, setCannedDialogOpen] = useState(false);
-  const [editingCanned, setEditingCanned] = useState<CannedResponse | null>(null);
+  const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
+  const [quickDialogOpen, setQuickDialogOpen] = useState(false);
+  const [editingQuick, setEditingQuick] = useState<QuickResponse | null>(null);
 
   useEffect(() => {
-    fetchCannedResponses();
+    fetchQuickResponses();
   }, []);
 
-  const fetchCannedResponses = async () => {
+  const fetchQuickResponses = async () => {
     try {
-      const res = await api.get('/canned-responses');
-      setCannedResponses(res.data.cannedResponses || []);
+      const res = await api.get('/quick-responses');
+      setQuickResponses(res.data.quickResponses || []);
     } catch {
       // ignore
     }
   };
 
-  const handleCannedSubmit = async (form: CannedResponseFormData) => {
+  const handleQuickSubmit = async (form: QuickResponseFormData) => {
     try {
-      if (editingCanned) {
-        await api.put(`/canned-responses/${editingCanned.id}`, form);
+      if (editingQuick) {
+        await api.put(`/quick-responses/${editingQuick.id}`, form);
       } else {
-        await api.post('/canned-responses', form);
+        await api.post('/quick-responses', form);
       }
-      fetchCannedResponses();
+      fetchQuickResponses();
     } catch {
       // ignore
     } finally {
-      setCannedDialogOpen(false);
-      setEditingCanned(null);
+      setQuickDialogOpen(false);
+      setEditingQuick(null);
     }
   };
 
-  const handleDeleteCanned = async (id: string) => {
-    if (!confirm('Delete this canned response?')) return;
+  const handleDeleteQuick = async (id: string) => {
+    if (!confirm('Delete this quick response?')) return;
     try {
-      await api.delete(`/canned-responses/${id}`);
-      fetchCannedResponses();
+      await api.delete(`/quick-responses/${id}`);
+      fetchQuickResponses();
     } catch {
       // ignore
     }
@@ -68,7 +68,7 @@ export default function CannedResponsesPage() {
   if (!can('settings.read')) {
     return (
       <div className="panel p-8 text-center text-sm text-gray-400 dark:text-gray-500">
-        You do not have permission to view canned responses.
+        You do not have permission to view quick responses.
       </div>
     );
   }
@@ -77,11 +77,11 @@ export default function CannedResponsesPage() {
     <div>
       <div className="mb-4 flex justify-end">
         <button
-          onClick={() => { setEditingCanned(null); setCannedDialogOpen(true); }}
+          onClick={() => { setEditingQuick(null); setQuickDialogOpen(true); }}
           className="btn-primary"
         >
           <Plus size={16} />
-          Add Canned Response
+          Add Quick Response
         </button>
       </div>
 
@@ -95,7 +95,7 @@ export default function CannedResponsesPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {cannedResponses.map((c) => (
+            {quickResponses.map((c) => (
               <tr key={c.id}>
                 <td>
                   <code className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
@@ -106,14 +106,14 @@ export default function CannedResponsesPage() {
                 <td className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button
-                      onClick={() => { setEditingCanned(c); setCannedDialogOpen(true); }}
+                      onClick={() => { setEditingQuick(c); setQuickDialogOpen(true); }}
                       className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
                       aria-label="Edit"
                     >
                       <Edit size={15} />
                     </button>
                     <button
-                      onClick={() => handleDeleteCanned(c.id)}
+                      onClick={() => handleDeleteQuick(c.id)}
                       className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
                       aria-label="Delete"
                     >
@@ -123,10 +123,10 @@ export default function CannedResponsesPage() {
                 </td>
               </tr>
             ))}
-            {cannedResponses.length === 0 && (
+            {quickResponses.length === 0 && (
               <tr>
                 <td colSpan={3} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                  No canned responses yet
+                  No quick responses yet
                 </td>
               </tr>
             )}
@@ -134,11 +134,11 @@ export default function CannedResponsesPage() {
         </table>
       </div>
 
-      <CannedResponseDialog
-        open={cannedDialogOpen}
-        data={editingCanned ? { id: editingCanned.id, shortcut: editingCanned.shortcut, content: editingCanned.content } : null}
-        onClose={() => { setCannedDialogOpen(false); setEditingCanned(null); }}
-        onSubmit={handleCannedSubmit}
+      <QuickResponseDialog
+        open={quickDialogOpen}
+        data={editingQuick ? { id: editingQuick.id, shortcut: editingQuick.shortcut, content: editingQuick.content } : null}
+        onClose={() => { setQuickDialogOpen(false); setEditingQuick(null); }}
+        onSubmit={handleQuickSubmit}
       />
     </div>
   );

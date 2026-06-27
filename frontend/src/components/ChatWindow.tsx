@@ -26,7 +26,7 @@ export interface Agent {
   email: string;
 }
 
-export interface CannedResponse {
+export interface QuickResponse {
   id: string;
   shortcut: string;
   content: string;
@@ -127,9 +127,9 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [cannedResponses, setCannedResponses] = useState<CannedResponse[]>([]);
+  const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
   const [agentsOpen, setAgentsOpen] = useState(false);
-  const [cannedOpen, setCannedOpen] = useState(false);
+  const [quickOpen, setQuickOpen] = useState(false);
   const [slashOpen, setSlashOpen] = useState(false);
   const [slashIndex, setSlashIndex] = useState(0);
   const [slashQuery, setSlashQuery] = useState('');
@@ -203,8 +203,8 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     api.get('/agents').then((res) => {
       setAgents(res.data.agents || []);
     });
-    api.get('/canned-responses').then((res) => {
-      setCannedResponses(res.data.cannedResponses || []);
+    api.get('/quick-responses').then((res) => {
+      setQuickResponses(res.data.quickResponses || []);
     });
   }, []);
 
@@ -349,7 +349,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     if (slashOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSlashIndex((i) => Math.min(i + 1, filteredCanned.length - 1));
+        setSlashIndex((i) => Math.min(i + 1, filteredQuick.length - 1));
         return;
       }
       if (e.key === 'ArrowUp') {
@@ -359,8 +359,8 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
       }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (filteredCanned.length > 0) {
-          insertCanned(filteredCanned[slashIndex]);
+        if (filteredQuick.length > 0) {
+          insertQuick(filteredQuick[slashIndex]);
         }
         return;
       }
@@ -417,13 +417,13 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     onAssignAgent?.(agentId);
   };
 
-  const sendCannedResponse = async (canned: CannedResponse) => {
+  const sendQuickResponse = async (quick: QuickResponse) => {
     if (!conversationId) return;
-    const mt = canned.messageType || 'text';
+    const mt = quick.messageType || 'text';
 
     // Text type: just insert into input for editing
     if (mt === 'text') {
-      setInput(canned.content);
+      setInput(quick.content);
       return;
     }
 
@@ -431,30 +431,30 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     const tempMessage: Message = {
       id: `temp-${Date.now()}`,
       conversationId,
-      content: canned.content,
+      content: quick.content,
       senderType: 'agent',
       createdAt: new Date().toISOString(),
       messageType: mt,
-      mediaUrl: canned.metadata?.mediaUrl,
-      filename: canned.metadata?.filename,
+      mediaUrl: quick.metadata?.mediaUrl,
+      filename: quick.metadata?.filename,
     };
     setMessages((prev) => [...prev, tempMessage]);
 
     try {
       const payload: Record<string, unknown> = {
         conversationId,
-        content: canned.content,
+        content: quick.content,
         messageType: mt,
       };
 
       if (['image', 'video', 'document', 'audio'].includes(mt)) {
-        payload.mediaUrl = canned.metadata?.mediaUrl;
-        if (mt === 'document') payload.filename = canned.metadata?.filename;
+        payload.mediaUrl = quick.metadata?.mediaUrl;
+        if (mt === 'document') payload.filename = quick.metadata?.filename;
       }
 
-      if (mt === 'button' && canned.metadata?.buttons) {
+      if (mt === 'button' && quick.metadata?.buttons) {
         payload.replyButtonsOptions = {
-          buttons: canned.metadata.buttons.map((b, i) => ({
+          buttons: quick.metadata.buttons.map((b, i) => ({
             type: b.type || 'reply',
             title: b.title,
             id: b.id || `btn-${i}`,
@@ -462,8 +462,8 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
         };
       }
 
-      if (mt === 'list' && canned.metadata?.listOptions) {
-        payload.listOptions = canned.metadata.listOptions;
+      if (mt === 'list' && quick.metadata?.listOptions) {
+        payload.listOptions = quick.metadata.listOptions;
       }
 
       await api.post('/messages', payload);
@@ -472,15 +472,15 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     }
   };
 
-  const handleSelectCanned = (canned: CannedResponse) => {
-    setCannedOpen(false);
-    sendCannedResponse(canned);
+  const handleSelectQuick = (quick: QuickResponse) => {
+    setQuickOpen(false);
+    sendQuickResponse(quick);
   };
 
-  const insertCanned = (canned: CannedResponse) => {
-    const mt = canned.messageType || 'text';
+  const insertQuick = (quick: QuickResponse) => {
+    const mt = quick.messageType || 'text';
     if (mt !== 'text') {
-      sendCannedResponse(canned);
+      sendQuickResponse(quick);
       setSlashOpen(false);
       setSlashQuery('');
       setSlashIndex(0);
@@ -490,21 +490,21 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     if (lastSlashIndex !== -1) {
       const before = input.slice(0, lastSlashIndex);
       const after = input.slice(lastSlashIndex + 1 + slashQuery.length);
-      setInput(before + canned.content + after);
+      setInput(before + quick.content + after);
     } else {
-      setInput(canned.content);
+      setInput(quick.content);
     }
     setSlashOpen(false);
     setSlashQuery('');
     setSlashIndex(0);
   };
 
-  const filteredCanned = slashQuery
-    ? cannedResponses.filter((c) =>
+  const filteredQuick = slashQuery
+    ? quickResponses.filter((c) =>
         c.shortcut.toLowerCase().includes(slashQuery.toLowerCase()) ||
         c.content.toLowerCase().includes(slashQuery.toLowerCase())
       )
-    : cannedResponses;
+    : quickResponses;
 
   const triggerFileInput = (accept: string) => {
     if (fileInputRef.current) {
@@ -542,25 +542,25 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <div className="relative">
             <button
-              onClick={() => setCannedOpen((prev) => !prev)}
+              onClick={() => setQuickOpen((prev) => !prev)}
               className="btn-secondary px-2.5 py-1.5 text-xs"
             >
-              <span className="hidden md:inline">Canned</span>
-              <span className="md:hidden">Canned</span>
+              <span className="hidden md:inline">Quick</span>
+              <span className="md:hidden">Quick</span>
             </button>
-            {cannedOpen && (
+            {quickOpen && (
               <ul className="absolute right-0 top-full z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
-                {cannedResponses.map((c) => (
+                {quickResponses.map((c) => (
                   <li
                     key={c.id}
-                    onClick={() => handleSelectCanned(c)}
+                    onClick={() => handleSelectQuick(c)}
                     className="cursor-pointer px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     {c.shortcut}
                   </li>
                 ))}
-                {cannedResponses.length === 0 && (
-                  <li className="px-3 py-2 text-sm text-gray-400">No canned responses</li>
+                {quickResponses.length === 0 && (
+                  <li className="px-3 py-2 text-sm text-gray-400">No quick responses</li>
                 )}
               </ul>
             )}
@@ -781,7 +781,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
           <div className="relative flex-1">
             <textarea
               rows={1}
-              placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for canned responses)'}
+              placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick responses)'}
               value={input}
               onChange={(e) => {
                 const val = e.target.value;
@@ -799,12 +799,12 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
               onKeyDown={handleKeyDown}
               className="input max-h-32 resize-none py-2.5"
             />
-            {slashOpen && filteredCanned.length > 0 && (
+            {slashOpen && filteredQuick.length > 0 && (
               <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                {filteredCanned.map((c, idx) => (
+                {filteredQuick.map((c, idx) => (
                   <li
                     key={c.id}
-                    onClick={() => insertCanned(c)}
+                    onClick={() => insertQuick(c)}
                     className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
                       idx === slashIndex
                         ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
@@ -817,9 +817,9 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                 ))}
               </ul>
             )}
-            {slashOpen && filteredCanned.length === 0 && (
+            {slashOpen && filteredQuick.length === 0 && (
               <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                <p className="text-sm text-gray-400 dark:text-gray-500">No canned responses found</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">No quick responses found</p>
               </div>
             )}
           </div>

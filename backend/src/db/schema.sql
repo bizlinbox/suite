@@ -131,7 +131,23 @@ BEGIN
   END IF;
 END $$;
 
-CREATE TABLE IF NOT EXISTS canned_responses (
+-- Migrate: rename canned_responses to quick_responses if exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'canned_responses') THEN
+    ALTER TABLE canned_responses RENAME TO quick_responses;
+  END IF;
+END $$;
+
+-- Migrate: rename index if exists
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_canned_responses_org_id') THEN
+    ALTER INDEX idx_canned_responses_org_id RENAME TO idx_quick_responses_org_id;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS quick_responses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     shortcut TEXT NOT NULL,
@@ -145,15 +161,15 @@ CREATE TABLE IF NOT EXISTS canned_responses (
 -- Migrate: add message_type and metadata if they don't exist (for existing tables)
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'canned_responses' AND column_name = 'message_type') THEN
-    ALTER TABLE canned_responses ADD COLUMN message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'video', 'document', 'audio', 'button', 'list'));
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'quick_responses' AND column_name = 'message_type') THEN
+    ALTER TABLE quick_responses ADD COLUMN message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'video', 'document', 'audio', 'button', 'list'));
   END IF;
 END $$;
 
 DO $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'canned_responses' AND column_name = 'metadata') THEN
-    ALTER TABLE canned_responses ADD COLUMN metadata JSONB DEFAULT '{}';
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'quick_responses' AND column_name = 'metadata') THEN
+    ALTER TABLE quick_responses ADD COLUMN metadata JSONB DEFAULT '{}';
   END IF;
 END $$;
 
@@ -198,7 +214,7 @@ CREATE INDEX IF NOT EXISTS idx_conversations_assigned_agent_id ON conversations(
 CREATE INDEX IF NOT EXISTS idx_conversations_status ON conversations(status);
 CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_messages_external_id ON messages(external_id);
-CREATE INDEX IF NOT EXISTS idx_canned_responses_org_id ON canned_responses(org_id);
+CREATE INDEX IF NOT EXISTS idx_quick_responses_org_id ON quick_responses(org_id);
 CREATE INDEX IF NOT EXISTS idx_workflows_org_id ON workflows(org_id);
 CREATE INDEX IF NOT EXISTS idx_whatsapp_numbers_org_id ON whatsapp_numbers(org_id);
 CREATE INDEX IF NOT EXISTS idx_addresses_org_id ON addresses(org_id);

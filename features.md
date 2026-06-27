@@ -8,7 +8,7 @@ A multi-tenant WhatsApp inbox platform built on the WhatsApp Cloud API, enabling
 -   Reply from a shared inbox
 -   Assign conversations to agents
 -   Manage contacts
--   Use canned responses
+-   Use quick responses
 -   Automate workflows
 -   Track analytics
 -   Support multiple WhatsApp numbers

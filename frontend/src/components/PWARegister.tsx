@@ -3,6 +3,34 @@
 import { useEffect, useState, useCallback } from 'react';
 import { Download, X, WifiOff, Wifi } from 'lucide-react';
 
+const INSTALL_DISMISS_KEY = 'bizlinbox_install_dismissed';
+const INSTALL_DISMISS_DAYS = 7;
+
+function isInstallDismissed(): boolean {
+  if (typeof window === 'undefined') return false;
+  const raw = localStorage.getItem(INSTALL_DISMISS_KEY);
+  if (!raw) return false;
+  const dismissedAt = parseInt(raw, 10);
+  const now = Date.now();
+  return now - dismissedAt < INSTALL_DISMISS_DAYS * 24 * 60 * 60 * 1000;
+}
+
+function markInstallDismissed() {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(INSTALL_DISMISS_KEY, Date.now().toString());
+}
+
+function markInstallInstalled() {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(INSTALL_DISMISS_KEY, 'installed');
+}
+
+function isInstalledPWA(): boolean {
+  if (typeof window === 'undefined') return false;
+  const raw = localStorage.getItem(INSTALL_DISMISS_KEY);
+  return raw === 'installed' || window.matchMedia('(display-mode: standalone)').matches;
+}
+
 export default function PWARegister() {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -50,20 +78,26 @@ export default function PWARegister() {
   // Handle beforeinstallprompt
   useEffect(() => {
     if (typeof window === 'undefined') return;
+    if (isInstalledPWA() || isInstallDismissed()) return;
 
     const handler = (e: Event) => {
       e.preventDefault();
+      if (isInstalledPWA() || isInstallDismissed()) return;
       setInstallPrompt(e);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-
-    // Check if already installed
-    window.addEventListener('appinstalled', () => {
+    const installedHandler = () => {
+      markInstallInstalled();
       setInstallPrompt(null);
-    });
+    };
 
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener('beforeinstallprompt', handler);
+    window.addEventListener('appinstalled', installedHandler);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler);
+      window.removeEventListener('appinstalled', installedHandler);
+    };
   }, []);
 
   // Online / offline status
@@ -97,6 +131,7 @@ export default function PWARegister() {
     installPrompt.prompt();
     const result = await installPrompt.userChoice;
     if (result.outcome === 'accepted') {
+      markInstallInstalled();
       setInstallPrompt(null);
     }
   }, [installPrompt]);
@@ -109,6 +144,7 @@ export default function PWARegister() {
   }, [swRegistration]);
 
   const dismissInstall = useCallback(() => {
+    markInstallDismissed();
     setInstallPrompt(null);
   }, []);
 
