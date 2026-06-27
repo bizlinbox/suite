@@ -163,9 +163,24 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     socket.emit('join_conversation', conversationId);
 
     const handleNewMessage = (message: Message) => {
-      if (message.conversationId === conversationId) {
-        setMessages((prev) => [...prev, message]);
-      }
+      if (message.conversationId !== conversationId) return;
+      setMessages((prev) => {
+        // Replace a matching temp message (same content/type/sender) instead of duplicating
+        const tempIndex = prev.findIndex(
+          (m) =>
+            m.id.startsWith('temp-') &&
+            m.senderType === message.senderType &&
+            m.messageType === message.messageType &&
+            m.content === message.content &&
+            m.reactionToMessageId === message.reactionToMessageId
+        );
+        if (tempIndex !== -1) {
+          const next = [...prev];
+          next[tempIndex] = message;
+          return next;
+        }
+        return [...prev, message];
+      });
     };
 
     const handleStatusUpdate = ({ messageId, status }: { messageId: string; status: Message['status'] }) => {
