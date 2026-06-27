@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
-import { Building2 } from 'lucide-react';
+import { Building2, Loader2 } from 'lucide-react';
 
 interface DayCount {
   day: string;
@@ -191,7 +191,7 @@ function DonutChart({ data }: { data: MsgByType[] }) {
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const { selectedWabaId } = useWaba();
-  const { can } = usePermission();
+  const { can, loading: authLoading } = usePermission();
 
   useEffect(() => {
     api.get('/analytics')
@@ -212,6 +212,14 @@ export default function AnalyticsPage() {
         <Building2 size={48} className="mb-4 text-gray-400 dark:text-gray-500" />
         <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Please select a WABA account</h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">Use the WABA dropdown in the top navigation to choose an account.</p>
+      </div>
+    );
+  }
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={32} className="animate-spin text-gray-400 dark:text-gray-500" />
       </div>
     );
   }

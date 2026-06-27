@@ -166,7 +166,7 @@ router.post('/', async (req, res) => {
 
         // Process message statuses (sent, delivered, read, failed)
         for (const status of value.statuses || []) {
-          await handleStatusUpdate(status);
+          await handleStatusUpdate(status, orgId);
         }
 
         // Process errors delivered via webhook
@@ -420,7 +420,7 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
   }
 }
 
-async function handleStatusUpdate(status) {
+async function handleStatusUpdate(status, orgId) {
   const externalId = status.id;
   let messageStatus = 'sent';
 
@@ -447,10 +447,19 @@ async function handleStatusUpdate(status) {
   }
 
   try {
-    await query(
-      'UPDATE messages SET status = $1 WHERE external_id = $2',
+    const msgResult = await query(
+      'UPDATE messages SET status = $1 WHERE external_id = $2 RETURNING id, conversation_id, status',
       [messageStatus, externalId]
     );
+
+    if (msgResult.rows.length > 0) {
+      const updatedMsg = msgResult.rows[0];
+      // Emit real-time status update to conversation and org
+      emitToConversation(orgId, updatedMsg.conversation_id, 'message_status_updated', camelize({
+        message_id: updatedMsg.id,
+        status: updatedMsg.status,
+      }));
+    }
   } catch (err) {
     logger.error('Failed to update message status', { externalId, status: messageStatus, error: err.message });
   }
@@ -603,7 +612,7 @@ router.post('/incoming', async (req, res) => {
           await handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, {}, wabaAccountId);
         }
         for (const status of value.statuses || []) {
-          await handleStatusUpdate(status);
+          await handleStatusUpdate(status, orgId);
         }
       }
     }

@@ -112,7 +112,7 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   if (!selectedWabaId) {
     return (
-      <div className="panel flex h-[calc(100vh-136px)] flex-col items-center justify-center p-8 text-center md:h-[calc(100vh-96px)]">
+      <div className="panel flex h-[calc(100vh-80px)] flex-col items-center justify-center p-8 text-center md:h-[calc(100vh-48px)]">
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
           <Building2 size={32} className="text-gray-400 dark:text-gray-500" />
         </div>
@@ -123,9 +123,10 @@ export default function Inbox({ selectedId }: InboxProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-136px)] md:h-[calc(100vh-96px)]">
-      <div className="panel flex h-full overflow-hidden">
-        <div className={`w-full flex-shrink-0 md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
+    <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden md:h-[calc(100vh-48px)]">
+      <div className="panel flex h-full overflow-hidden rounded-2xl">
+        {/* Conversation list - always visible on desktop, toggle on mobile */}
+        <div className={`w-full flex-shrink-0 md:block md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
@@ -134,7 +135,8 @@ export default function Inbox({ selectedId }: InboxProps) {
           />
         </div>
 
-        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 ${selectedId ? 'flex' : 'hidden'}`}>
+        {/* Chat area - always visible on desktop, toggle on mobile */}
+        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 md:flex ${selectedId ? 'flex' : 'hidden'}`}>
           {selectedConversation ? (
             <ChatWindow
               conversationId={selectedConversation.id}

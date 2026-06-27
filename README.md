@@ -4,53 +4,43 @@
 
 A production-ready, multi-tenant WhatsApp inbox platform built on the WhatsApp Cloud API.
 
-## Quick Start
+## About
 
-### Prerequisites
+BizlInbox is a production-ready, multi-tenant WhatsApp inbox platform built on the WhatsApp Cloud API. It provides a complete solution for managing WhatsApp Business API conversations with support for multiple phone numbers, team collaboration, and real-time messaging.
 
-| Requirement | Purpose |
-|-------------|---------|
-| Docker & Docker Compose | Container orchestration |
-| Domain name | For Traefik reverse proxy & Let's Encrypt HTTPS |
-| Server with ports 80/443 open | Web traffic & certificate validation |
-
-### 1. Docker Compose (Recommended)
-
-The fastest way to get BizlInbox running in production:
+## Env Sample
 
 ```bash
-# 1. Clone or download the repository
-cd bizlinbox
+# Backend
+NODE_ENV=production
+PORT=4000
+DATABASE_URL=postgres://bizlinbox:bizlinbox@localhost:5432/bizlinbox
+REDIS_URL=redis://localhost:6379
 
-# 2. Create and configure environment
-cp .env.example .env
-# Edit .env with your values:
-#   DOMAIN=yourdomain.com
-#   LETSENCRYPT_EMAIL=admin@yourdomain.com
-#   JWT_SECRET=$(openssl rand -hex 32)
-#   JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+# Auth secrets (generate strong random values in production)
+JWT_SECRET=change-me-to-a-256-bit-random-string
+JWT_REFRESH_SECRET=change-me-to-another-256-bit-random-string
 
-# 3. Prepare ACME directory for Let's Encrypt
-mkdir -p traefik/acme
+# WhatsApp Cloud API
+WHATSAPP_API_VERSION=v20.0
+WHATSAPP_APP_ID=
+WHATSAPP_APP_SECRET=
 
-# 4. Pull pre-built images (fastest)
-docker compose pull
+# Optional: fallback global verify token for legacy webhook endpoint.
+# Each WABA now auto-generates its own verify token on creation.
 
-# 5. Start all services in detached mode
-docker compose up -d
+# Storage
+UPLOAD_DIR=uploads
+
+# Domain & Traefik
+DOMAIN=example.com
+LETSENCRYPT_EMAIL=admin@example.com
+
+# Frontend runtime config (optional: leave empty for same-origin API calls)
+NEXT_PUBLIC_API_URL=
 ```
 
-**Access points after startup:**
-
-| Service | URL | Description |
-|---------|-----|-------------|
-| Application | `https://yourdomain.com` | Main BizlInbox app |
-| Traefik Dashboard | `https://traefik.yourdomain.com` | Reverse proxy status |
-| API Health | `https://yourdomain.com/health` | Backend health check |
-
-### 2. Standalone docker-compose.yml (Copy & Run)
-
-Save the following as `docker-compose.yml` anywhere on your server, edit the variables, and run `docker compose up -d`:
+## Docker Compose
 
 ```yaml
 version: '3.8'
@@ -65,22 +55,15 @@ services:
     container_name: bizlinbox-traefik
     restart: unless-stopped
     command:
-      - "--api.dashboard=true"
-      - "--providers.docker=true"
-      - "--providers.docker.exposedByDefault=false"
-      - "--entryPoints.web.address=:80"
-      - "--entryPoints.web.http.redirections.entryPoint.to=websecure"
-      - "--entryPoints.web.http.redirections.entryPoint.scheme=https"
-      - "--entryPoints.websecure.address=:443"
-      - "--certificatesresolvers.letsencrypt.acme.email=${LETSENCRYPT_EMAIL}"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
+      - "--configFile=/etc/traefik/traefik.yml"
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./acme:/letsencrypt
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/acme:/letsencrypt
     networks:
       - bizlinbox
     labels:
@@ -89,6 +72,10 @@ services:
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.service=api@internal"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   postgres:
     image: postgres:15-alpine
@@ -107,6 +94,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   redis:
     image: redis:7-alpine
@@ -121,36 +112,49 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 256M
 
   app:
     image: bizlintech/bizinbox:develop
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: bizlinbox-app
     restart: unless-stopped
     environment:
       NODE_ENV: production
       DATABASE_URL: postgres://bizlinbox:bizlinbox@postgres:5432/bizlinbox
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production}
       PORT: 4000
       CLIENT_URL: https://${DOMAIN}
       PUBLIC_URL: https://${DOMAIN}
       INTERNAL_API_URL: http://localhost:4000
-      NEXT_PUBLIC_API_URL: ""
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     networks:
       - bizlinbox
     volumes:
       - uploads:/app/uploads
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:4000/health', (r) => { process.exit(r && r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
     labels:
       - "traefik.enable=true"
-      # API routes → backend port 4000
       - "traefik.http.routers.bizlinbox-api.rule=Host(`${DOMAIN}`) && (PathPrefix(`/api`) || PathPrefix(`/socket.io`) || PathPrefix(`/uploads`))"
+      - "traefik.http.routers.bizlinbox-api.priority=100"
       - "traefik.http.routers.bizlinbox-api.entrypoints=websecure"
       - "traefik.http.routers.bizlinbox-api.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bizlinbox-api.service=bizlinbox-api"
       - "traefik.http.services.bizlinbox-api.loadbalancer.server.port=4000"
-      # Frontend routes → frontend port 3000
       - "traefik.http.routers.bizlinbox-web.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.bizlinbox-web.priority=10"
       - "traefik.http.routers.bizlinbox-web.entrypoints=websecure"
       - "traefik.http.routers.bizlinbox-web.tls.certresolver=letsencrypt"
       - "traefik.http.routers.bizlinbox-web.service=bizlinbox-web"
@@ -160,102 +164,13 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
 volumes:
   postgres_data:
   redis_data:
   uploads:
 ```
-
-Create a `.env` file in the same directory:
-
-```bash
-DOMAIN=yourdomain.com
-LETSENCRYPT_EMAIL=admin@yourdomain.com
-JWT_SECRET=$(openssl rand -hex 32)
-JWT_REFRESH_SECRET=$(openssl rand -hex 32)
-```
-
-Then run:
-
-```bash
-mkdir -p acme
-docker compose up -d
-```
-
-### 3. First Login
-
-After the containers start, a demo admin account is automatically seeded:
-
-| Credential | Value |
-|------------|-------|
-| Email | `admin@bizlinbox.local` |
-| Password | `admin123` |
-
-> **Warning:** Change this password immediately in production.
-
-### 4. Local Development
-
-For code changes and debugging:
-
-```bash
-# Terminal 1 — Backend
-cd backend
-npm install
-cp .env.example .env
-npm run migrate
-npm run seed
-npm run dev
-
-# Terminal 2 — Frontend
-cd frontend
-npm install
-npm run dev
-```
-
-## Environment Variables
-
-### Backend
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NODE_ENV` | Environment mode | `production` |
-| `PORT` | Server port | `4000` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgres://user:pass@localhost:5432/db` |
-| `REDIS_URL` | Redis connection string | `redis://localhost:6379` |
-| `JWT_SECRET` | JWT signing secret (256-bit random) | `...` |
-| `JWT_REFRESH_SECRET` | Refresh token secret (256-bit random) | `...` |
-| `CLIENT_URL` | Allowed CORS origin(s) | `https://example.com` |
-| `WHATSAPP_VERIFY_TOKEN` | Meta webhook verification token | `custom-verify-token` |
-| `UPLOAD_DIR` | Upload storage path | `uploads` |
-
-### Frontend (Runtime Configurable)
-
-All frontend configuration is applied at container runtime — no rebuild required.
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL. Leave empty for same-origin (Traefik path-based routing). | `` or `https://api.example.com` |
-| `INTERNAL_API_URL` | Internal backend URL for SSR | `http://backend:4000` |
-
-### Traefik
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `DOMAIN` | Root domain for the application | `example.com` |
-| `LETSENCRYPT_EMAIL` | Email for Let's Encrypt registration | `admin@example.com` |
-
-## Production Checklist
-
-1. Change default secrets in `.env`
-2. Set strong `JWT_SECRET` and `JWT_REFRESH_SECRET` (256-bit random strings)
-3. Set `DOMAIN` to your actual domain
-4. Configure WhatsApp Cloud API credentials
-5. Enable PostgreSQL backups
-6. Remove demo admin account or change password
-7. Set up log aggregation (Winston JSON logs are ready for ingestion)
-8. Configure monitoring on `/health` endpoint
-9. (Optional) Add basic auth to Traefik dashboard
-10. (Optional) Use a separate subdomain for the API instead of path-based routing
-
-

@@ -3,11 +3,11 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
-import Navbar from '@/components/Navbar';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { WabaProvider } from '@/context/WabaContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { Menu } from 'lucide-react';
 
 const DRAWER_WIDTH = 256;
 
@@ -23,14 +23,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
 
   const handleMobileClose = () => setMobileOpen(false);
   const handleDesktopToggle = () => {
-    if (isInbox) {
-      setCollapsed((prev) => !prev);
-    } else {
-      setDesktopOpen((prev) => !prev);
-    }
-  };
-  const handleMenuToggle = () => {
-    setMobileOpen((prev) => !prev);
     if (isInbox) {
       setCollapsed((prev) => !prev);
     } else {
@@ -60,7 +52,15 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <WabaProvider wabaAccounts={user?.wabaAccounts || []}>
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
-        <Navbar onMenuClick={handleMenuToggle} sidebarOpen={desktopOpen && !collapsed} />
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setMobileOpen((prev) => !prev)}
+          className="fixed left-4 top-4 z-40 rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-800 dark:bg-gray-900 md:hidden"
+          aria-label="Open menu"
+        >
+          <Menu size={20} className="text-gray-700 dark:text-gray-200" />
+        </button>
+
         <Sidebar
           mobileOpen={mobileOpen}
           onMobileClose={handleMobileClose}
@@ -69,7 +69,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           collapsed={isInbox ? collapsed : false}
         />
         <main
-          className={`flex-1 overflow-x-hidden p-4 pt-20 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:p-6 md:pb-6 md:pt-20 ${
+          className={`flex-1 overflow-x-hidden p-4 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:p-6 md:pb-6 ${
             isInbox
               ? collapsed
                 ? 'md:ml-16'
@@ -99,7 +99,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           ) : (
-            <div className="mx-auto max-w-7xl">{children}</div>
+            <div className={isInbox ? '' : 'mx-auto max-w-7xl'}>{children}</div>
           )}
         </main>
 

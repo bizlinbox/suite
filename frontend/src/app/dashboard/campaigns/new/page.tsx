@@ -66,7 +66,7 @@ function formatDate(dateStr: string | null): string {
 export default function NewCampaignPage() {
   const router = useRouter();
   const { user } = useAuth();
-  const { can } = usePermission();
+  const { can, loading: authLoading } = usePermission();
   const { selectedWabaId } = useWaba();
   const wabaAccounts = user?.wabaAccounts || [];
 
@@ -380,6 +380,14 @@ export default function NewCampaignPage() {
     return msg;
   }, [content, templateVars]);
 
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={32} className="animate-spin text-gray-400 dark:text-gray-500" />
+      </div>
+    );
+  }
+
   if (!can('campaigns.manage')) {
     return (
       <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-12 text-center">
@@ -526,7 +534,7 @@ export default function NewCampaignPage() {
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                       idx <= currentStep
-                        ? 'bg-primary-700 text-white'
+                        ? 'bg-[#25D366] text-white'
                         : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                     }`}
                   >
@@ -933,7 +941,7 @@ export default function NewCampaignPage() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !canGoNext()}
-                className="mt-4 w-full rounded-lg bg-primary-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="mt-4 w-full rounded-lg bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#128C7E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {submitting ? 'Creating...' : 'Create Campaign'}
               </button>
@@ -958,7 +966,7 @@ export default function NewCampaignPage() {
           <button
             onClick={handleNext}
             disabled={!canGoNext()}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg bg-primary-900 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-700 transition-all duration-200 ${
+            className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#128C7E] transition-all duration-200 ${
               !canGoNext() ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >

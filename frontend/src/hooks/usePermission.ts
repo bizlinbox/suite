@@ -3,7 +3,7 @@
 import { useAuth } from './useAuth';
 
 export function usePermission() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const permissions = user?.permissions || [];
 
   const can = (...required: string[]) =>
@@ -14,5 +14,5 @@ export function usePermission() {
 
   const isAdmin = can('users.manage');
 
-  return { can, canAll, isAdmin, permissions };
+  return { can, canAll, isAdmin, permissions, loading };
 }

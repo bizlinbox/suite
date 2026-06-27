@@ -220,7 +220,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buttons</label>
                 <button
                   onClick={addButton}
-                  className="flex items-center gap-1 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300"
+                  className="flex items-center gap-1 rounded-md bg-[#25D366] px-2 py-1 text-xs font-medium text-white hover:bg-[#128C7E]"
                 >
                   <Plus size={14} /> Add
                 </button>
@@ -266,7 +266,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sections</label>
                   <button
                     onClick={addListSection}
-                    className="flex items-center gap-1 rounded-md bg-primary-50 px-2 py-1 text-xs font-medium text-primary-700 hover:bg-primary-100 dark:bg-primary-900/20 dark:text-primary-300"
+                    className="flex items-center gap-1 rounded-md bg-[#25D366] px-2 py-1 text-xs font-medium text-white hover:bg-[#128C7E]"
                   >
                     <Plus size={14} /> Add Section
                   </button>
@@ -310,7 +310,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
                         ))}
                         <button
                           onClick={() => addListRow(sIdx)}
-                          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/10"
+                          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[#25D366] hover:bg-[#25D366]/10"
                         >
                           <Plus size={12} /> Add Row
                         </button>
@@ -335,7 +335,7 @@ export default function CannedResponseDialog({ open, data, onClose, onSubmit }: 
           </button>
           <button
             onClick={handleSubmit}
-            className="rounded-lg bg-primary-900 px-4 py-2 text-white hover:bg-primary-700"
+            className="rounded-lg bg-[#25D366] px-4 py-2 text-white hover:bg-[#128C7E]"
           >
             {data?.id ? 'Update' : 'Create'}
           </button>

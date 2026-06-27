@@ -17,9 +17,12 @@ import {
   X,
   LogOut,
   Plug,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
+import { useTheme } from '@/components/ThemeProvider';
 
 const DRAWER_WIDTH = 256;
 
@@ -119,6 +122,24 @@ function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+  const { theme, toggleTheme } = useTheme();
+
+  return (
+    <button
+      onClick={toggleTheme}
+      className={`flex w-full items-center rounded-lg border border-blue-800/40 bg-blue-900/40 text-blue-200 transition-colors hover:bg-blue-800/50 hover:text-white ${
+        collapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-2'
+      }`}
+      aria-label="Toggle theme"
+      title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+    >
+      {theme === 'dark' ? <Sun size={16} className="shrink-0 text-blue-400" /> : <Moon size={16} className="shrink-0 text-blue-400" />}
+      {!collapsed && <span className="text-sm font-medium">{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>}
+    </button>
+  );
+}
+
 export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, desktopOpen = true, collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -134,7 +155,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
   const drawerContent = (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className={`flex items-center py-3.5 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
+      <div className={`flex items-center py-3.5 ${collapsed ? 'justify-between px-1.5' : 'justify-between px-4'}`}>
         <Link href="/dashboard" className={`flex items-center ${collapsed ? 'gap-0' : 'gap-2.5'}`}>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-700 text-white">
             <MessageSquare size={18} />
@@ -143,28 +164,27 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             <span className="text-lg font-bold tracking-tight text-white">BizlInbox</span>
           )}
         </Link>
-        {!collapsed && (
-          <div className="flex items-center gap-1">
-            {onDesktopToggle && (
-              <button
-                onClick={onDesktopToggle}
-                className="hidden rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
-                aria-label="Collapse sidebar"
-              >
-                <ChevronLeft size={18} />
-              </button>
-            )}
-            {mobileOpen && (
-              <button
-                onClick={onMobileClose}
-                className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
-                aria-label="Close sidebar"
-              >
-                <X size={18} />
-              </button>
-            )}
-          </div>
-        )}
+        <div className="flex items-center gap-1">
+          {onDesktopToggle && (
+            <button
+              onClick={onDesktopToggle}
+              className="hidden rounded-md p-1 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+            </button>
+          )}
+          {!collapsed && mobileOpen && (
+            <button
+              onClick={onMobileClose}
+              className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          )}
+        </div>
       </div>
 
       <WabaSwitcher collapsed={collapsed} />
@@ -200,6 +220,11 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
           );
         })}
       </nav>
+
+      {/* Theme Toggle */}
+      <div className={`py-2 ${collapsed ? 'px-2' : 'px-4'}`}>
+        <ThemeToggle collapsed={collapsed} />
+      </div>
 
       {/* User / Logout */}
       <div className={`py-3 ${collapsed ? 'px-2' : 'px-4'}`}>

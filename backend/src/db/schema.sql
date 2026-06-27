@@ -42,6 +42,44 @@ CREATE TABLE IF NOT EXISTS contacts (
     UNIQUE(org_id, phone)
 );
 
+-- Migrate: add extra contact fields if missing
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'company') THEN
+    ALTER TABLE contacts ADD COLUMN company TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'job_title') THEN
+    ALTER TABLE contacts ADD COLUMN job_title TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'notes') THEN
+    ALTER TABLE contacts ADD COLUMN notes TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'birthday') THEN
+    ALTER TABLE contacts ADD COLUMN birthday DATE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'language') THEN
+    ALTER TABLE contacts ADD COLUMN language TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'tags') THEN
+    ALTER TABLE contacts ADD COLUMN tags TEXT[] DEFAULT '{}';
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'address') THEN
+    ALTER TABLE contacts ADD COLUMN address TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'city') THEN
+    ALTER TABLE contacts ADD COLUMN city TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'state') THEN
+    ALTER TABLE contacts ADD COLUMN state TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'country') THEN
+    ALTER TABLE contacts ADD COLUMN country TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'contacts' AND column_name = 'zip_code') THEN
+    ALTER TABLE contacts ADD COLUMN zip_code TEXT;
+  END IF;
+END $$;
+
 CREATE TABLE IF NOT EXISTS addresses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,

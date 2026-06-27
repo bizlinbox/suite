@@ -27,8 +27,6 @@ COPY backend/src ./src
 # ---- Stage 3: Production Runner ----
 FROM node:20-alpine AS runner
 
-RUN apk add --no-cache dumb-init
-
 WORKDIR /app
 
 # Create non-root user
@@ -64,5 +62,4 @@ EXPOSE 3000 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://127.0.0.1:4000/health', (r) => { process.exit(r && r.statusCode === 200 ? 0 : 1) }).on('error', () => process.exit(1))"
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["./start.sh"]
+CMD ["/bin/sh", "./start.sh"]

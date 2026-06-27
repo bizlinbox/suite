@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Plus } from 'lucide-react';
+import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import CannedResponseDialog, { CannedResponseFormData } from '@/components/CannedResponseDialog';
@@ -13,7 +13,7 @@ interface CannedResponse {
 }
 
 export default function CannedResponsesPage() {
-  const { can } = usePermission();
+  const { can, loading: authLoading } = usePermission();
   const [cannedResponses, setCannedResponses] = useState<CannedResponse[]>([]);
   const [cannedDialogOpen, setCannedDialogOpen] = useState(false);
   const [editingCanned, setEditingCanned] = useState<CannedResponse | null>(null);
@@ -56,6 +56,14 @@ export default function CannedResponsesPage() {
       // ignore
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 size={32} className="animate-spin text-gray-400 dark:text-gray-500" />
+      </div>
+    );
+  }
 
   if (!can('settings.read')) {
     return (

@@ -91,7 +91,7 @@ router.post('/', async (req, res, next) => {
     if (message_type === 'location' && (!locationOptions || locationOptions.latitude == null || locationOptions.longitude == null)) {
       return res.status(400).json({ error: 'location_options with latitude and longitude is required for location type' });
     }
-    if (message_type === 'reaction' && (!reactionOptions || !reactionOptions.message_id || !reactionOptions.emoji)) {
+    if (message_type === 'reaction' && (!reactionOptions || !reactionOptions.target_message_id || !reactionOptions.emoji)) {
       return res.status(400).json({ error: 'reaction_options with message_id and emoji is required for reaction type' });
     }
     if (message_type === 'sticker' && !media_url) {
