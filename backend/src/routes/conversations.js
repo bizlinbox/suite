@@ -9,11 +9,24 @@ const router = express.Router();
 router.use(authenticate);
 router.use(resolveWabaAccount);
 
+function isAdmin(req) {
+  const perms = req.user?.permissions || [];
+  return perms.includes('users.manage');
+}
+
+function privateAccessFilter(req) {
+  const isUserAdmin = isAdmin(req);
+  if (isUserAdmin) {
+    return { clause: '', param: null };
+  }
+  return { clause: ` AND (c.is_private = false OR c.assigned_agent_id = $PARAM)`, param: req.user.id };
+}
+
 // GET / - list conversations for org
 router.get('/', async (req, res, next) => {
   try {
     const { status, assigned_to } = req.query;
-    let sql = `SELECT c.id, c.org_id, c.contact_id, c.assigned_agent_id, c.status, c.last_message_at, c.created_at,
+    let sql = `SELECT c.id, c.org_id, c.contact_id, c.assigned_agent_id, c.status, c.is_private, c.last_message_at, c.created_at,
                       con.name as contact_name, con.phone as contact_phone,
                       u.name as assigned_agent_name
                FROM conversations c
@@ -36,6 +49,16 @@ router.get('/', async (req, res, next) => {
       params.push(assigned_to);
     }
 
+    // Filter private conversations for non-admins/non-assigned
+    const privacyFilter = privateAccessFilter(req);
+    if (privacyFilter.clause) {
+      const paramIndex = params.length + 1;
+      sql += privacyFilter.clause.replace('$PARAM', `$${paramIndex}`);
+      if (privacyFilter.param) {
+        params.push(privacyFilter.param);
+      }
+    }
+
     sql += ' ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC';
 
     const result = await query(sql, params);
@@ -54,7 +77,7 @@ router.get('/', async (req, res, next) => {
 // GET /:id
 router.get('/:id', async (req, res, next) => {
   try {
-    let sql = `SELECT c.id, c.org_id, c.contact_id, c.assigned_agent_id, c.status, c.last_message_at, c.created_at,
+    let sql = `SELECT c.id, c.org_id, c.contact_id, c.assigned_agent_id, c.status, c.is_private, c.last_message_at, c.created_at,
                       con.name as contact_name, con.phone as contact_phone
                FROM conversations c
                JOIN contacts con ON con.id = c.contact_id
@@ -70,7 +93,15 @@ router.get('/:id', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    res.json({ conversation: camelize(result.rows[0]) });
+
+    const conversation = camelize(result.rows[0]);
+
+    // Check private access
+    if (conversation.isPrivate && !isAdmin(req) && conversation.assignedAgentId !== req.user.id) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    res.json({ conversation });
   } catch (err) {
     logger.error('Get conversation error', err);
     next(err);
@@ -106,7 +137,7 @@ router.post('/', async (req, res, next) => {
     const result = await query(
       `INSERT INTO conversations (org_id, contact_id, status, waba_account_id)
        VALUES ($1, $2, 'open', $3)
-       RETURNING id, org_id, contact_id, assigned_agent_id, status, last_message_at, created_at`,
+       RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`,
       [req.user.org_id, contact_id, waba_account_id || null]
     );
     res.status(201).json({ conversation: camelize(result.rows[0]) });
@@ -128,7 +159,7 @@ router.patch('/:id/assign', async (req, res, next) => {
       sql += ` AND waba_account_id = $${params.length + 1}`;
       params.push(req.wabaAccountId);
     }
-    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, last_message_at, created_at`;
+    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
     const result = await query(sql, params);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -155,7 +186,7 @@ router.patch('/:id/status', async (req, res, next) => {
       sql += ` AND waba_account_id = $${params.length + 1}`;
       params.push(req.wabaAccountId);
     }
-    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, last_message_at, created_at`;
+    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
     const result = await query(sql, params);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
@@ -163,6 +194,48 @@ router.patch('/:id/status', async (req, res, next) => {
     res.json({ conversation: camelize(result.rows[0]) });
   } catch (err) {
     logger.error('Update conversation status error', err);
+    next(err);
+  }
+});
+
+// PATCH /:id/private - toggle private
+router.patch('/:id/private', async (req, res, next) => {
+  try {
+    const { is_private } = req.body;
+    if (typeof is_private !== 'boolean') {
+      return res.status(400).json({ error: 'is_private boolean is required' });
+    }
+
+    // Only admin or assigned agent can toggle privacy
+    const convResult = await query(
+      'SELECT assigned_agent_id, is_private FROM conversations WHERE id = $1 AND org_id = $2',
+      [req.params.id, req.user.org_id]
+    );
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const conv = convResult.rows[0];
+    if (!isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden: only admin or assigned agent can change privacy' });
+    }
+
+    let sql = `UPDATE conversations
+               SET is_private = $1
+               WHERE id = $2 AND org_id = $3`;
+    const params = [is_private, req.params.id, req.user.org_id];
+    if (req.wabaAccountId) {
+      sql += ` AND waba_account_id = $${params.length + 1}`;
+      params.push(req.wabaAccountId);
+    }
+    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
+    const result = await query(sql, params);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    res.json({ conversation: camelize(result.rows[0]) });
+  } catch (err) {
+    logger.error('Toggle conversation private error', err);
     next(err);
   }
 });
@@ -178,7 +251,7 @@ router.post('/:id/close', async (req, res, next) => {
       sql += ` AND waba_account_id = $${params.length + 1}`;
       params.push(req.wabaAccountId);
     }
-    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, last_message_at, created_at`;
+    sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
     const result = await query(sql, params);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });

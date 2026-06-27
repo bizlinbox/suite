@@ -11,6 +11,30 @@ const router = express.Router();
 router.use(authenticate);
 router.use(resolveWabaAccount);
 
+function isAdmin(req) {
+  const perms = req.user?.permissions || [];
+  return perms.includes('users.manage');
+}
+
+// Helper to check conversation access including private restriction
+async function checkConversationAccess(req, conversation_id) {
+  let sql = `SELECT c.id, c.assigned_agent_id, c.is_private, c.waba_account_id, con.phone as contact_phone FROM conversations c JOIN contacts con ON con.id = c.contact_id WHERE c.id = $1 AND c.org_id = $2`;
+  const params = [conversation_id, req.user.org_id];
+  if (req.wabaAccountId) {
+    sql += ` AND waba_account_id = $3`;
+    params.push(req.wabaAccountId);
+  }
+  const result = await query(sql, params);
+  if (result.rows.length === 0) {
+    return { allowed: false, reason: 'Conversation not found' };
+  }
+  const conv = result.rows[0];
+  if (conv.is_private && !isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+    return { allowed: false, reason: 'Conversation not found' };
+  }
+  return { allowed: true, conversation: conv };
+}
+
 // GET /?conversation_id=... - list messages for a conversation
 router.get('/', async (req, res, next) => {
   try {
@@ -19,16 +43,9 @@ router.get('/', async (req, res, next) => {
       return res.status(400).json({ error: 'conversation_id is required' });
     }
 
-    let convSql = 'SELECT id FROM conversations WHERE id = $1 AND org_id = $2';
-    const convParams = [conversation_id, req.user.org_id];
-    if (req.wabaAccountId) {
-      convSql += ' AND waba_account_id = $3';
-      convParams.push(req.wabaAccountId);
-    }
-
-    const convCheck = await query(convSql, convParams);
-    if (convCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Conversation not found' });
+    const access = await checkConversationAccess(req, conversation_id);
+    if (!access.allowed) {
+      return res.status(404).json({ error: access.reason });
     }
 
     let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.reaction_to_message_id, m.created_at
@@ -104,22 +121,12 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'content or media_url is required' });
     }
 
-    let convSql = `SELECT c.id, con.phone as contact_phone, c.waba_account_id
-                   FROM conversations c
-                   JOIN contacts con ON con.id = c.contact_id
-                   WHERE c.id = $1 AND c.org_id = $2`;
-    const convParams = [conversation_id, req.user.org_id];
-    if (req.wabaAccountId) {
-      convSql += ' AND c.waba_account_id = $3';
-      convParams.push(req.wabaAccountId);
+    const access = await checkConversationAccess(req, conversation_id);
+    if (!access.allowed) {
+      return res.status(404).json({ error: access.reason });
     }
 
-    const convCheck = await query(convSql, convParams);
-    if (convCheck.rows.length === 0) {
-      return res.status(404).json({ error: 'Conversation not found' });
-    }
-
-    const conv = convCheck.rows[0];
+    const conv = access.conversation;
 
     // For reactions, look up target message external_id
     let reactionToMessageId = null;

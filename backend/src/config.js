@@ -17,7 +17,7 @@ module.exports = {
   whatsappVerifyToken: process.env.WHATSAPP_VERIFY_TOKEN,
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   cookieSecure: isProd,
-  cookieSameSite: isProd ? 'none' : 'lax',
+  cookieSameSite: 'lax',
   rateLimitWindowMs: 900000,
   rateLimitMax: 100,
   corsOrigin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:3000'],

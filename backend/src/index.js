@@ -72,6 +72,18 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+// Webhook rate limiting (public, no auth)
+const webhookLimiter = rateLimit({
+  windowMs: 60000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (req, res) => {
+    res.status(429).json({ error: 'Too many webhook requests, please try again later.' });
+  },
+});
+app.use('/api/v1/webhooks', webhookLimiter);
+
 // General rate limiting
 const generalLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,

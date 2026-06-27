@@ -18,7 +18,19 @@ const storage = multer.diskStorage({
   },
 });
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf', 'audio/mpeg', 'audio/mp4', 'video/mp4', 'video/webm'];
+const ALLOWED_TYPES = [
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'video/mp4', 'video/webm', 'video/3gpp',
+  'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg',
+  'text/plain',
+  'application/pdf',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+];
 
 function fileFilter(req, file, cb) {
   if (ALLOWED_TYPES.includes(file.mimetype)) {
@@ -52,7 +64,8 @@ router.post('/', authenticate, upload.single('file'), handleMulterError, (req, r
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
     }
-    const fileUrl = `${req.protocol}://${req.get('host')}/uploads/${req.file.filename}`;
+    const publicUrl = config.publicUrl || `${req.protocol}://${req.get('host')}`;
+    const fileUrl = `${publicUrl}/uploads/${req.file.filename}`;
     res.json({ url: fileUrl, filename: req.file.filename });
   } catch (err) {
     logger.error('Upload error', err);
