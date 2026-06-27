@@ -13,7 +13,7 @@ const router = express.Router();
 const META_ALLOWED_TYPES = [
   'image/jpeg', 'image/png', 'image/webp',
   'video/mp4', 'video/3gpp',
-  'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg',
+  'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg', 'audio/webm',
   'text/plain',
   'application/pdf',
   'application/vnd.ms-excel',

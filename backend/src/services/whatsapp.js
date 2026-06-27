@@ -81,18 +81,46 @@ async function sendTextMessage(phoneNumberId, accessToken, to, content, previewU
   return response.data;
 }
 
-async function sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, caption, messageType, filename) {
+async function sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, caption, messageType, filename, mediaMimeType) {
   const url = `${WHATSAPP_BASE_URL}/${phoneNumberId}/messages`;
   const type = messageType === 'document' ? 'document' : messageType;
 
+  let metaMediaId = null;
+
+  // If mediaUrl is a local file path (not a Meta media ID or public link),
+  // upload it to Meta first to get a reliable media ID.
+  if (!mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
+    // Local path — resolve full path and upload
+    const fullPath = path.isAbsolute(mediaUrl) ? mediaUrl : path.join(process.cwd(), mediaUrl);
+    if (fs.existsSync(fullPath)) {
+      const mime = mediaMimeType || 'application/octet-stream';
+      metaMediaId = await uploadMedia(phoneNumberId, accessToken, fullPath, mime);
+    } else {
+      throw new Error(`Media file not found: ${fullPath}`);
+    }
+  } else {
+    // It's a public URL — try uploading to Meta for reliability
+    // Download the file locally first, then upload to Meta
+    try {
+      const response = await axios.get(mediaUrl, { responseType: 'arraybuffer', timeout: 30000 });
+      const tempFile = path.join(require('os').tmpdir(), `wa_media_${Date.now()}_${path.basename(mediaUrl.split('?')[0])}`);
+      fs.writeFileSync(tempFile, Buffer.from(response.data));
+      const mime = mediaMimeType || response.headers['content-type'] || 'application/octet-stream';
+      metaMediaId = await uploadMedia(phoneNumberId, accessToken, tempFile, mime);
+      try { fs.unlinkSync(tempFile); } catch {}
+    } catch (dlErr) {
+      logger.warn('Failed to download/upload media to Meta, falling back to link', { mediaUrl, error: dlErr.message });
+      // Fallback: use the URL as a link (requires Meta to reach it)
+      metaMediaId = null;
+    }
+  }
+
   const mediaObj = {};
 
-  // Meta supports both 'id' (uploaded media) and 'link' (public URL)
-  if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) {
-    mediaObj.link = mediaUrl;
+  if (metaMediaId) {
+    mediaObj.id = metaMediaId;
   } else {
-    // Treat as uploaded media ID
-    mediaObj.id = mediaUrl;
+    mediaObj.link = mediaUrl;
   }
 
   // Only certain types support caption per Meta's API
@@ -439,6 +467,7 @@ async function sendMessage(jobData) {
     to,
     content,
     mediaUrl,
+    mediaMimeType,
     messageType,
     messageId,
     wabaAccountId,
@@ -452,6 +481,7 @@ async function sendMessage(jobData) {
     locationRequestOptions,
     reactionOptions,
     filename,
+    voice,
   } = jobData;
 
   try {
@@ -477,7 +507,7 @@ async function sendMessage(jobData) {
     } else if (messageType === 'text' || !mediaUrl) {
       result = await sendTextMessage(phoneNumberId, accessToken, to, content, jobData.previewUrl);
     } else {
-      result = await sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, content, messageType, filename);
+      result = await sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, content, messageType, filename, mediaMimeType);
     }
 
     // Update message status and external_id if available
@@ -500,6 +530,7 @@ async function sendMessage(jobData) {
     logger.info('WhatsApp message sent', { messageId, externalId, to, messageType: messageType || 'text', campaignRecipientId: jobData.campaignRecipientId || null });
     return result;
   } catch (err) {
+    const errorDetail = err.response?.data?.error?.message || err.message || 'Unknown error';
     logger.error('WhatsApp send message error', {
       message: err.message,
       response: err.response?.data,
@@ -507,16 +538,30 @@ async function sendMessage(jobData) {
 
     if (messageId) {
       await query(
-        "UPDATE messages SET status = 'failed' WHERE id = $1",
-        [messageId]
+        "UPDATE messages SET status = 'failed', error_message = $1 WHERE id = $2",
+        [errorDetail.substring(0, 500), messageId]
       );
+      // Emit socket event so frontend shows the failure immediately
+      const { emitToConversation } = require('./socket');
+      try {
+        const msgResult = await query('SELECT conversation_id FROM messages WHERE id = $1', [messageId]);
+        if (msgResult.rows.length > 0) {
+          const convId = msgResult.rows[0].conversation_id;
+          const convResult = await query('SELECT org_id FROM conversations WHERE id = $1', [convId]);
+          if (convResult.rows.length > 0) {
+            emitToConversation(convResult.rows[0].org_id, convId, 'message_status_updated', { messageId, status: 'failed', errorMessage: errorDetail });
+          }
+        }
+      } catch (socketErr) {
+        // Ignore socket errors
+      }
     }
 
     // Track campaign recipient failure
     if (jobData.campaignRecipientId) {
       await query(
         "UPDATE campaign_recipients SET status = 'failed', error_message = $1 WHERE id = $2",
-        [err.message?.substring(0, 500) || 'Unknown error', jobData.campaignRecipientId]
+        [errorDetail.substring(0, 500), jobData.campaignRecipientId]
       );
       // Increment campaign failed_count
       if (jobData.campaignId) {

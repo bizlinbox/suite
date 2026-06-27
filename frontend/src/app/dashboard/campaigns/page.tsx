@@ -215,7 +215,7 @@ export default function CampaignsPage() {
             onClick={() => setTypeFilter(t)}
             className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-colors ${
               typeFilter === t
-                ? 'bg-[#25D366] text-white'
+                ? 'bg-primary-600 text-white'
                 : 'bg-white dark:bg-gray-900 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800'
             }`}
           >

@@ -169,7 +169,7 @@ export default function PWARegister() {
               <div className="mt-3 flex items-center gap-2">
                 <button
                   onClick={handleInstall}
-                  className="rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white hover:bg-[#128C7E]"
+                  className="rounded-lg bg-primary-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-secondary-500"
                 >
                   Install
                 </button>

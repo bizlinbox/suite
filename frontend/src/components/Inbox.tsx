@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -22,6 +22,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   const [newChatOpen, setNewChatOpen] = useState(false);
   const { socket } = useSocket();
   const { selectedWabaId } = useWaba();
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -37,9 +38,25 @@ export default function Inbox({ selectedId }: InboxProps) {
   }, [fetchConversations]);
 
   useEffect(() => {
+    audioRef.current = new Audio('/sounds/ting_iphone.mp3');
+  }, []);
+
+  useEffect(() => {
     if (!socket) return;
 
     const handleNewMessage = (message: Message) => {
+      // Play notification sound for incoming contact messages
+      if (message.senderType === 'contact' && audioRef.current) {
+        const isViewingConversation = message.conversationId === selectedId;
+        const isVisible = document.visibilityState === 'visible';
+        if (!isViewingConversation || !isVisible) {
+          audioRef.current.currentTime = 0;
+          audioRef.current.play().catch(() => {
+            // Ignore autoplay restrictions
+          });
+        }
+      }
+
       setConversations((prev) =>
         prev.map((c) =>
           c.id === message.conversationId

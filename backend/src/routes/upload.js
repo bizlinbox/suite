@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
 const ALLOWED_TYPES = [
   'image/jpeg', 'image/png', 'image/gif', 'image/webp',
   'video/mp4', 'video/webm', 'video/3gpp',
-  'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg',
+  'audio/aac', 'audio/mp4', 'audio/mpeg', 'audio/amr', 'audio/ogg', 'audio/webm',
   'text/plain',
   'application/pdf',
   'application/vnd.ms-excel',

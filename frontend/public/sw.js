@@ -1,6 +1,6 @@
-/* BizlInbox Service Worker — Offline Support */
+/* BizlInbox Service Worker — Offline Support + Push Notifications */
 
-const CACHE_VERSION = 'bizlinbox-v1';
+const CACHE_VERSION = 'bizlinbox-v2';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const API_CACHE = `${CACHE_VERSION}-api`;
 const IMAGE_CACHE = `${CACHE_VERSION}-images`;
@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
   '/dashboard/quick-replies',
   '/dashboard/waba-accounts',
   '/dashboard/settings',
+  '/dashboard/settings/notifications',
   '/offline.html',
   '/icons/icon-192x192.svg',
   '/icons/icon-512x512.svg',
@@ -178,20 +179,82 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Background sync for outgoing messages
+// ============================================================
+// Push Notifications
+// ============================================================
+
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch {
+    payload = { title: 'BizlInbox', body: event.data.text() };
+  }
+
+  const title = payload.title || 'BizlInbox';
+  const options = {
+    body: payload.body || 'New message received',
+    icon: payload.icon || '/icons/icon-192x192.svg',
+    badge: payload.badge || '/icons/icon-192x192.svg',
+    tag: payload.tag || 'bizlinbox-message',
+    requireInteraction: payload.requireInteraction ?? false,
+    data: payload.data || {},
+    actions: payload.actions || [],
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const data = event.notification.data || {};
+  const conversationId = data.conversationId;
+  const url = conversationId
+    ? `/dashboard/inbox/${conversationId}`
+    : data.url || '/dashboard/inbox';
+
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // If a window/tab is already open, focus it and navigate
+      for (const client of clientList) {
+        if (client.url.startsWith(self.location.origin) && 'focus' in client) {
+          return client.navigate(url).then(() => client.focus()).catch(() => client.focus());
+        }
+      }
+      // Otherwise open a new window
+      return self.clients.openWindow(url);
+    })
+  );
+});
+
+// ============================================================
+// Background Sync & Runtime Messages
+// ============================================================
+
 self.addEventListener('sync', (event) => {
   if (event.tag === 'send-message') {
     event.waitUntil(sendPendingMessages());
   }
 });
 
-// Message handler for runtime communication
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
   if (event.data && event.data.type === 'GET_VERSION') {
     event.ports[0].postMessage({ version: CACHE_VERSION });
+  }
+  // Handle SHOW_NOTIFICATION from the frontend
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, options } = event.data.payload || {};
+    if (title) {
+      self.registration.showNotification(title, options || {});
+    }
   }
 });
 

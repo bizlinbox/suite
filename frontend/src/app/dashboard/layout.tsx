@@ -7,6 +7,7 @@ import MobileBottomNav from '@/components/MobileBottomNav';
 import { WabaProvider } from '@/context/WabaContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import NotificationManager from '@/components/NotificationManager';
 import { Menu } from 'lucide-react';
 
 const DRAWER_WIDTH = 256;
@@ -104,6 +105,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         </main>
 
         <MobileBottomNav />
+        <NotificationManager />
       </div>
     </WabaProvider>
   );

@@ -11,6 +11,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   const tabs = [
     { label: 'Quick Replies', href: '/dashboard/quick-replies' },
+    { label: 'Notifications', href: '/dashboard/settings/notifications' },
     ...(canManageSettings ? [{ label: 'WABA Accounts', href: '/dashboard/waba-accounts' }] : []),
   ];
 

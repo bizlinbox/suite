@@ -48,7 +48,7 @@ router.get('/', async (req, res, next) => {
       return res.status(404).json({ error: access.reason });
     }
 
-    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.reaction_to_message_id, m.created_at
+    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.error_message, m.reaction_to_message_id, m.created_at
                   FROM messages m
                   JOIN conversations c ON c.id = m.conversation_id
                   WHERE m.conversation_id = $1 AND c.org_id = $2`;
@@ -86,6 +86,8 @@ router.post('/', async (req, res, next) => {
     const reactionOptions = body.reaction_options || body.reactionOptions;
     const preview_url = body.preview_url || body.previewUrl;
     const filename = body.filename;
+    const voice = body.voice;
+    const media_mime_type = body.media_mime_type || body.mediaMimeType;
 
     if (!conversation_id) {
       return res.status(400).json({ error: 'conversation_id is required' });
@@ -144,10 +146,10 @@ router.post('/', async (req, res, next) => {
 
     // Save message in DB
     const msgResult = await query(
-      `INSERT INTO messages (conversation_id, sender_type, content, media_url, message_type, filename, status, reaction_to_message_id)
-       VALUES ($1, 'agent', $2, $3, $4, $5, 'sent', $6)
-       RETURNING id, conversation_id, sender_type, content, media_url, message_type, filename, status, reaction_to_message_id, created_at`,
-      [conversation_id, content, media_url, message_type, filename, reactionToMessageId]
+      `INSERT INTO messages (conversation_id, sender_type, content, media_url, message_type, filename, voice, status, reaction_to_message_id)
+       VALUES ($1, 'agent', $2, $3, $4, $5, $6, 'sent', $7)
+       RETURNING id, conversation_id, sender_type, content, media_url, message_type, filename, voice, status, reaction_to_message_id, created_at`,
+      [conversation_id, content, media_url, message_type, filename, voice || false, reactionToMessageId]
     );
     const message = msgResult.rows[0];
 
@@ -183,10 +185,14 @@ router.post('/', async (req, res, next) => {
         to: conv.contact_phone,
         content,
         mediaUrl: media_url,
+        mediaMimeType: media_mime_type,
         messageType: message_type,
         messageId: message.id,
         wabaAccountId: conv.waba_account_id || null,
       };
+      if (voice) {
+        jobData.voice = voice;
+      }
       if (message_type === 'address_message' && address_options) {
         jobData.addressOptions = address_options;
       }

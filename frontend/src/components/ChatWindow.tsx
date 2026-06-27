@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
 import ContactProfilePopup from './ContactProfilePopup';
+import { toastError } from '@/components/Toaster';
 
 export interface Message {
   id: string;
@@ -20,6 +21,7 @@ export interface Message {
   voice?: boolean;
   reactionToMessageId?: string | null;
   status?: 'sent' | 'delivered' | 'read' | 'failed';
+  errorMessage?: string;
 }
 
 export interface Agent {
@@ -56,10 +58,20 @@ interface ChatWindowProps {
   onBack?: () => void;
 }
 
-function MessageStatusIcon({ status }: { status?: Message['status'] }) {
+function MessageStatusIcon({ status, errorMessage }: { status?: Message['status']; errorMessage?: string }) {
   if (!status) return null;
   if (status === 'failed') {
-    return <AlertCircle size={12} className="text-red-500" />;
+    return (
+      <span className="group relative inline-flex items-center">
+        <AlertCircle size={12} className="text-red-500" />
+        {errorMessage && (
+          <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-1.5 hidden w-56 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700 shadow-lg group-hover:block dark:border-red-900/40 dark:bg-gray-900 dark:text-red-400">
+            <span className="mb-1 block font-semibold">Failed to send</span>
+            {errorMessage}
+          </span>
+        )}
+      </span>
+    );
   }
   if (status === 'read') {
     return <CheckCheck size={12} className="text-blue-600" />;
@@ -122,12 +134,152 @@ function getFileIcon(messageType?: string) {
   }
 }
 
+function getMediaUrl(mediaUrl?: string): string {
+  if (!mediaUrl) return '';
+  if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) return mediaUrl;
+  return `${api.defaults.baseURL?.replace('/api/v1', '') || ''}/uploads/${mediaUrl}`;
+}
+
+function formatAudioTime(seconds: number): string {
+  if (!isFinite(seconds) || seconds < 0) return '0:00';
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+const SPEEDS = [1, 1.5, 2, 2.5, 3];
+
+function VoiceMessagePlayer({ mediaUrl, isUser, voice }: { mediaUrl?: string; isUser: boolean; voice?: boolean }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [speed, setSpeed] = useState(1);
+  const [speedOpen, setSpeedOpen] = useState(false);
+  const speedRef = useRef<HTMLDivElement>(null);
+  const url = getMediaUrl(mediaUrl);
+
+  const togglePlay = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
+    const onEnded = () => { setIsPlaying(false); setCurrentTime(0); };
+    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
+    const onLoadedMetadata = () => setDuration(audio.duration || 0);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    audio.addEventListener('loadedmetadata', onLoadedMetadata);
+    return () => {
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+      audio.removeEventListener('loadedmetadata', onLoadedMetadata);
+    };
+  }, [url]);
+
+  // Close speed popup on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (speedRef.current && !speedRef.current.contains(event.target as Node)) {
+        setSpeedOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const changeSpeed = (s: number) => {
+    if (audioRef.current) {
+      audioRef.current.playbackRate = s;
+    }
+    setSpeed(s);
+    setSpeedOpen(false);
+  };
+
+  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  return (
+    <div className={`flex items-center gap-2 rounded-lg p-2 min-w-[200px] ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+      <button
+        onClick={togglePlay}
+        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${isUser ? 'bg-primary-700' : 'bg-primary-600'} text-white`}
+      >
+        {isPlaying ? <Pause size={14} /> : <Play size={14} />}
+      </button>
+      <div className="flex flex-1 flex-col">
+        <div className="flex items-center gap-1.5">
+          {voice && <Mic size={12} className={`${isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-500 dark:text-gray-400'}`} />}
+          <div className="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-gray-700">
+            <div
+              className="h-1.5 rounded-full bg-primary-600"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+        <div className="mt-1 flex items-center justify-between">
+          <span className={`text-[10px] ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-500 dark:text-gray-400'}`}>
+            {formatAudioTime(currentTime)}
+          </span>
+          <span className={`text-[10px] ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-500 dark:text-gray-400'}`}>
+            {formatAudioTime(duration)}
+          </span>
+        </div>
+      </div>
+
+      {/* Speed control */}
+      <div className="relative" ref={speedRef}>
+        <button
+          onClick={(e) => { e.stopPropagation(); setSpeedOpen((prev) => !prev); }}
+          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${isUser ? 'bg-white/30 text-gray-800 dark:bg-white/10 dark:text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} hover:opacity-80`}
+          title="Playback speed"
+        >
+          {speed}x
+        </button>
+        {speedOpen && (
+          <div className={`absolute bottom-full right-0 z-50 mb-1 flex flex-col overflow-hidden rounded-lg border shadow-lg ${isUser ? 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-800' : 'border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800'}`}>
+            {SPEEDS.map((s) => (
+              <button
+                key={s}
+                onClick={(e) => { e.stopPropagation(); changeSpeed(s); }}
+                className={`px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                  s === speed
+                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                    : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700'
+                }`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <audio ref={audioRef} src={url} preload="metadata" className="hidden" />
+    </div>
+  );
+}
+
 const attachmentOptions = [
   { key: 'photo', label: 'Photo', icon: ImageIcon, accept: 'image/*' },
   { key: 'video', label: 'Video', icon: Video, accept: 'video/*' },
   { key: 'audio', label: 'Audio', icon: Music, accept: 'audio/*' },
   { key: 'document', label: 'Document', icon: FileText, accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt' },
   { key: 'location', label: 'Location', icon: MapPin, accept: '' },
+  { key: 'flow', label: 'Flow', icon: FormInput, accept: '' },
 ];
 
 export default function ChatWindow({ conversationId, contactId, contactName, isPrivate: initialIsPrivate, assignedAgentId, currentUserId, onAssignAgent, onTogglePrivacy, onBack }: ChatWindowProps) {
@@ -146,6 +298,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [pendingMediaId, setPendingMediaId] = useState<string | null>(null);
   const [pendingMessageType, setPendingMessageType] = useState<string>('text');
   const [pendingFilename, setPendingFilename] = useState<string>('');
+  const [pendingMimeType, setPendingMimeType] = useState<string>('');
   const [locationDialogOpen, setLocationDialogOpen] = useState(false);
   const [locationForm, setLocationForm] = useState({ latitude: '', longitude: '', name: '', address: '' });
   const [locationError, setLocationError] = useState('');
@@ -155,9 +308,35 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
+  const quickRef = useRef<HTMLDivElement>(null);
+  const agentsRef = useRef<HTMLDivElement>(null);
+  const slashRef = useRef<HTMLDivElement>(null);
+  const reactingToRef = useRef<string | null>(null);
   const { socket } = useSocket();
   const { isAdmin } = usePermission();
   const reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordingChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recordingCancelledRef = useRef(false);
+
+  // Voice preview state
+  const [voicePreviewBlob, setVoicePreviewBlob] = useState<Blob | null>(null);
+  const [voicePreviewUrl, setVoicePreviewUrl] = useState<string>('');
+  const [voicePreviewPlaying, setVoicePreviewPlaying] = useState(false);
+  const [voicePreviewCurrentTime, setVoicePreviewCurrentTime] = useState(0);
+  const voicePreviewAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Flow dialog state
+  const [flowDialogOpen, setFlowDialogOpen] = useState(false);
+  const [flows, setFlows] = useState<{ id: string; name: string; flowId: string; status: string }[]>([]);
+  const [selectedFlowId, setSelectedFlowId] = useState('');
+  const [flowForm, setFlowForm] = useState({ body: '', header: '', footer: '', flowToken: `flow-${Date.now()}`, screen: '', data: '' });
+  const [sendingFlow, setSendingFlow] = useState(false);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -182,7 +361,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
             m.senderType === message.senderType &&
             m.messageType === message.messageType &&
             m.content === message.content &&
-            m.reactionToMessageId === message.reactionToMessageId
+            (m.reactionToMessageId ?? null) === (message.reactionToMessageId ?? null)
         );
         if (tempIndex !== -1) {
           const next = [...prev];
@@ -193,9 +372,9 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       });
     };
 
-    const handleStatusUpdate = ({ messageId, status }: { messageId: string; status: Message['status'] }) => {
+    const handleStatusUpdate = ({ messageId, status, errorMessage }: { messageId: string; status: Message['status']; errorMessage?: string }) => {
       setMessages((prev) =>
-        prev.map((m) => (m.id === messageId ? { ...m, status } : m))
+        prev.map((m) => (m.id === messageId ? { ...m, status, ...(errorMessage && { errorMessage }) } : m))
       );
     };
 
@@ -222,14 +401,55 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Sync reactingTo ref for use in document event listeners
+  reactingToRef.current = reactingTo;
+
+  // Close popups when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (attachRef.current && !attachRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (attachRef.current && !attachRef.current.contains(target)) {
         setAttachOpen(false);
+      }
+      if (quickRef.current && !quickRef.current.contains(target)) {
+        setQuickOpen(false);
+      }
+      if (agentsRef.current && !agentsRef.current.contains(target)) {
+        setAgentsOpen(false);
+      }
+      if (slashRef.current && !slashRef.current.contains(target)) {
+        setSlashOpen(false);
+        setSlashQuery('');
+        setSlashIndex(0);
+      }
+      if (reactingToRef.current) {
+        const container = document.querySelector(`[data-reaction-container="${reactingToRef.current}"]`);
+        if (!container || !container.contains(target)) {
+          setReactingTo(null);
+        }
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Close all popups on Escape key
+  useEffect(() => {
+    function handleEsc(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setQuickOpen(false);
+        setAgentsOpen(false);
+        setAttachOpen(false);
+        setSlashOpen(false);
+        setSlashQuery('');
+        setSlashIndex(0);
+        setReactingTo(null);
+        setLocationDialogOpen(false);
+        setLocationError('');
+      }
+    }
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
   }, []);
 
   const handleSendText = async () => {
@@ -241,13 +461,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       senderType: 'agent',
       createdAt: new Date().toISOString(),
       messageType: 'text',
+      reactionToMessageId: null,
     };
     setMessages((prev) => [...prev, tempMessage]);
     setInput('');
     try {
       await api.post('/messages', { conversationId, content: tempMessage.content });
-    } catch {
-      // Optionally handle send error
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send message');
     }
   };
 
@@ -263,6 +484,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       messageType: pendingMessageType,
       mediaUrl: pendingMediaId,
       filename: pendingFilename,
+      reactionToMessageId: null,
     };
     setMessages((prev) => [...prev, tempMessage]);
     setInput('');
@@ -270,6 +492,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     setPendingMediaId(null);
     setPendingMessageType('text');
     setPendingFilename('');
+    setPendingMimeType('');
     try {
       await api.post('/messages', {
         conversationId,
@@ -277,9 +500,10 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         mediaUrl: pendingMediaId,
         messageType: pendingMessageType,
         filename: pendingFilename,
+        ...(pendingMimeType && { mediaMimeType: pendingMimeType }),
       });
-    } catch {
-      // Optionally handle send error
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send media');
     }
   };
 
@@ -296,6 +520,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       senderType: 'agent',
       createdAt: new Date().toISOString(),
       messageType: 'location',
+      reactionToMessageId: null,
     };
     setMessages((prev) => [...prev, tempMessage]);
     setLocationDialogOpen(false);
@@ -312,8 +537,8 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           address: locationForm.address || undefined,
         },
       });
-    } catch {
-      // Optionally handle send error
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send location');
     }
   };
 
@@ -342,8 +567,170 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           emoji,
         },
       });
-    } catch {
-      // Optionally handle send error
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send reaction');
+    }
+  };
+
+  // Voice recording handlers
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm; codecs=opus')
+        ? 'audio/webm; codecs=opus'
+        : MediaRecorder.isTypeSupported('audio/ogg; codecs=opus')
+        ? 'audio/ogg; codecs=opus'
+        : 'audio/webm';
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+      recordingChunksRef.current = [];
+      recordingCancelledRef.current = false;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) recordingChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = () => {
+        stream.getTracks().forEach((t) => t.stop());
+        if (recordingCancelledRef.current) return;
+        const blob = new Blob(recordingChunksRef.current, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        setVoicePreviewBlob(blob);
+        setVoicePreviewUrl(url);
+        setVoicePreviewCurrentTime(0);
+        setVoicePreviewPlaying(false);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((d) => d + 1);
+      }, 1000);
+    } catch (err) {
+      toastError('Microphone access denied or not available');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+  };
+
+  const cancelRecording = () => {
+    recordingCancelledRef.current = true;
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
+  };
+
+  const cancelVoicePreview = () => {
+    if (voicePreviewAudioRef.current) {
+      voicePreviewAudioRef.current.pause();
+    }
+    if (voicePreviewUrl) {
+      URL.revokeObjectURL(voicePreviewUrl);
+    }
+    setVoicePreviewBlob(null);
+    setVoicePreviewUrl('');
+    setVoicePreviewPlaying(false);
+    setVoicePreviewCurrentTime(0);
+    setRecordingDuration(0);
+  };
+
+  const toggleVoicePreview = () => {
+    const audio = voicePreviewAudioRef.current;
+    if (!audio) return;
+    if (voicePreviewPlaying) {
+      audio.pause();
+    } else {
+      audio.play().catch(() => {});
+    }
+  };
+
+  useEffect(() => {
+    const audio = voicePreviewAudioRef.current;
+    if (!audio) return;
+    const onPlay = () => setVoicePreviewPlaying(true);
+    const onPause = () => setVoicePreviewPlaying(false);
+    const onEnded = () => { setVoicePreviewPlaying(false); setVoicePreviewCurrentTime(0); };
+    const onTimeUpdate = () => setVoicePreviewCurrentTime(audio.currentTime);
+    audio.addEventListener('play', onPlay);
+    audio.addEventListener('pause', onPause);
+    audio.addEventListener('ended', onEnded);
+    audio.addEventListener('timeupdate', onTimeUpdate);
+    return () => {
+      audio.removeEventListener('play', onPlay);
+      audio.removeEventListener('pause', onPause);
+      audio.removeEventListener('ended', onEnded);
+      audio.removeEventListener('timeupdate', onTimeUpdate);
+    };
+  }, [voicePreviewUrl]);
+
+  const sendVoiceMessage = async (blob: Blob) => {
+    if (!conversationId) return;
+
+    const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type });
+
+    let uploadUrl: string;
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      uploadUrl = res.data.url;
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to upload voice message');
+      return;
+    }
+
+    const tempMessage: Message = {
+      id: `temp-${Date.now()}`,
+      conversationId,
+      content: '',
+      senderType: 'agent',
+      createdAt: new Date().toISOString(),
+      messageType: 'audio',
+      mediaUrl: uploadUrl,
+      voice: true,
+      reactionToMessageId: null,
+    };
+    setMessages((prev) => [...prev, tempMessage]);
+
+    try {
+      await api.post('/messages', {
+        conversationId,
+        content: '',
+        messageType: 'audio',
+        mediaUrl: uploadUrl,
+        mediaMimeType: file.type,
+        voice: true,
+      });
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send voice message');
+    } finally {
+      // Clear preview state
+      if (voicePreviewUrl) URL.revokeObjectURL(voicePreviewUrl);
+      setVoicePreviewBlob(null);
+      setVoicePreviewUrl('');
+      setVoicePreviewPlaying(false);
+      setVoicePreviewCurrentTime(0);
+      setRecordingDuration(0);
     }
   };
 
@@ -392,6 +779,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
     const messageType = getMessageTypeFromMime(file.type);
     setPendingMessageType(messageType);
+    setPendingMimeType(file.type);
     setPendingFile(file);
     setPendingFilename(file.name);
     setUploading(true);
@@ -405,10 +793,12 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       setPendingMediaId(res.data.id);
-    } catch {
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to upload file');
       setPendingFile(null);
       setPendingMessageType('text');
     } finally {
+      setPendingMimeType('');
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -419,6 +809,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     setPendingMediaId(null);
     setPendingMessageType('text');
     setPendingFilename('');
+    setPendingMimeType('');
     setInput('');
   };
 
@@ -459,6 +850,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       messageType: mt,
       mediaUrl: quick.metadata?.mediaUrl,
       filename: quick.metadata?.filename,
+      reactionToMessageId: null,
     };
     setMessages((prev) => [...prev, tempMessage]);
 
@@ -476,6 +868,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
       if (mt === 'button' && quick.metadata?.buttons) {
         payload.replyButtonsOptions = {
+          body: quick.content,
           buttons: quick.metadata.buttons.map((b, i) => ({
             type: b.type || 'reply',
             title: b.title,
@@ -485,7 +878,11 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       }
 
       if (mt === 'list' && quick.metadata?.listOptions) {
-        payload.listOptions = quick.metadata.listOptions;
+        payload.listOptions = {
+          body: quick.content,
+          button: quick.metadata.listOptions.button,
+          sections: quick.metadata.listOptions.sections,
+        };
       }
 
       await api.post('/messages', payload);
@@ -541,7 +938,52 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       setLocationDialogOpen(true);
       return;
     }
+    if (option.key === 'flow') {
+      setAttachOpen(false);
+      setFlowDialogOpen(true);
+      api.get('/flows').then((res) => {
+        setFlows(res.data.flows || []);
+      });
+      return;
+    }
     triggerFileInput(option.accept);
+  };
+
+  const handleSendFlow = async () => {
+    if (!conversationId || !selectedFlowId) return;
+    const flow = flows.find((f) => f.id === selectedFlowId);
+    if (!flow) return;
+
+    setSendingFlow(true);
+    try {
+      const payload: Record<string, unknown> = {
+        conversation_id: conversationId,
+        body: flowForm.body || `Please complete: ${flow.name}`,
+        header: flowForm.header || undefined,
+        footer: flowForm.footer || undefined,
+        flow_token: flowForm.flowToken,
+      };
+      if (flowForm.screen) {
+        payload.screen = flowForm.screen;
+      }
+      if (flowForm.data) {
+        try {
+          payload.data = JSON.parse(flowForm.data);
+        } catch {
+          toastError('Flow data is not valid JSON');
+          setSendingFlow(false);
+          return;
+        }
+      }
+      await api.post(`/flows/${selectedFlowId}/send`, payload);
+      setFlowDialogOpen(false);
+      setSelectedFlowId('');
+      setFlowForm({ body: '', header: '', footer: '', flowToken: `flow-${Date.now()}`, screen: '', data: '' });
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to send flow');
+    } finally {
+      setSendingFlow(false);
+    }
   };
 
   return (
@@ -570,7 +1012,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           {contactName}
         </button>
         <div className="flex flex-shrink-0 items-center gap-1.5">
-          <div className="relative">
+          <div className="relative" ref={quickRef}>
             <button
               onClick={() => setQuickOpen((prev) => !prev)}
               className="btn-secondary px-2.5 py-1.5 text-xs"
@@ -579,7 +1021,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
               <span className="md:hidden">Quick</span>
             </button>
             {quickOpen && (
-              <ul className="absolute right-0 top-full z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
+              <ul className="absolute right-0 top-full z-50 mt-1.5 max-h-64 w-52 overflow-y-auto overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
                 {quickReplies.map((c) => (
                   <li
                     key={c.id}
@@ -596,7 +1038,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
             )}
           </div>
 
-          <div className="relative">
+          <div className="relative" ref={agentsRef}>
             <button
               onClick={() => setAgentsOpen((prev) => !prev)}
               className="btn-secondary px-2.5 py-1.5 text-xs"
@@ -605,7 +1047,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
               <span className="md:hidden">Assign</span>
             </button>
             {agentsOpen && (
-              <ul className="absolute right-0 top-full z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
+              <ul className="absolute right-0 top-full z-50 mt-1.5 max-h-64 w-52 overflow-y-auto overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
                 {agents.map((a) => (
                   <li
                     key={a.id}
@@ -663,7 +1105,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
               <div key={msg.id} className={`flex flex-col ${isFirstInGroup ? 'mt-3' : 'mt-[2px]'}`}>
                 {showDateSeparator && (
                   <div className="my-3 flex items-center justify-center">
-                    <span className="rounded-full bg-[#e1f2fb] px-3 py-1 text-[11px] font-medium text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">
+                    <span className="rounded-full bg-tertiary-100 px-3 py-1 text-[11px] font-medium text-primary-700 shadow-sm dark:bg-primary-900/40 dark:text-primary-200">
                       {formatDateSeparator(msg.createdAt)}
                     </span>
                   </div>
@@ -679,7 +1121,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                     </button>
                   )}
                   {/* Reaction picker button */}
-                  <div className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
+                  <div data-reaction-container={msg.id} className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
                     <button
                       onClick={() => setReactingTo(reactingTo === msg.id ? null : msg.id)}
                       className="mb-2 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-gray-800 dark:hover:text-gray-300"
@@ -705,34 +1147,35 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   <div className="flex max-w-[75%] flex-col">
                     <div
                       onClick={!isUser ? () => setProfileOpen(true) : undefined}
-                      className={`relative px-[9px] py-[5px] ${!isUser ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''} ${
+                      className={`relative px-3 py-2 ${!isUser ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''} ${
                         isUser
-                          ? 'rounded-md rounded-br-sm bg-[#d9fdd3] text-[#111b21] dark:bg-[#005c4b] dark:text-[#e9edef]'
-                          : 'rounded-md rounded-bl-sm border border-gray-100 bg-white text-[#111b21] shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-[#202c33] dark:text-[#e9edef] dark:shadow-none'
+                          ? 'rounded-2xl rounded-tr-sm bg-tertiary-100 text-gray-900 dark:bg-primary-700 dark:text-gray-100'
+                          : 'rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-[#111b21] shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-[#202c33] dark:text-[#e9edef] dark:shadow-none'
                       }`}
                     >
                       {hasMedia && (
-                        <div className="mb-1">
+                        <div className="mb-1.5">
                           {msg.messageType === 'image' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
                               <ImageIcon size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
                               <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
                             </div>
                           )}
                           {msg.messageType === 'video' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
                               <Video size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
                               <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
                             </div>
                           )}
                           {msg.messageType === 'audio' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
-                              <Music size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>{msg.voice ? 'Voice message' : 'Audio'}</span>
-                            </div>
+                            <VoiceMessagePlayer
+                              mediaUrl={msg.mediaUrl}
+                              isUser={isUser}
+                              voice={msg.voice}
+                            />
                           )}
                           {msg.messageType === 'document' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
                               <FileText size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
                               <div className="min-w-0 flex-1">
                                 <span className={`block truncate text-xs font-medium ${isUser ? 'text-[#111b21] dark:text-[#e9edef]' : 'text-gray-700 dark:text-gray-300'}`}>
@@ -742,26 +1185,32 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                             </div>
                           )}
                           {msg.messageType === 'location' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
                               <MapPin size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
                               <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
+                            </div>
+                          )}
+                          {msg.messageType === 'nfm_reply' && (
+                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-green-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
+                              <FormInput size={18} className="text-green-600 dark:text-green-400" />
+                              <span className="text-xs font-medium text-green-600 dark:text-green-400">Form completed</span>
                             </div>
                           )}
                         </div>
                       )}
                       {msg.content && (
-                        <div className="flex items-end gap-1.5">
+                        <div className="flex items-end gap-2">
                           <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
-                          <span className={`flex-shrink-0 whitespace-nowrap text-[11px] opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
+                          <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
                             {formatMessageDate(msg.createdAt)}
-                            {isUser && <MessageStatusIcon status={msg.status} />}
+                            {isUser && <span className="ml-0.5 inline-block"><MessageStatusIcon status={msg.status} errorMessage={msg.errorMessage} /></span>}
                           </span>
                         </div>
                       )}
                       {!msg.content && hasMedia && (
                         <span className={`flex items-center justify-end gap-1 text-[11px] opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
                           {formatMessageDate(msg.createdAt)}
-                          {isUser && <MessageStatusIcon status={msg.status} />}
+                          {isUser && <MessageStatusIcon status={msg.status} errorMessage={msg.errorMessage} />}
                         </span>
                       )}
                     </div>
@@ -822,8 +1271,8 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           <div className="relative self-center" ref={attachRef}>
             <button
               onClick={() => setAttachOpen((prev) => !prev)}
-              disabled={uploading || !!pendingMediaId}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50"
+              disabled={uploading || !!pendingMediaId || isRecording}
+              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50 ${isRecording ? 'hidden' : ''}`}
               aria-label="Attach"
             >
               <Paperclip size={20} />
@@ -849,64 +1298,144 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
           <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
 
-          <div className="relative flex-1 self-center">
-            <textarea
-              rows={1}
-              placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
-              value={input}
-              onChange={(e) => {
-                const val = e.target.value;
-                setInput(val);
-                const words = val.split(/\s+/);
-                const lastWord = words[words.length - 1];
-                if (lastWord.startsWith('/')) {
-                  setSlashOpen(true);
-                  setSlashQuery(lastWord.slice(1));
-                  setSlashIndex(0);
-                } else {
-                  setSlashOpen(false);
-                }
-              }}
-              onKeyDown={handleKeyDown}
-              className="input max-h-32 min-h-11 resize-none py-2.5"
-            />
-            {slashOpen && filteredQuickReplies.length > 0 && (
-              <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                {filteredQuickReplies.map((c, idx) => (
-                  <li
-                    key={c.id}
-                    onClick={() => insertQuickReply(c)}
-                    className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
-                      idx === slashIndex
-                        ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
-                        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-                    }`}
-                  >
-                    <span className="font-medium">/{c.shortcut}</span>
-                    <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{c.content.slice(0, 60)}{c.content.length > 60 ? '...' : ''}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {slashOpen && filteredQuickReplies.length === 0 && (
-              <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                <p className="text-sm text-gray-400 dark:text-gray-500">No quick replies found</p>
+          {isRecording ? (
+            <div className="flex flex-1 items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-900/20">
+              <span className="relative flex h-3 w-3">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
+              </span>
+              <span className="text-sm font-medium text-red-700 dark:text-red-300">Recording</span>
+              <span className="text-sm text-red-600 dark:text-red-400">
+                {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+              </span>
+              <div className="flex-1"></div>
+              <button
+                onClick={cancelRecording}
+                className="rounded-lg p-1.5 text-red-600 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
+                title="Cancel"
+              >
+                <X size={18} />
+              </button>
+              <button
+                onClick={stopRecording}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+                title="Stop"
+              >
+                <StopCircle size={18} />
+              </button>
+            </div>
+          ) : voicePreviewBlob ? (
+            <div className="flex flex-1 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/20">
+              <button
+                onClick={(e) => { e.stopPropagation(); toggleVoicePreview(); }}
+                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
+              >
+                {voicePreviewPlaying ? <Pause size={14} /> : <Play size={14} />}
+              </button>
+              <div className="flex flex-1 flex-col">
+                <div className="flex items-center gap-1.5">
+                  <Mic size={12} className="text-gray-500 dark:text-gray-400" />
+                  <div className="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-gray-700">
+                    <div
+                      className="h-1.5 rounded-full bg-primary-600"
+                      style={{ width: `${recordingDuration > 0 ? (voicePreviewCurrentTime / recordingDuration) * 100 : 0}%` }}
+                    />
+                  </div>
+                </div>
+                <div className="mt-0.5 flex justify-between">
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(voicePreviewCurrentTime)}</span>
+                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(recordingDuration)}</span>
+                </div>
               </div>
-            )}
-          </div>
-          <button
-            onClick={handleSend}
-            disabled={uploading || (!input.trim() && !pendingMediaId)}
-            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-sm hover:bg-[#128C7E] disabled:opacity-40"
-          >
-            <Send size={18} />
-          </button>
+              <audio ref={voicePreviewAudioRef} src={voicePreviewUrl} preload="metadata" className="hidden" />
+              <button
+                onClick={cancelVoicePreview}
+                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
+              <button
+                onClick={() => voicePreviewBlob && sendVoiceMessage(voicePreviewBlob)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm hover:bg-secondary-500"
+                title="Send voice message"
+              >
+                <Send size={16} />
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="relative flex-1 self-center" ref={slashRef}>
+                <textarea
+                  rows={1}
+                  placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
+                  value={input}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setInput(val);
+                    const words = val.split(/\s+/);
+                    const lastWord = words[words.length - 1];
+                    if (lastWord.startsWith('/')) {
+                      setSlashOpen(true);
+                      setSlashQuery(lastWord.slice(1));
+                      setSlashIndex(0);
+                    } else {
+                      setSlashOpen(false);
+                    }
+                  }}
+                  onKeyDown={handleKeyDown}
+                  className="input max-h-32 min-h-11 resize-none py-2.5"
+                />
+                {slashOpen && filteredQuickReplies.length > 0 && (
+                  <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
+                    {filteredQuickReplies.map((c, idx) => (
+                      <li
+                        key={c.id}
+                        onClick={() => insertQuickReply(c)}
+                        className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
+                          idx === slashIndex
+                            ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
+                            : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                        }`}
+                      >
+                        <span className="font-medium">/{c.shortcut}</span>
+                        <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{c.content.slice(0, 60)}{c.content.length > 60 ? '...' : ''}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {slashOpen && filteredQuickReplies.length === 0 && (
+                  <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
+                    <p className="text-sm text-gray-400 dark:text-gray-500">No quick replies found</p>
+                  </div>
+                )}
+              </div>
+              {!input.trim() && !pendingMediaId ? (
+                <button
+                  onClick={startRecording}
+                  disabled={uploading}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
+                  title="Record voice message"
+                >
+                  <Mic size={18} />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSend}
+                  disabled={uploading || (!input.trim() && !pendingMediaId)}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
+                >
+                  <Send size={18} />
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
       {/* Location Dialog */}
       {locationDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) { setLocationDialogOpen(false); setLocationError(''); } }}>
           <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Location</h3>
@@ -980,6 +1509,112 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           </div>
         </div>
       )}
+      {/* Flow Dialog */}
+      {flowDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setFlowDialogOpen(false); }}>
+          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="mb-5 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Flow</h3>
+              <button onClick={() => setFlowDialogOpen(false)} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-4">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Select Flow</label>
+                <select
+                  value={selectedFlowId}
+                  onChange={(e) => setSelectedFlowId(e.target.value)}
+                  className="input w-full"
+                >
+                  <option value="">Choose a flow...</option>
+                  {flows.map((f) => (
+                    <option key={f.id} value={f.id}>{f.name} {f.status !== 'PUBLISHED' ? `(${f.status})` : ''}</option>
+                  ))}
+                </select>
+                {flows.length === 0 && <p className="mt-1 text-xs text-gray-400">No flows found. Create one in Settings &rarr; Flows.</p>}
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Header (optional)</label>
+                <input
+                  type="text"
+                  value={flowForm.header}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, header: e.target.value }))}
+                  className="input w-full"
+                  placeholder="Form header..."
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Body</label>
+                <textarea
+                  value={flowForm.body}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, body: e.target.value }))}
+                  rows={2}
+                  className="input w-full"
+                  placeholder="Please complete this form..."
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Footer (optional)</label>
+                <input
+                  type="text"
+                  value={flowForm.footer}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, footer: e.target.value }))}
+                  className="input w-full"
+                  placeholder="Powered by BizlInbox"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Flow Token</label>
+                <input
+                  type="text"
+                  value={flowForm.flowToken}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, flowToken: e.target.value }))}
+                  className="input w-full"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Screen (optional)</label>
+                <input
+                  type="text"
+                  value={flowForm.screen}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, screen: e.target.value }))}
+                  className="input w-full"
+                  placeholder="e.g. SIGN_UP"
+                />
+                <p className="mt-1 text-xs text-gray-400">Navigate to a specific screen when the user opens the flow.</p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Screen Data (optional)</label>
+                <textarea
+                  value={flowForm.data}
+                  onChange={(e) => setFlowForm((p) => ({ ...p, data: e.target.value }))}
+                  rows={3}
+                  className="input w-full font-mono text-xs"
+                  placeholder='{"key": "value"}'
+                />
+                <p className="mt-1 text-xs text-gray-400">JSON object to pre-fill fields on the target screen.</p>
+              </div>
+
+              <div className="mt-2 flex justify-end gap-2">
+                <button onClick={() => setFlowDialogOpen(false)} className="btn-secondary">Cancel</button>
+                <button onClick={handleSendFlow} disabled={!selectedFlowId || sendingFlow} className="btn-primary">
+                  {sendingFlow ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  Send Flow
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <ContactProfilePopup
         contactId={contactId}
         open={profileOpen}

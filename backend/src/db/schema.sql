@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS messages (
     message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'unknown')),
     status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'read', 'failed')),
     external_id TEXT,
+    error_message TEXT,
     reaction_to_message_id UUID REFERENCES messages(id) ON DELETE CASCADE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -130,6 +131,40 @@ BEGIN
     CREATE INDEX IF NOT EXISTS idx_messages_reaction_to ON messages(reaction_to_message_id);
   END IF;
 END $$;
+
+CREATE TABLE IF NOT EXISTS flows (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    waba_account_id UUID REFERENCES waba_accounts(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
+    flow_id TEXT UNIQUE,
+    category TEXT,
+    status TEXT DEFAULT 'DRAFT',
+    flow_json JSONB DEFAULT '{}',
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_flows_org_id ON flows(org_id);
+CREATE INDEX IF NOT EXISTS idx_flows_waba_account_id ON flows(waba_account_id);
+
+CREATE TABLE IF NOT EXISTS flow_submissions (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    flow_id UUID REFERENCES flows(id) ON DELETE SET NULL,
+    conversation_id UUID NOT NULL REFERENCES conversations(id) ON DELETE CASCADE,
+    contact_id UUID NOT NULL REFERENCES contacts(id) ON DELETE CASCADE,
+    flow_token TEXT,
+    response_json JSONB DEFAULT '{}',
+    status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'failed')),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    completed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_flow_submissions_org_id ON flow_submissions(org_id);
+CREATE INDEX IF NOT EXISTS idx_flow_submissions_flow_id ON flow_submissions(flow_id);
+CREATE INDEX IF NOT EXISTS idx_flow_submissions_conversation_id ON flow_submissions(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_flow_submissions_flow_token ON flow_submissions(flow_token);
 
 -- Migrate: rename canned_responses to quick_responses if exists
 DO $$
@@ -287,6 +322,9 @@ ALTER TABLE whatsapp_numbers ADD COLUMN IF NOT EXISTS waba_account_id UUID REFER
 
 -- Migrate conversations: add waba_account_id for WABA-scoped filtering
 ALTER TABLE conversations ADD COLUMN IF NOT EXISTS waba_account_id UUID REFERENCES waba_accounts(id) ON DELETE SET NULL;
+
+-- Migrate conversations: add is_private for restricted access
+ALTER TABLE conversations ADD COLUMN IF NOT EXISTS is_private BOOLEAN NOT NULL DEFAULT false;
 
 -- Indexes for WABA queries
 CREATE INDEX IF NOT EXISTS idx_waba_accounts_org_id ON waba_accounts(org_id);

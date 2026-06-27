@@ -534,7 +534,7 @@ export default function NewCampaignPage() {
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold ${
                       idx <= currentStep
-                        ? 'bg-[#25D366] text-white'
+                        ? 'bg-primary-600 text-white'
                         : 'bg-gray-200 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
                     }`}
                   >
@@ -941,7 +941,7 @@ export default function NewCampaignPage() {
               <button
                 onClick={handleSubmit}
                 disabled={submitting || !canGoNext()}
-                className="mt-4 w-full rounded-lg bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#128C7E] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="mt-4 w-full rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-secondary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
               >
                 {submitting ? 'Creating...' : 'Create Campaign'}
               </button>
@@ -966,7 +966,7 @@ export default function NewCampaignPage() {
           <button
             onClick={handleNext}
             disabled={!canGoNext()}
-            className={`inline-flex items-center justify-center gap-2 rounded-lg bg-[#25D366] px-4 py-2 text-sm font-semibold text-white hover:bg-[#128C7E] transition-all duration-200 ${
+            className={`inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white hover:bg-secondary-500 transition-all duration-200 ${
               !canGoNext() ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >

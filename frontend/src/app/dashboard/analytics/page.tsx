@@ -31,7 +31,7 @@ interface AnalyticsData {
   messagesByType: MsgByType[];
 }
 
-const COLORS = ['#075e54', '#128c7e', '#25d366', '#dcf8c6', '#ece5dd', '#0d9488', '#0f766e', '#34d399'];
+const COLORS = ['#002d62', '#148b7d', '#4b6f9a', '#e8f4f2', '#c2cfe0', '#117a6e', '#0e695f', '#708db0'];
 
 function formatDate(dateStr: string) {
   const d = new Date(dateStr);
@@ -261,11 +261,11 @@ export default function AnalyticsPage() {
       <div className="mb-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
         <div className="panel p-5">
           <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">Messages per Day (Last 30 Days)</h2>
-          <LineChart data={data?.messagesPerDay || []} color="#128c7e" />
+          <LineChart data={data?.messagesPerDay || []} color="#148b7d" />
         </div>
         <div className="panel p-5">
           <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-gray-100">Conversations per Day (Last 30 Days)</h2>
-          <LineChart data={data?.conversationsPerDay || []} color="#075e54" />
+          <LineChart data={data?.conversationsPerDay || []} color="#002d62" />
         </div>
       </div>
 

@@ -10,6 +10,16 @@ interface QuickReply {
   id: string;
   shortcut: string;
   content: string;
+  messageType?: string;
+  metadata?: {
+    mediaUrl?: string;
+    filename?: string;
+    buttons?: { type: 'reply'; title: string; id?: string }[];
+    listOptions?: {
+      button: string;
+      sections: { title: string; rows: { id: string; title: string; description?: string }[] }[];
+    };
+  };
 }
 
 export default function QuickRepliesPage() {
@@ -136,7 +146,13 @@ export default function QuickRepliesPage() {
 
       <QuickReplyDialog
         open={quickDialogOpen}
-        data={editingQuick ? { id: editingQuick.id, shortcut: editingQuick.shortcut, content: editingQuick.content } : null}
+        data={editingQuick ? {
+          id: editingQuick.id,
+          shortcut: editingQuick.shortcut,
+          content: editingQuick.content,
+          messageType: (editingQuick.messageType || 'text') as import('@/components/QuickReplyDialog').QuickMessageType,
+          metadata: editingQuick.metadata || {},
+        } : null}
         onClose={() => { setQuickDialogOpen(false); setEditingQuick(null); }}
         onSubmit={handleQuickSubmit}
       />

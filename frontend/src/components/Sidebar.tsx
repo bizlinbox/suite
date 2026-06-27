@@ -19,6 +19,8 @@ import {
   Plug,
   Sun,
   Moon,
+  FileText,
+  FormInput,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -35,12 +37,14 @@ const allNavItems = [
   { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' as string | null },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' as string | null },
   { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
+  { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
+  { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
   { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
 ];
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }
@@ -152,15 +156,15 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
   const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
 
-  const drawerContent = (
+  const drawerContent = (isCollapsed: boolean) => (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <div className={`flex items-center py-3.5 ${collapsed ? 'justify-between px-1.5' : 'justify-between px-4'}`}>
-        <Link href="/dashboard" className={`flex items-center ${collapsed ? 'gap-0' : 'gap-2.5'}`}>
+      <div className={`flex items-center py-3.5 ${isCollapsed ? 'justify-between px-1.5' : 'justify-between px-4'}`}>
+        <Link href="/dashboard" className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-2.5'}`}>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-700 text-white">
             <MessageSquare size={18} />
           </div>
-          {!collapsed && (
+          {!isCollapsed && (
             <span className="text-lg font-bold tracking-tight text-white">BizlInbox</span>
           )}
         </Link>
@@ -169,13 +173,13 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             <button
               onClick={onDesktopToggle}
               className="hidden rounded-md p-1 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
+              {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
             </button>
           )}
-          {!collapsed && mobileOpen && (
+          {!isCollapsed && mobileOpen && (
             <button
               onClick={onMobileClose}
               className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
@@ -187,12 +191,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
         </div>
       </div>
 
-      <WabaSwitcher collapsed={collapsed} />
+      <WabaSwitcher collapsed={isCollapsed} />
 
-      <div className={`mb-2 h-px bg-blue-800/40 ${collapsed ? 'mx-2' : 'mx-3'}`} />
+      <div className={`mb-2 h-px bg-blue-800/40 ${isCollapsed ? 'mx-2' : 'mx-3'}`} />
 
       {/* Nav */}
-      <nav className={`flex-1 space-y-0.5 py-2 ${collapsed ? 'px-2' : 'px-3'}`}>
+      <nav className={`flex-1 space-y-0.5 overflow-y-auto py-2 ${isCollapsed ? 'px-2' : 'px-3'}`}>
         {navItems.map((item) => {
           const active = isActiveNav(pathname, item.href);
           const Icon = item.icon;
@@ -200,12 +204,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             <Link
               key={item.href}
               href={item.href}
-              title={collapsed ? item.label : undefined}
+              title={isCollapsed ? item.label : undefined}
               className={`group flex items-center rounded-lg transition-colors ${
                 active
                   ? 'bg-blue-800 text-white'
                   : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
-              } ${collapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
+              } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
             >
               <Icon
                 size={18}
@@ -215,25 +219,25 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                     : 'text-blue-400 group-hover:text-white'
                 }`}
               />
-              {!collapsed && item.label}
+              {!isCollapsed && item.label}
             </Link>
           );
         })}
       </nav>
 
       {/* Theme Toggle */}
-      <div className={`py-2 ${collapsed ? 'px-2' : 'px-4'}`}>
-        <ThemeToggle collapsed={collapsed} />
+      <div className={`py-2 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        <ThemeToggle collapsed={isCollapsed} />
       </div>
 
       {/* User / Logout */}
-      <div className={`py-3 ${collapsed ? 'px-2' : 'px-4'}`}>
-        <div className={`rounded-lg border border-blue-800/40 bg-blue-900/40 ${collapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
-          <div className={`flex items-center ${collapsed ? 'justify-center' : 'gap-2'}`}>
+      <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        <div className={`rounded-lg border border-blue-800/40 bg-blue-900/40 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-semibold text-white" title={user?.name || 'User'}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
-            {!collapsed && (
+            {!isCollapsed && (
               <div className="min-w-0 flex-1">
                 <div className="truncate text-xs font-medium text-white">{user?.name}</div>
                 <div className="truncate text-[10px] text-blue-300">{user?.email}</div>
@@ -243,12 +247,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
           <button
             onClick={() => logout()}
             className={`mt-2 flex w-full items-center justify-center rounded-md text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20 ${
-              collapsed ? 'gap-0 px-1 py-1.5' : 'gap-1.5 px-2 py-1.5'
+              isCollapsed ? 'gap-0 px-1 py-1.5' : 'gap-1.5 px-2 py-1.5'
             }`}
             title="Log out"
           >
             <LogOut size={12} />
-            {!collapsed && 'Log out'}
+            {!isCollapsed && 'Log out'}
           </button>
         </div>
       </div>
@@ -272,7 +276,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
         }`}
         style={{ width: DRAWER_WIDTH }}
       >
-        <div className="h-full w-full">{drawerContent}</div>
+        <div className="h-full w-full">{drawerContent(false)}</div>
       </div>
 
       {/* Desktop drawer */}
@@ -282,7 +286,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
         }`}
         style={{ width: sidebarWidth }}
       >
-        <div className="h-full w-full">{drawerContent}</div>
+        <div className="h-full w-full">{drawerContent(collapsed)}</div>
       </div>
 
       {/* Desktop expand button (when fully hidden) */}

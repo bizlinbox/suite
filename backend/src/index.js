@@ -31,6 +31,7 @@ const uploadRoutes = require('./routes/upload');
 const mediaRoutes = require('./routes/media');
 const wabaAccountRoutes = require('./routes/wabaAccounts');
 const templateRoutes = require('./routes/templates');
+const flowRoutes = require('./routes/flows');
 const { router: campaignRoutes } = require('./routes/campaigns');
 const roleRoutes = require('./routes/roles');
 
@@ -145,6 +146,7 @@ app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/media', mediaRoutes);
 app.use('/api/v1/waba-accounts', wabaAccountRoutes);
 app.use('/api/v1/templates', templateRoutes);
+app.use('/api/v1/flows', flowRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/roles', roleRoutes);
 

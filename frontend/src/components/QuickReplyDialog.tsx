@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Plus, Trash2, Upload } from 'lucide-react';
+import { api } from '@/lib/api';
 
 export type QuickMessageType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'button' | 'list';
 
@@ -40,6 +41,13 @@ const messageTypeLabels: Record<QuickMessageType, string> = {
 
 const messageTypes: QuickMessageType[] = ['text', 'image', 'video', 'document', 'audio', 'button', 'list'];
 
+const acceptMap: Record<string, string> = {
+  image: 'image/*',
+  video: 'video/*',
+  document: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt',
+  audio: 'audio/*',
+};
+
 export default function QuickReplyDialog({ open, data, onClose, onSubmit }: QuickReplyDialogProps) {
   const [form, setForm] = useState<QuickReplyFormData>({
     shortcut: '',
@@ -47,6 +55,9 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
     messageType: 'text',
     metadata: {},
   });
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (data) {
@@ -59,6 +70,8 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
     } else {
       setForm({ shortcut: '', content: '', messageType: 'text', metadata: {} });
     }
+    setUploading(false);
+    setUploadError('');
   }, [data, open]);
 
   const setMetaField = (key: string, value: unknown) => {
@@ -124,9 +137,45 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
     setMetaField('listOptions', { ...form.metadata.listOptions, sections });
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    setUploadError('');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await api.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setMetaField('mediaUrl', res.data.url);
+      if (form.messageType === 'document') {
+        setMetaField('filename', file.name);
+      }
+    } catch {
+      setUploadError('Upload failed. Please try again.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const clearMedia = () => {
+    setMetaField('mediaUrl', undefined);
+    setMetaField('filename', undefined);
+    setUploadError('');
+  };
+
   const handleSubmit = () => {
     onSubmit(form);
   };
+
+  const mediaRequired = ['image', 'video', 'document', 'audio'].includes(form.messageType);
+  const hasMedia = !!form.metadata.mediaUrl;
 
   if (!open) return null;
 
@@ -186,29 +235,50 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
             />
           </div>
 
-          {/* Media URL */}
-          {['image', 'video', 'document', 'audio'].includes(form.messageType) && (
+          {/* Media Upload */}
+          {mediaRequired && (
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Media URL</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {messageTypeLabels[form.messageType]} File
+              </label>
               <input
-                type="url"
-                value={form.metadata.mediaUrl || ''}
-                onChange={(e) => setMetaField('mediaUrl', e.target.value)}
-                required
-                placeholder="https://example.com/image.jpg"
-                className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                ref={fileInputRef}
+                type="file"
+                accept={acceptMap[form.messageType] || '*/*'}
+                className="hidden"
+                onChange={handleFileSelect}
               />
-              {form.messageType === 'document' && (
-                <div className="mt-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Filename (optional)</label>
-                  <input
-                    type="text"
-                    value={form.metadata.filename || ''}
-                    onChange={(e) => setMetaField('filename', e.target.value)}
-                    placeholder="document.pdf"
-                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
-                  />
+
+              {!hasMedia && (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 disabled:opacity-50"
+                >
+                  <Upload size={18} />
+                  {uploading ? 'Uploading...' : `Upload ${messageTypeLabels[form.messageType]}`}
+                </button>
+              )}
+
+              {hasMedia && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                  <span className="flex-1 truncate text-sm text-gray-700 dark:text-gray-300">
+                    {form.metadata.filename || form.metadata.mediaUrl}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearMedia}
+                    className="rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    title="Remove file"
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
+              )}
+
+              {uploadError && (
+                <p className="mt-1 text-xs text-red-500">{uploadError}</p>
               )}
             </div>
           )}
@@ -333,7 +403,8 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
             </button>
             <button
               onClick={handleSubmit}
-              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+              disabled={mediaRequired && !hasMedia}
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
             >
               Save
             </button>

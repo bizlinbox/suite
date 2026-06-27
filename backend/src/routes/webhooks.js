@@ -262,31 +262,50 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       messageType = 'reaction';
     } else if (msg.interactive) {
       if (msg.interactive.type === 'nfm_reply' && msg.interactive.nfm_reply) {
-        // Native flow reply — e.g. address message response
+        // Native flow reply — e.g. address message response or WhatsApp Flow completion
         const nfm = msg.interactive.nfm_reply;
         content = nfm.body || JSON.stringify(nfm);
         messageType = 'nfm_reply';
 
-        // Handle address message response
+        // Handle flow / nfm_reply response_json
         if (nfm.response_json) {
           try {
             const responseData = typeof nfm.response_json === 'string'
               ? JSON.parse(nfm.response_json)
               : nfm.response_json;
 
+            // Store flow submission data for later processing
+            if (responseData.flow_token || responseData.values) {
+              msg._flowSubmission = {
+                flowToken: responseData.flow_token || null,
+                responseJson: responseData,
+              };
+            }
+
             if (responseData.values) {
               const addr = responseData.values;
-              // Store address — will be saved after contact upsert below
-              msg._extractedAddress = {
-                street: addr.address?.trim() || addr.street?.trim() || null,
-                city: addr.city?.trim() || null,
-                state: addr.state?.trim() || null,
-                zip: addr.zip?.trim() || addr.postal_code?.trim() || null,
-                country: addr.country?.trim() || null,
-                country_code: addr.country_code?.trim() || null,
-                type: 'HOME',
-              };
-              content = `Address received: ${addr.address?.trim() || ''}, ${addr.city?.trim() || ''}, ${addr.state?.trim() || ''} ${addr.zip?.trim() || ''}, ${addr.country?.trim() || ''}`.replace(/,\s*,/g, ',').replace(/,\s*$/, '').trim();
+              // Check if this looks like an address flow response
+              if (addr.address || addr.street || addr.city || addr.state || addr.zip || addr.country) {
+                // Store address — will be saved after contact upsert below
+                msg._extractedAddress = {
+                  street: addr.address?.trim() || addr.street?.trim() || null,
+                  city: addr.city?.trim() || null,
+                  state: addr.state?.trim() || null,
+                  zip: addr.zip?.trim() || addr.postal_code?.trim() || null,
+                  country: addr.country?.trim() || null,
+                  country_code: addr.country_code?.trim() || null,
+                  type: 'HOME',
+                };
+                content = `Address received: ${addr.address?.trim() || ''}, ${addr.city?.trim() || ''}, ${addr.state?.trim() || ''} ${addr.zip?.trim() || ''}, ${addr.country?.trim() || ''}`.replace(/,\s*,/g, ',').replace(/,\s*$/, '').trim();
+              } else {
+                // Generic flow response — summarize the values
+                const entries = Object.entries(responseData.values)
+                  .map(([k, v]) => `${k}: ${v}`)
+                  .join(', ');
+                content = `Flow completed: ${entries}`;
+              }
+            } else if (Object.keys(responseData).length > 0) {
+              content = `Flow response: ${JSON.stringify(responseData).slice(0, 500)}`;
             }
           } catch (parseErr) {
             logger.warn('Failed to parse nfm_reply response_json', { error: parseErr.message, responseJson: nfm.response_json });
@@ -403,6 +422,59 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       [conversationId, content, mediaUrl, mediaMimeType, messageType, externalId, voice, reactionToMessageId, timestamp]
     );
     const message = msgResult.rows[0];
+
+    // Save flow submission if this was a flow completion
+    if (msg._flowSubmission) {
+      try {
+        const { flowToken, responseJson } = msg._flowSubmission;
+        let flowId = null;
+
+        // Try to find the flow by token
+        if (flowToken) {
+          const tokenResult = await query(
+            'SELECT flow_id FROM flow_submissions WHERE flow_token = $1 AND org_id = $2 LIMIT 1',
+            [flowToken, orgId]
+          );
+          if (tokenResult.rows.length > 0) {
+            flowId = tokenResult.rows[0].flow_id;
+          }
+        }
+
+        // If no matching flow found by token, try to find the most recent pending submission for this conversation
+        if (!flowId) {
+          const recentResult = await query(
+            `SELECT flow_id FROM flow_submissions
+             WHERE conversation_id = $1 AND org_id = $2 AND status = 'pending'
+             ORDER BY created_at DESC LIMIT 1`,
+            [conversationId, orgId]
+          );
+          if (recentResult.rows.length > 0) {
+            flowId = recentResult.rows[0].flow_id;
+          }
+        }
+
+        // Update existing pending submission if found, otherwise insert
+        const existingResult = await query(
+          'SELECT id FROM flow_submissions WHERE flow_token = $1 AND org_id = $2 AND conversation_id = $3 LIMIT 1',
+          [flowToken, orgId, conversationId]
+        );
+        if (existingResult.rows.length > 0) {
+          await query(
+            'UPDATE flow_submissions SET response_json = $1, status = $2, completed_at = NOW() WHERE id = $3',
+            [JSON.stringify(responseJson), 'completed', existingResult.rows[0].id]
+          );
+        } else {
+          await query(
+            `INSERT INTO flow_submissions (org_id, flow_id, conversation_id, contact_id, flow_token, response_json, status, completed_at)
+             VALUES ($1, $2, $3, $4, $5, $6, 'completed', NOW())`,
+            [orgId, flowId, conversationId, contactId, flowToken || null, JSON.stringify(responseJson)]
+          );
+        }
+        logger.info('Flow submission saved', { flowId, conversationId, flowToken });
+      } catch (fsErr) {
+        logger.warn('Failed to save flow submission', { error: fsErr.message });
+      }
+    }
 
     // Emit Socket.IO events
     emitToConversation(orgId, conversationId, 'new_message', camelize(message));

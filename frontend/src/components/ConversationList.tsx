@@ -12,6 +12,8 @@ export interface Conversation {
   lastMessageAt: string;
   unreadCount: number;
   assignedAgentName?: string;
+  isPrivate?: boolean;
+  assignedAgentId?: string;
 }
 
 interface ConversationListProps {
@@ -92,6 +94,9 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                       {conversation.contactName}
                     </span>
                     <div className="flex items-center gap-1.5">
+                      {conversation.isPrivate && (
+                        <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Private</span>
+                      )}
                       {conversation.lastMessageAt && (
                         <span className="text-[10px] text-gray-400 dark:text-gray-500">
                           {new Date(conversation.lastMessageAt).toLocaleDateString() === new Date().toLocaleDateString()

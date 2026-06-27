@@ -47,10 +47,20 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
       });
   }, [open, contactId]);
 
+  // Close on ESC key
+  useEffect(() => {
+    if (!open) return;
+    function handleEsc(e: KeyboardEvent) {
+      if (e.key === 'Escape') onClose();
+    }
+    document.addEventListener('keydown', handleEsc);
+    return () => document.removeEventListener('keydown', handleEsc);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4">
