@@ -26,7 +26,7 @@ export interface Agent {
   email: string;
 }
 
-export interface QuickResponse {
+export interface QuickReply {
   id: string;
   shortcut: string;
   content: string;
@@ -127,7 +127,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
   const [agentsOpen, setAgentsOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
   const [slashOpen, setSlashOpen] = useState(false);
@@ -203,8 +203,8 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     api.get('/agents').then((res) => {
       setAgents(res.data.agents || []);
     });
-    api.get('/quick-responses').then((res) => {
-      setQuickResponses(res.data.quickResponses || []);
+    api.get('/quick-replies').then((res) => {
+      setQuickReplies(res.data.quickReplies || []);
     });
   }, []);
 
@@ -349,7 +349,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     if (slashOpen) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setSlashIndex((i) => Math.min(i + 1, filteredQuick.length - 1));
+        setSlashIndex((i) => Math.min(i + 1, filteredQuickReplies.length - 1));
         return;
       }
       if (e.key === 'ArrowUp') {
@@ -359,8 +359,8 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
       }
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        if (filteredQuick.length > 0) {
-          insertQuick(filteredQuick[slashIndex]);
+        if (filteredQuickReplies.length > 0) {
+          insertQuickReply(filteredQuickReplies[slashIndex]);
         }
         return;
       }
@@ -417,7 +417,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     onAssignAgent?.(agentId);
   };
 
-  const sendQuickResponse = async (quick: QuickResponse) => {
+  const sendQuickReply = async (quick: QuickReply) => {
     if (!conversationId) return;
     const mt = quick.messageType || 'text';
 
@@ -472,15 +472,15 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     }
   };
 
-  const handleSelectQuick = (quick: QuickResponse) => {
+  const handleSelectQuickReply = (quick: QuickReply) => {
     setQuickOpen(false);
-    sendQuickResponse(quick);
+    sendQuickReply(quick);
   };
 
-  const insertQuick = (quick: QuickResponse) => {
+  const insertQuickReply = (quick: QuickReply) => {
     const mt = quick.messageType || 'text';
     if (mt !== 'text') {
-      sendQuickResponse(quick);
+      sendQuickReply(quick);
       setSlashOpen(false);
       setSlashQuery('');
       setSlashIndex(0);
@@ -499,12 +499,12 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     setSlashIndex(0);
   };
 
-  const filteredQuick = slashQuery
-    ? quickResponses.filter((c) =>
+  const filteredQuickReplies = slashQuery
+    ? quickReplies.filter((c) =>
         c.shortcut.toLowerCase().includes(slashQuery.toLowerCase()) ||
         c.content.toLowerCase().includes(slashQuery.toLowerCase())
       )
-    : quickResponses;
+    : quickReplies;
 
   const triggerFileInput = (accept: string) => {
     if (fileInputRef.current) {
@@ -550,17 +550,17 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
             </button>
             {quickOpen && (
               <ul className="absolute right-0 top-full z-50 mt-1.5 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
-                {quickResponses.map((c) => (
+                {quickReplies.map((c) => (
                   <li
                     key={c.id}
-                    onClick={() => handleSelectQuick(c)}
+                    onClick={() => handleSelectQuickReply(c)}
                     className="cursor-pointer px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
                   >
                     {c.shortcut}
                   </li>
                 ))}
-                {quickResponses.length === 0 && (
-                  <li className="px-3 py-2 text-sm text-gray-400">No quick responses</li>
+                {quickReplies.length === 0 && (
+                  <li className="px-3 py-2 text-sm text-gray-400">No quick replies</li>
                 )}
               </ul>
             )}
@@ -781,7 +781,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
           <div className="relative flex-1">
             <textarea
               rows={1}
-              placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick responses)'}
+              placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
               value={input}
               onChange={(e) => {
                 const val = e.target.value;
@@ -799,12 +799,12 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
               onKeyDown={handleKeyDown}
               className="input max-h-32 resize-none py-2.5"
             />
-            {slashOpen && filteredQuick.length > 0 && (
+            {slashOpen && filteredQuickReplies.length > 0 && (
               <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                {filteredQuick.map((c, idx) => (
+                {filteredQuickReplies.map((c, idx) => (
                   <li
                     key={c.id}
-                    onClick={() => insertQuick(c)}
+                    onClick={() => insertQuickReply(c)}
                     className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
                       idx === slashIndex
                         ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
@@ -817,9 +817,9 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                 ))}
               </ul>
             )}
-            {slashOpen && filteredQuick.length === 0 && (
+            {slashOpen && filteredQuickReplies.length === 0 && (
               <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                <p className="text-sm text-gray-400 dark:text-gray-500">No quick responses found</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">No quick replies found</p>
               </div>
             )}
           </div>

@@ -5,7 +5,7 @@ import { X, Plus, Trash2 } from 'lucide-react';
 
 export type QuickMessageType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'button' | 'list';
 
-export interface QuickResponseFormData {
+export interface QuickReplyFormData {
   id?: string;
   shortcut: string;
   content: string;
@@ -21,11 +21,11 @@ export interface QuickResponseFormData {
   };
 }
 
-interface QuickResponseDialogProps {
+interface QuickReplyDialogProps {
   open: boolean;
-  data: Partial<QuickResponseFormData> | null;
+  data: Partial<QuickReplyFormData> | null;
   onClose: () => void;
-  onSubmit: (data: QuickResponseFormData) => void;
+  onSubmit: (data: QuickReplyFormData) => void;
 }
 
 const messageTypeLabels: Record<QuickMessageType, string> = {
@@ -40,8 +40,8 @@ const messageTypeLabels: Record<QuickMessageType, string> = {
 
 const messageTypes: QuickMessageType[] = ['text', 'image', 'video', 'document', 'audio', 'button', 'list'];
 
-export default function QuickResponseDialog({ open, data, onClose, onSubmit }: QuickResponseDialogProps) {
-  const [form, setForm] = useState<QuickResponseFormData>({
+export default function QuickReplyDialog({ open, data, onClose, onSubmit }: QuickReplyDialogProps) {
+  const [form, setForm] = useState<QuickReplyFormData>({
     shortcut: '',
     content: '',
     messageType: 'text',
@@ -135,7 +135,7 @@ export default function QuickResponseDialog({ open, data, onClose, onSubmit }: Q
       <div className="mx-4 w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-gray-900 p-6 shadow-xl">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            {data?.id ? 'Edit Quick Response' : 'Create Quick Response'}
+            {data?.id ? 'Edit Quick Reply' : 'Create Quick Reply'}
           </h2>
           <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
             <X size={20} />
@@ -216,129 +216,128 @@ export default function QuickResponseDialog({ open, data, onClose, onSubmit }: Q
           {/* Quick Reply Buttons */}
           {form.messageType === 'button' && (
             <div>
-              <div className="mb-2 flex items-center justify-between">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Buttons</label>
-                <button
-                  onClick={addButton}
-                  className="flex items-center gap-1 rounded-md bg-[#25D366] px-2 py-1 text-xs font-medium text-white hover:bg-[#128C7E]"
-                >
-                  <Plus size={14} /> Add
-                </button>
-              </div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Buttons</label>
               <div className="space-y-2">
-                {(form.metadata.buttons || []).map((btn, index) => (
-                  <div key={index} className="flex items-center gap-2">
+                {(form.metadata.buttons || []).map((btn, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
                     <input
                       type="text"
                       value={btn.title}
-                      onChange={(e) => updateButton(index, e.target.value)}
-                      placeholder={`Button ${index + 1} text`}
-                      className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
+                      onChange={(e) => updateButton(idx, e.target.value)}
+                      placeholder={`Button ${idx + 1}`}
+                      className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
                     />
-                    <button onClick={() => removeButton(index)} className="rounded-md p-1.5 text-red-500 hover:bg-red-50">
-                      <Trash2 size={14} />
+                    <button
+                      onClick={() => removeButton(idx)}
+                      className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 ))}
-                {(form.metadata.buttons || []).length === 0 && (
-                  <p className="text-sm text-gray-400">No buttons added yet</p>
-                )}
+                <button
+                  onClick={addButton}
+                  className="flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  <Plus size={16} />
+                  Add Button
+                </button>
               </div>
             </div>
           )}
 
           {/* List Message */}
           {form.messageType === 'list' && (
-            <div className="space-y-4">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">List Button Text</label>
-                <input
-                  type="text"
-                  value={form.metadata.listOptions?.button || 'Options'}
-                  onChange={(e) => setMetaField('listOptions', { ...form.metadata.listOptions, button: e.target.value })}
-                  placeholder="Options"
-                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
-                />
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Sections</label>
-                  <button
-                    onClick={addListSection}
-                    className="flex items-center gap-1 rounded-md bg-[#25D366] px-2 py-1 text-xs font-medium text-white hover:bg-[#128C7E]"
-                  >
-                    <Plus size={14} /> Add Section
-                  </button>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">List Options</label>
+              <div className="space-y-4">
+                <div>
+                  <label className="mb-1 block text-xs text-gray-500 dark:text-gray-400">Button Label</label>
+                  <input
+                    type="text"
+                    value={form.metadata.listOptions?.button || ''}
+                    onChange={(e) => setMetaField('listOptions', { ...form.metadata.listOptions, button: e.target.value })}
+                    placeholder="Options"
+                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-600"
+                  />
                 </div>
-                <div className="space-y-3">
-                  {(form.metadata.listOptions?.sections || []).map((section, sIdx) => (
-                    <div key={sIdx} className="rounded-lg border border-gray-200 dark:border-gray-700 p-3">
-                      <div className="mb-2 flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={section.title}
-                          onChange={(e) => updateListSectionTitle(sIdx, e.target.value)}
-                          placeholder="Section title"
-                          className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
-                        />
-                        <button onClick={() => removeListSection(sIdx)} className="rounded-md p-1 text-red-500 hover:bg-red-50">
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                      <div className="space-y-1.5 pl-2">
-                        {section.rows.map((row, rIdx) => (
-                          <div key={rIdx} className="flex items-center gap-2">
-                            <input
-                              type="text"
-                              value={row.title}
-                              onChange={(e) => updateListRow(sIdx, rIdx, 'title', e.target.value)}
-                              placeholder="Row title"
-                              className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
-                            />
-                            <input
-                              type="text"
-                              value={row.description || ''}
-                              onChange={(e) => updateListRow(sIdx, rIdx, 'description', e.target.value)}
-                              placeholder="Description (optional)"
-                              className="flex-1 rounded-md border border-gray-300 dark:border-gray-700 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
-                            />
-                            <button onClick={() => removeListRow(sIdx, rIdx)} className="rounded-md p-1 text-red-500 hover:bg-red-50">
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => addListRow(sIdx)}
-                          className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[#25D366] hover:bg-[#25D366]/10"
-                        >
-                          <Plus size={12} /> Add Row
-                        </button>
-                      </div>
+                {(form.metadata.listOptions?.sections || []).map((section, sIdx) => (
+                  <div key={sIdx} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                    <div className="mb-2 flex items-center justify-between">
+                      <input
+                        type="text"
+                        value={section.title}
+                        onChange={(e) => updateListSectionTitle(sIdx, e.target.value)}
+                        placeholder="Section Title"
+                        className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
+                      />
+                      <button
+                        onClick={() => removeListSection(sIdx)}
+                        className="ml-2 rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                  ))}
-                  {(form.metadata.listOptions?.sections || []).length === 0 && (
-                    <p className="text-sm text-gray-400">No sections added yet</p>
-                  )}
-                </div>
+                    <div className="space-y-2 pl-2">
+                      {section.rows.map((row, rIdx) => (
+                        <div key={row.id} className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={row.title}
+                            onChange={(e) => updateListRow(sIdx, rIdx, 'title', e.target.value)}
+                            placeholder="Row Title"
+                            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
+                          />
+                          <input
+                            type="text"
+                            value={row.description || ''}
+                            onChange={(e) => updateListRow(sIdx, rIdx, 'description', e.target.value)}
+                            placeholder="Description"
+                            className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-600"
+                          />
+                          <button
+                            onClick={() => removeListRow(sIdx, rIdx)}
+                            className="rounded-lg p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => addListRow(sIdx)}
+                        className="flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                      >
+                        <Plus size={14} />
+                        Add Row
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                <button
+                  onClick={addListSection}
+                  className="flex items-center gap-1 rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                >
+                  <Plus size={16} />
+                  Add Section
+                </button>
               </div>
             </div>
           )}
-        </div>
 
-        <div className="mt-6 flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={handleSubmit}
-            className="rounded-lg bg-[#25D366] px-4 py-2 text-white hover:bg-[#128C7E]"
-          >
-            {data?.id ? 'Update' : 'Create'}
-          </button>
+          <div className="mt-2 flex justify-end gap-2">
+            <button
+              onClick={onClose}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              Save
+            </button>
+          </div>
         </div>
       </div>
     </div>

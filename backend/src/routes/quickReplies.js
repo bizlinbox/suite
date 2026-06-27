@@ -8,7 +8,7 @@ const router = express.Router();
 
 router.use(authenticate);
 
-// GET / - list quick responses for org
+// GET / - list quick replies for org
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
@@ -16,9 +16,9 @@ router.get('/', async (req, res, next) => {
        FROM quick_responses WHERE org_id = $1 ORDER BY created_at DESC`,
       [req.user.org_id]
     );
-    res.json({ quickResponses: camelize(result.rows) });
+    res.json({ quickReplies: camelize(result.rows) });
   } catch (err) {
-    logger.error('List quick responses error', err);
+    logger.error('List quick replies error', err);
     next(err);
   }
 });
@@ -32,11 +32,11 @@ router.get('/:id', async (req, res, next) => {
       [req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Quick response not found' });
+      return res.status(404).json({ error: 'Quick reply not found' });
     }
-    res.json({ quickResponse: camelize(result.rows[0]) });
+    res.json({ quickReply: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Get quick response error', err);
+    logger.error('Get quick reply error', err);
     next(err);
   }
 });
@@ -56,9 +56,9 @@ router.post('/', async (req, res, next) => {
        RETURNING id, org_id, shortcut, content, message_type, metadata, created_at`,
       [req.user.org_id, shortcut, content, mt, meta]
     );
-    res.status(201).json({ quickResponse: camelize(result.rows[0]) });
+    res.status(201).json({ quickReply: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Create quick response error', err);
+    logger.error('Create quick reply error', err);
     next(err);
   }
 });
@@ -79,11 +79,11 @@ router.put('/:id', async (req, res, next) => {
       [shortcut, content, messageType, meta, req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Quick response not found' });
+      return res.status(404).json({ error: 'Quick reply not found' });
     }
-    res.json({ quickResponse: camelize(result.rows[0]) });
+    res.json({ quickReply: camelize(result.rows[0]) });
   } catch (err) {
-    logger.error('Update quick response error', err);
+    logger.error('Update quick reply error', err);
     next(err);
   }
 });
@@ -96,11 +96,11 @@ router.delete('/:id', async (req, res, next) => {
       [req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Quick response not found' });
+      return res.status(404).json({ error: 'Quick reply not found' });
     }
-    res.json({ message: 'Quick response deleted' });
+    res.json({ message: 'Quick reply deleted' });
   } catch (err) {
-    logger.error('Delete quick response error', err);
+    logger.error('Delete quick reply error', err);
     next(err);
   }
 });

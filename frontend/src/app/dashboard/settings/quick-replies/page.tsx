@@ -4,51 +4,41 @@ import { useEffect, useState } from 'react';
 import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
-import QuickResponseDialog, { QuickResponseFormData, QuickMessageType } from '@/components/QuickResponseDialog';
+import QuickReplyDialog, { QuickReplyFormData } from '@/components/QuickReplyDialog';
 
-interface QuickResponse {
+interface QuickReply {
   id: string;
   shortcut: string;
   content: string;
-  messageType?: string;
-  metadata?: {
-    mediaUrl?: string;
-    filename?: string;
-    buttons?: { type: 'reply'; title: string; id?: string }[];
-    listOptions?: {
-      button: string;
-      sections: { title: string; rows: { id: string; title: string; description?: string }[] }[];
-    };
-  };
 }
 
-export default function QuickResponsesPage() {
+export default function QuickRepliesPage() {
   const { can, loading: authLoading } = usePermission();
-  const [quickResponses, setQuickResponses] = useState<QuickResponse[]>([]);
+  const [quickReplies, setQuickReplies] = useState<QuickReply[]>([]);
   const [quickDialogOpen, setQuickDialogOpen] = useState(false);
-  const [editingQuick, setEditingQuick] = useState<QuickResponse | null>(null);
+  const [editingQuick, setEditingQuick] = useState<QuickReply | null>(null);
 
   useEffect(() => {
-    fetchQuickResponses();
+    fetchQuickReplies();
   }, []);
 
-  const fetchQuickResponses = async () => {
+  const fetchQuickReplies = async () => {
     try {
-      const res = await api.get('/quick-responses');
-      setQuickResponses(res.data.quickResponses || []);
+      const res = await api.get('/quick-replies');
+      setQuickReplies(res.data.quickReplies || []);
     } catch {
       // ignore
     }
   };
 
-  const handleQuickSubmit = async (form: QuickResponseFormData) => {
+  const handleQuickSubmit = async (form: QuickReplyFormData) => {
     try {
       if (editingQuick) {
-        await api.put(`/quick-responses/${editingQuick.id}`, form);
+        await api.put(`/quick-replies/${editingQuick.id}`, form);
       } else {
-        await api.post('/quick-responses', form);
+        await api.post('/quick-replies', form);
       }
-      fetchQuickResponses();
+      fetchQuickReplies();
     } catch {
       // ignore
     } finally {
@@ -58,10 +48,10 @@ export default function QuickResponsesPage() {
   };
 
   const handleDeleteQuick = async (id: string) => {
-    if (!confirm('Delete this quick response?')) return;
+    if (!confirm('Delete this quick reply?')) return;
     try {
-      await api.delete(`/quick-responses/${id}`);
-      fetchQuickResponses();
+      await api.delete(`/quick-replies/${id}`);
+      fetchQuickReplies();
     } catch {
       // ignore
     }
@@ -78,24 +68,20 @@ export default function QuickResponsesPage() {
   if (!can('settings.read')) {
     return (
       <div className="panel p-8 text-center text-sm text-gray-400 dark:text-gray-500">
-        You do not have permission to view quick responses.
+        You do not have permission to view quick replies.
       </div>
     );
   }
 
   return (
     <div>
-      <div className="page-header">
-        <div>
-          <h1>Quick Responses</h1>
-          <p>Manage quick reply shortcuts for your team</p>
-        </div>
+      <div className="mb-4 flex justify-end">
         <button
           onClick={() => { setEditingQuick(null); setQuickDialogOpen(true); }}
           className="btn-primary"
         >
           <Plus size={16} />
-          Add Quick Response
+          Add Quick Reply
         </button>
       </div>
 
@@ -104,23 +90,17 @@ export default function QuickResponsesPage() {
           <thead>
             <tr>
               <th>Shortcut</th>
-              <th>Type</th>
               <th>Content</th>
               <th className="w-24 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {quickResponses.map((c) => (
+            {quickReplies.map((c) => (
               <tr key={c.id}>
                 <td>
                   <code className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {c.shortcut}
                   </code>
-                </td>
-                <td>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-400">
-                    {c.messageType || 'text'}
-                  </span>
                 </td>
                 <td className="max-w-md truncate">{c.content}</td>
                 <td className="text-right">
@@ -143,10 +123,10 @@ export default function QuickResponsesPage() {
                 </td>
               </tr>
             ))}
-            {quickResponses.length === 0 && (
+            {quickReplies.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                  No quick responses yet
+                <td colSpan={3} className="py-10 text-center text-gray-400 dark:text-gray-500">
+                  No quick replies yet
                 </td>
               </tr>
             )}
@@ -154,15 +134,9 @@ export default function QuickResponsesPage() {
         </table>
       </div>
 
-      <QuickResponseDialog
+      <QuickReplyDialog
         open={quickDialogOpen}
-        data={editingQuick ? {
-          id: editingQuick.id,
-          shortcut: editingQuick.shortcut,
-          content: editingQuick.content,
-          messageType: (editingQuick.messageType || 'text') as QuickMessageType,
-          metadata: editingQuick.metadata || {},
-        } : null}
+        data={editingQuick ? { id: editingQuick.id, shortcut: editingQuick.shortcut, content: editingQuick.content } : null}
         onClose={() => { setQuickDialogOpen(false); setEditingQuick(null); }}
         onSubmit={handleQuickSubmit}
       />

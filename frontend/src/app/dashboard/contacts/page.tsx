@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Building2, MapPin, Briefcase, Calendar, Globe, Tag } from 'lucide-react';
+import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import ContactDialog, { ContactFormData } from '@/components/ContactDialog';
@@ -29,6 +29,7 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
+  const [search, setSearch] = useState('');
 
   const fetchContacts = async () => {
     try {
@@ -115,10 +116,17 @@ export default function ContactsPage() {
       }
     : null;
 
+  const filtered = contacts.filter((c) =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone.includes(search) ||
+    (c.email || '').toLowerCase().includes(search.toLowerCase()) ||
+    (c.company || '').toLowerCase().includes(search.toLowerCase())
+  );
+
   if (authLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <span className="text-gray-500 dark:text-gray-400">Loading...</span>
+        <Loader2 size={32} className="animate-spin text-gray-400 dark:text-gray-500" />
       </div>
     );
   }
@@ -128,141 +136,108 @@ export default function ContactsPage() {
       <div className="page-header">
         <div>
           <h1>Contacts</h1>
-          <p>Manage your contacts and their details.</p>
+          <p>Manage your contacts and their details</p>
         </div>
         {can('contacts.manage') && (
           <button onClick={handleCreate} className="btn-primary">
+            <Plus size={16} />
             Add Contact
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {contacts.map((contact) => (
-          <div
-            key={contact.id}
-            className="panel flex flex-col gap-4 p-5 transition-shadow hover:shadow-md"
-          >
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-                  {contact.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0">
-                  <h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
-                    {contact.name}
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{contact.phone}</p>
-                </div>
-              </div>
-              {can('contacts.manage') && (
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => handleEdit(contact)}
-                    className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800"
-                    title="Edit"
-                  >
-                    <Edit size={15} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(contact.id)}
-                    className="rounded-md p-1.5 text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                    title="Delete"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </div>
-              )}
-            </div>
+      {/* Search */}
+      <div className="mb-4">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search contacts..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="input w-full pl-9 md:max-w-sm"
+          />
+        </div>
+      </div>
 
-            {/* Details */}
-            <div className="flex flex-col gap-2 text-sm">
-              {contact.email && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <span className="text-xs text-gray-400 dark:text-gray-500">Email</span>
-                  <span className="truncate">{contact.email}</span>
-                </div>
-              )}
-
-              {(contact.company || contact.jobTitle) && (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-                  <Briefcase size={14} className="shrink-0 text-gray-400" />
-                  <span className="truncate">
-                    {contact.jobTitle && <span className="font-medium">{contact.jobTitle}</span>}
-                    {contact.jobTitle && contact.company && ' at '}
-                    {contact.company && <span>{contact.company}</span>}
-                  </span>
-                </div>
-              )}
-
-              {(contact.address || contact.city || contact.state || contact.country) && (
-                <div className="flex items-start gap-2 text-gray-600 dark:text-gray-300">
-                  <MapPin size={14} className="mt-0.5 shrink-0 text-gray-400" />
-                  <span className="truncate">
-                    {[contact.address, contact.city, contact.state, contact.country, contact.zipCode]
-                      .filter(Boolean)
-                      .join(', ')}
-                  </span>
-                </div>
-              )}
-
-              {(contact.birthday || contact.language) && (
-                <div className="flex items-center gap-3 text-gray-600 dark:text-gray-300">
-                  {contact.birthday && (
-                    <div className="flex items-center gap-1.5">
-                      <Calendar size={14} className="shrink-0 text-gray-400" />
-                      <span className="text-xs">
-                        {new Date(contact.birthday).toLocaleDateString(undefined, {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
+      <div className="panel overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="data-table min-w-full">
+            <thead>
+              <tr>
+                <th className="text-left">Name</th>
+                <th className="text-left">Phone</th>
+                <th className="text-left">Email</th>
+                <th className="text-left">Company</th>
+                <th className="text-left">Tags</th>
+                <th className="w-24 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {filtered.map((contact) => (
+                <tr key={contact.id}>
+                  <td>
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+                        {contact.name.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{contact.name}</span>
                     </div>
-                  )}
-                  {contact.language && (
-                    <div className="flex items-center gap-1.5">
-                      <Globe size={14} className="shrink-0 text-gray-400" />
-                      <span className="text-xs uppercase">{contact.language}</span>
+                  </td>
+                  <td className="text-sm text-gray-600 dark:text-gray-300">{contact.phone}</td>
+                  <td className="text-sm text-gray-600 dark:text-gray-300">{contact.email || '-'}</td>
+                  <td className="text-sm text-gray-600 dark:text-gray-300">
+                    {contact.company || '-'}
+                  </td>
+                  <td>
+                    <div className="flex flex-wrap gap-1">
+                      {(contact.tags || []).slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {(contact.tags || []).length > 3 && (
+                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                          +{(contact.tags || []).length - 3}
+                        </span>
+                      )}
                     </div>
-                  )}
-                </div>
+                  </td>
+                  <td className="text-right">
+                    {can('contacts.manage') && (
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          onClick={() => handleEdit(contact)}
+                          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                          aria-label="Edit"
+                        >
+                          <Edit size={15} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(contact.id)}
+                          className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          aria-label="Delete"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="py-10 text-center text-gray-400 dark:text-gray-500">
+                    {contacts.length === 0 ? 'No contacts yet' : 'No contacts match your search'}
+                  </td>
+                </tr>
               )}
-
-              {contact.notes && (
-                <p className="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">
-                  {contact.notes}
-                </p>
-              )}
-
-              {(contact.tags || []).length > 0 && (
-                <div className="mt-1 flex flex-wrap gap-1.5">
-                  {(contact.tags || []).map((tag) => (
-                    <span
-                      key={tag}
-                      className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
-                    >
-                      <Tag size={10} />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        ))}
-
-        {contacts.length === 0 && (
-          <div className="panel col-span-full flex flex-col items-center justify-center py-16 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
-              <Building2 size={20} className="text-gray-400 dark:text-gray-500" />
-            </div>
-            <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">No contacts yet</h3>
-            <p className="mt-1 max-w-xs text-sm text-gray-500 dark:text-gray-400">
-              Add your first contact to start managing customer details.
-            </p>
-          </div>
-        )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <ContactDialog
