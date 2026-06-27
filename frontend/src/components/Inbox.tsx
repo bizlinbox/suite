@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import { useSocket } from '@/hooks/useSocket';
 import { useWaba } from '@/context/WabaContext';
 import ConversationList, { Conversation } from '@/components/ConversationList';
@@ -16,6 +17,7 @@ interface InboxProps {
 
 export default function Inbox({ selectedId }: InboxProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [newChatOpen, setNewChatOpen] = useState(false);
   const { socket } = useSocket();
@@ -83,11 +85,18 @@ export default function Inbox({ selectedId }: InboxProps) {
     try {
       await api.patch(`/conversations/${selectedId}/assign`, { agentId });
       setConversations((prev) =>
-        prev.map((c) => (c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId] } : c))
+        prev.map((c) => (c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId], assignedAgentId: agentId } : c))
       );
     } catch {
       // ignore
     }
+  };
+
+  const handleTogglePrivacy = (isPrivate: boolean) => {
+    if (!selectedId) return;
+    setConversations((prev) =>
+      prev.map((c) => (c.id === selectedId ? { ...c, isPrivate } : c))
+    );
   };
 
   const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
@@ -140,8 +149,13 @@ export default function Inbox({ selectedId }: InboxProps) {
           {selectedConversation ? (
             <ChatWindow
               conversationId={selectedConversation.id}
+              contactId={selectedConversation.contactId}
               contactName={selectedConversation.contactName}
+              isPrivate={selectedConversation.isPrivate}
+              assignedAgentId={selectedConversation.assignedAgentId}
+              currentUserId={user?.id}
               onAssignAgent={handleAssignAgent}
+              onTogglePrivacy={handleTogglePrivacy}
               onBack={handleBack}
             />
           ) : (

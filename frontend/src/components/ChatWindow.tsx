@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
+import { usePermission } from '@/hooks/usePermission';
+import ContactProfilePopup from './ContactProfilePopup';
 
 export interface Message {
   id: string;
@@ -44,8 +46,13 @@ export interface QuickReply {
 
 interface ChatWindowProps {
   conversationId: string;
+  contactId: string;
   contactName: string;
+  isPrivate?: boolean;
+  assignedAgentId?: string;
+  currentUserId?: string;
   onAssignAgent?: (agentId: string) => void;
+  onTogglePrivacy?: (isPrivate: boolean) => void;
   onBack?: () => void;
 }
 
@@ -123,7 +130,7 @@ const attachmentOptions = [
   { key: 'location', label: 'Location', icon: MapPin, accept: '' },
 ];
 
-export default function ChatWindow({ conversationId, contactName, onAssignAgent, onBack }: ChatWindowProps) {
+export default function ChatWindow({ conversationId, contactId, contactName, isPrivate: initialIsPrivate, assignedAgentId, currentUserId, onAssignAgent, onTogglePrivacy, onBack }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -143,10 +150,13 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
   const [locationForm, setLocationForm] = useState({ latitude: '', longitude: '', name: '', address: '' });
   const [locationError, setLocationError] = useState('');
   const [reactingTo, setReactingTo] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(initialIsPrivate || false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const attachRef = useRef<HTMLDivElement>(null);
   const { socket } = useSocket();
+  const { isAdmin } = usePermission();
   const reactionEmojis = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
   useEffect(() => {
@@ -417,6 +427,18 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
     onAssignAgent?.(agentId);
   };
 
+  const handleTogglePrivacy = async () => {
+    if (!conversationId) return;
+    const next = !isPrivate;
+    try {
+      await api.patch(`/conversations/${conversationId}/private`, { is_private: next });
+      setIsPrivate(next);
+      onTogglePrivacy?.(next);
+    } catch {
+      // ignore
+    }
+  };
+
   const sendQuickReply = async (quick: QuickReply) => {
     if (!conversationId) return;
     const mt = quick.messageType || 'text';
@@ -535,10 +557,18 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
           </button>
         )}
-        <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-800/40"
+        >
           {contactName.charAt(0).toUpperCase()}
-        </div>
-        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{contactName}</h3>
+        </button>
+        <button
+          onClick={() => setProfileOpen(true)}
+          className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-gray-900 hover:text-primary-700 dark:text-gray-100 dark:hover:text-primary-400"
+        >
+          {contactName}
+        </button>
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <div className="relative">
             <button
@@ -591,13 +621,23 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
               </ul>
             )}
           </div>
+
+          {/* Privacy Toggle */}
+          {(assignedAgentId === currentUserId || isAdmin) && (
+            <button
+              onClick={handleTogglePrivacy}
+              className={`btn-secondary px-2.5 py-1.5 text-xs ${isPrivate ? 'text-red-600 dark:text-red-400' : ''}`}
+              title={isPrivate ? 'Private - only you and admins can see' : 'Make private'}
+            >
+              {isPrivate ? <Lock size={14} /> : <Unlock size={14} />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-4 py-4">
+      <div className="flex flex-1 flex-col overflow-y-auto px-4 py-3">
         {(() => {
-          // Separate reactions from regular messages
           const reactionsByTarget: Record<string, Message[]> = {};
           const regularMessages: Message[] = [];
           messages.forEach((m) => {
@@ -613,20 +653,32 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
             const isUser = msg.senderType === 'agent';
             const hasMedia = msg.mediaUrl && msg.messageType && msg.messageType !== 'text';
             const prevMsg = regularMessages[index - 1];
+            const nextMsg = regularMessages[index + 1];
             const showDateSeparator = !prevMsg || new Date(msg.createdAt).toDateString() !== new Date(prevMsg.createdAt).toDateString();
+            const isFirstInGroup = !prevMsg || prevMsg.senderType !== msg.senderType || showDateSeparator;
+            const isLastInGroup = !nextMsg || nextMsg.senderType !== msg.senderType;
             const msgReactions = reactionsByTarget[msg.id] || [];
 
             return (
-              <div key={msg.id} className="flex flex-col">
+              <div key={msg.id} className={`flex flex-col ${isFirstInGroup ? 'mt-3' : 'mt-[2px]'}`}>
                 {showDateSeparator && (
                   <div className="my-3 flex items-center justify-center">
-                    <span className="rounded-full bg-gray-100 px-3 py-1 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                    <span className="rounded-full bg-[#e1f2fb] px-3 py-1 text-[11px] font-medium text-[#54656f] shadow-sm dark:bg-[#182229] dark:text-[#8696a0]">
                       {formatDateSeparator(msg.createdAt)}
                     </span>
                   </div>
                 )}
                 <div className={`group flex items-end gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                  {/* Reaction picker button — shown on hover, on the outer edge */}
+                  {!isUser && isFirstInGroup && (
+                    <button
+                      onClick={() => setProfileOpen(true)}
+                      className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                      title={contactName}
+                    >
+                      {contactName.charAt(0).toUpperCase()}
+                    </button>
+                  )}
+                  {/* Reaction picker button */}
                   <div className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
                     <button
                       onClick={() => setReactingTo(reactingTo === msg.id ? null : msg.id)}
@@ -650,66 +702,77 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                     )}
                   </div>
 
-                  <div className="flex flex-col">
+                  <div className="flex max-w-[75%] flex-col">
                     <div
-                      className={`max-w-[75%] px-3.5 py-2 ${
+                      onClick={!isUser ? () => setProfileOpen(true) : undefined}
+                      className={`relative px-[9px] py-[5px] ${!isUser ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''} ${
                         isUser
-                          ? 'rounded-2xl rounded-br-sm bg-[#D9FDD3] text-[#111B21]'
-                          : 'rounded-2xl rounded-bl-sm bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100'
+                          ? 'rounded-md rounded-br-sm bg-[#d9fdd3] text-[#111b21] dark:bg-[#005c4b] dark:text-[#e9edef]'
+                          : 'rounded-md rounded-bl-sm border border-gray-100 bg-white text-[#111b21] shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-[#202c33] dark:text-[#e9edef] dark:shadow-none'
                       }`}
                     >
                       {hasMedia && (
-                        <div className="mb-1.5">
+                        <div className="mb-1">
                           {msg.messageType === 'image' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-white dark:bg-gray-900/60'}`}>
-                              <ImageIcon size={18} className={isUser ? 'text-gray-700' : 'text-primary-600 dark:text-primary-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                              <ImageIcon size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
                             </div>
                           )}
                           {msg.messageType === 'video' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-white dark:bg-gray-900/60'}`}>
-                              <Video size={18} className={isUser ? 'text-gray-700' : 'text-primary-600 dark:text-primary-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                              <Video size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
                             </div>
                           )}
                           {msg.messageType === 'audio' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-white dark:bg-gray-900/60'}`}>
-                              <Music size={18} className={isUser ? 'text-gray-700' : 'text-primary-600 dark:text-primary-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700' : 'text-gray-600 dark:text-gray-400'}`}>{msg.voice ? 'Voice message' : 'Audio'}</span>
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                              <Music size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>{msg.voice ? 'Voice message' : 'Audio'}</span>
                             </div>
                           )}
                           {msg.messageType === 'document' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-white dark:bg-gray-900/60'}`}>
-                              <FileText size={18} className={isUser ? 'text-gray-700' : 'text-primary-600 dark:text-primary-400'} />
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                              <FileText size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
                               <div className="min-w-0 flex-1">
-                                <span className={`block truncate text-xs font-medium ${isUser ? 'text-[#111B21]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                <span className={`block truncate text-xs font-medium ${isUser ? 'text-[#111b21] dark:text-[#e9edef]' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {msg.filename || 'Document'}
                                 </span>
                               </div>
                             </div>
                           )}
                           {msg.messageType === 'location' && (
-                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-white dark:bg-gray-900/60'}`}>
-                              <MapPin size={18} className={isUser ? 'text-gray-700' : 'text-primary-600 dark:text-primary-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
+                            <div className={`flex items-center gap-2 rounded-lg p-2 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+                              <MapPin size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
                             </div>
                           )}
                         </div>
                       )}
-                      {msg.content && <p className="text-sm leading-relaxed">{msg.content}</p>}
-                      <span className={`mt-1 flex items-center justify-end gap-1 text-[10px] ${isUser ? 'text-gray-500' : 'text-gray-400 dark:text-gray-500'}`}>
-                        {formatMessageDate(msg.createdAt)}
-                        {isUser && <MessageStatusIcon status={msg.status} />}
-                      </span>
+                      {msg.content && (
+                        <div className="flex items-end gap-1.5">
+                          <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
+                          <span className={`flex-shrink-0 whitespace-nowrap text-[11px] opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
+                            {formatMessageDate(msg.createdAt)}
+                            {isUser && <MessageStatusIcon status={msg.status} />}
+                          </span>
+                        </div>
+                      )}
+                      {!msg.content && hasMedia && (
+                        <span className={`flex items-center justify-end gap-1 text-[11px] opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
+                          {formatMessageDate(msg.createdAt)}
+                          {isUser && <MessageStatusIcon status={msg.status} />}
+                        </span>
+                      )}
                     </div>
 
                     {/* Reactions row */}
                     {msgReactions.length > 0 && (
-                      <div className={`mt-1 flex flex-wrap gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`z-10 -mt-2 flex flex-wrap gap-0.5 ${isUser ? 'justify-end pr-1' : 'justify-start pl-1'}`}>
                         {msgReactions.map((r) => (
                           <span
                             key={r.id}
-                            className="inline-flex items-center rounded-full bg-gray-100 px-1.5 py-0.5 text-sm dark:bg-gray-800"
+                            className="inline-flex items-center gap-0.5 rounded-full bg-white px-1.5 py-0.5 text-sm shadow-sm dark:bg-[#2a3942]"
                             title={`Reacted ${formatMessageDate(r.createdAt)}`}
                           >
                             {r.content}
@@ -718,6 +781,14 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                       </div>
                     )}
                   </div>
+                  {isUser && isFirstInGroup && (
+                    <div
+                      className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-primary-200 text-[10px] font-semibold text-primary-800 dark:bg-primary-800/40 dark:text-primary-300"
+                      title="Agent"
+                    >
+                      A
+                    </div>
+                  )}
                 </div>
               </div>
             );
@@ -748,11 +819,11 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
 
         <div className="flex items-center gap-2">
           {/* Attachment Button */}
-          <div className="relative" ref={attachRef}>
+          <div className="relative self-center" ref={attachRef}>
             <button
               onClick={() => setAttachOpen((prev) => !prev)}
               disabled={uploading || !!pendingMediaId}
-              className="flex flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white p-2.5 text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50"
+              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50"
               aria-label="Attach"
             >
               <Paperclip size={20} />
@@ -778,7 +849,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
 
           <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
 
-          <div className="relative flex-1">
+          <div className="relative flex-1 self-center">
             <textarea
               rows={1}
               placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
@@ -797,7 +868,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
                 }
               }}
               onKeyDown={handleKeyDown}
-              className="input max-h-32 resize-none py-2.5"
+              className="input max-h-32 min-h-11 resize-none py-2.5"
             />
             {slashOpen && filteredQuickReplies.length > 0 && (
               <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
@@ -826,7 +897,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
           <button
             onClick={handleSend}
             disabled={uploading || (!input.trim() && !pendingMediaId)}
-            className="flex flex-shrink-0 items-center justify-center rounded-xl bg-[#25D366] p-2.5 text-white shadow-sm hover:bg-[#128C7E] disabled:opacity-40"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-[#25D366] text-white shadow-sm hover:bg-[#128C7E] disabled:opacity-40"
           >
             <Send size={18} />
           </button>
@@ -909,6 +980,11 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
           </div>
         </div>
       )}
+      <ContactProfilePopup
+        contactId={contactId}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
+      />
     </div>
   );
 }
