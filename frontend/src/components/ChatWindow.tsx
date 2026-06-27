@@ -746,7 +746,7 @@ export default function ChatWindow({ conversationId, contactName, onAssignAgent,
           </div>
         )}
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-center gap-2">
           {/* Attachment Button */}
           <div className="relative" ref={attachRef}>
             <button
