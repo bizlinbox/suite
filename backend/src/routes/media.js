@@ -2,6 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const axios = require('axios');
 const { query } = require('../db');
 const { authenticate, resolveWabaAccount } = require('../middleware/auth');
 const { uploadMedia, getMedia, deleteMedia } = require('../services/whatsapp');
@@ -116,6 +117,32 @@ router.post('/', authenticate, resolveWabaAccount, upload.single('file'), handle
     // Clean up temp file on error
     if (req.file) fs.unlink(req.file.path, () => {});
     logger.error('Meta media upload failed', { error: err.message, response: err.response?.data });
+    next(err);
+  }
+});
+
+// GET /api/v1/media/proxy/:mediaId - Proxy media download from Meta
+router.get('/proxy/:mediaId', authenticate, async (req, res, next) => {
+  try {
+    const { mediaId } = req.params;
+    const credentials = await getOrgCredentials(req.user.org_id);
+    if (!credentials) {
+      return res.status(404).json({ error: 'No WhatsApp number configured for this organization' });
+    }
+
+    const metaData = await getMedia(mediaId, credentials.access_token);
+
+    const fileRes = await axios.get(metaData.url, {
+      responseType: 'stream',
+      headers: { Authorization: `Bearer ${credentials.access_token}` },
+      timeout: 30000,
+    });
+
+    res.setHeader('Content-Type', metaData.mime_type || 'application/octet-stream');
+    res.setHeader('Cache-Control', 'private, max-age=3600');
+    fileRes.data.pipe(res);
+  } catch (err) {
+    logger.error('Meta media proxy failed', { error: err.message, response: err.response?.data });
     next(err);
   }
 });

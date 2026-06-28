@@ -164,6 +164,8 @@ function getFileIcon(messageType?: string) {
 function getMediaUrl(mediaUrl?: string): string {
   if (!mediaUrl) return '';
   if (mediaUrl.startsWith('http://') || mediaUrl.startsWith('https://')) return mediaUrl;
+  // Meta media IDs are numeric strings — proxy through backend
+  if (/^\d+$/.test(mediaUrl)) return `${api.defaults.baseURL}/media/proxy/${mediaUrl}`;
   return `${api.defaults.baseURL?.replace('/api/v1', '') || ''}/uploads/${mediaUrl}`;
 }
 
