@@ -18,8 +18,6 @@ module.exports = {
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   cookieSecure: isProd,
   cookieSameSite: 'lax',
-  rateLimitWindowMs: 900000,
-  rateLimitMax: 100,
   corsOrigin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:3000'],
   trustProxy: isProd,
   publicUrl: process.env.PUBLIC_URL || process.env.WEBHOOK_BASE_URL || null,

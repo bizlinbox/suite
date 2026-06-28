@@ -2,7 +2,6 @@ const express = require('express');
 const helmet = require('helmet');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const rateLimit = require('express-rate-limit');
 const http = require('http');
 const path = require('path');
 const fs = require('fs');
@@ -74,43 +73,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
-// Webhook rate limiting (public, no auth)
-const webhookLimiter = rateLimit({
-  windowMs: 60000,
-  max: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    res.status(429).json({ error: 'Too many webhook requests, please try again later.' });
-  },
-});
-app.use('/api/v1/webhooks', webhookLimiter);
 
-// General rate limiting
-const generalLimiter = rateLimit({
-  windowMs: config.rateLimitWindowMs,
-  max: config.rateLimitMax,
-  standardHeaders: true,
-  legacyHeaders: false,
-  handler: (req, res) => {
-    res.status(429).json({ error: 'Too many requests, please try again later.' });
-  },
-});
-app.use('/api/', generalLimiter);
-
-// Stricter rate limit for auth
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  skipSuccessfulRequests: false,
-  handler: (req, res) => {
-    res.status(429).json({ error: 'Too many auth attempts, please try again later.' });
-  },
-});
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
 
 // Static uploads
 if (!fs.existsSync(config.uploadDir)) {
