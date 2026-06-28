@@ -176,7 +176,7 @@ CREATE INDEX IF NOT EXISTS idx_api_logs_direction ON api_logs(direction);
 CREATE TABLE IF NOT EXISTS flows (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     org_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-    waba_account_id UUID REFERENCES waba_accounts(id) ON DELETE CASCADE,
+    waba_account_id UUID,
     name TEXT NOT NULL,
     flow_id TEXT UNIQUE,
     category TEXT,
@@ -342,6 +342,20 @@ CREATE TABLE IF NOT EXISTS waba_accounts (
     UNIQUE(org_id, phone_number_id),
     UNIQUE(org_id, business_account_id)
 );
+
+-- Add FK from flows to waba_accounts (idempotent for fresh and existing DBs)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE constraint_name = 'flows_waba_account_id_fkey'
+    AND table_name = 'flows'
+  ) THEN
+    ALTER TABLE flows
+      ADD CONSTRAINT flows_waba_account_id_fkey
+      FOREIGN KEY (waba_account_id) REFERENCES waba_accounts(id) ON DELETE CASCADE;
+  END IF;
+END $$;
 
 -- Migration: add webhook_verify_token to existing waba_accounts
 ALTER TABLE waba_accounts ADD COLUMN IF NOT EXISTS webhook_verify_token TEXT;
