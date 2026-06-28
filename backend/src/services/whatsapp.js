@@ -5,6 +5,7 @@ const path = require('path');
 const config = require('../config');
 const logger = require('../utils/logger');
 const { query } = require('../db');
+const { logApiCall } = require('./apiLog');
 
 const WHATSAPP_BASE_URL = `https://graph.facebook.com/${config.whatsappApiVersion}`;
 
@@ -460,6 +461,47 @@ async function sendReactionMessage(phoneNumberId, accessToken, to, options = {})
   return response.data;
 }
 
+async function sendTemplateMessage(phoneNumberId, accessToken, to, templateName, languageCode, templateVariables) {
+  const url = `${WHATSAPP_BASE_URL}/${phoneNumberId}/messages`;
+
+  const template = {
+    name: templateName,
+    language: {
+      code: languageCode || 'en',
+    },
+  };
+
+  // Build components if variables are provided
+  if (templateVariables && Array.isArray(templateVariables) && templateVariables.length > 0) {
+    template.components = [
+      {
+        type: 'body',
+        parameters: templateVariables.map((v) => ({
+          type: 'text',
+          text: String(v),
+        })),
+      },
+    ];
+  }
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to,
+    type: 'template',
+    template,
+  };
+
+  const response = await axios.post(url, payload, {
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  return response.data;
+}
+
 async function sendMessage(jobData) {
   const {
     phoneNumberId,
@@ -471,6 +513,8 @@ async function sendMessage(jobData) {
     messageType,
     messageId,
     wabaAccountId,
+    orgId,
+    conversationId,
     addressOptions,
     contactsData,
     ctaUrlOptions,
@@ -482,32 +526,79 @@ async function sendMessage(jobData) {
     reactionOptions,
     filename,
     voice,
+    templateName,
+    templateLanguage,
+    templateVariables,
   } = jobData;
+
+  async function timedSend(fn, endpoint) {
+    const start = Date.now();
+    try {
+      const result = await fn();
+      const duration = Date.now() - start;
+      await logApiCall({
+        orgId,
+        conversationId,
+        direction: 'outgoing',
+        provider: 'whatsapp',
+        endpoint,
+        method: 'POST',
+        requestBody: { to, type: messageType || 'text', content: content || '' },
+        responseBody: result,
+        statusCode: 200,
+        durationMs: duration,
+        success: true,
+      });
+      return result;
+    } catch (err) {
+      const duration = Date.now() - start;
+      const statusCode = err.response?.status || 0;
+      await logApiCall({
+        orgId,
+        conversationId,
+        direction: 'outgoing',
+        provider: 'whatsapp',
+        endpoint,
+        method: 'POST',
+        requestBody: { to, type: messageType || 'text', content: content || '' },
+        responseBody: err.response?.data || null,
+        statusCode,
+        durationMs: duration,
+        success: false,
+        errorMessage: err.response?.data?.error?.message || err.message,
+      });
+      throw err;
+    }
+  }
+
+  const endpoint = `${WHATSAPP_BASE_URL}/${phoneNumberId}/messages`;
 
   try {
     let result;
-    if (messageType === 'address_message' && addressOptions) {
-      result = await sendAddressMessage(phoneNumberId, accessToken, to, addressOptions);
+    if (messageType === 'template' && templateName) {
+      result = await timedSend(() => sendTemplateMessage(phoneNumberId, accessToken, to, templateName, templateLanguage, templateVariables), endpoint);
+    } else if (messageType === 'address_message' && addressOptions) {
+      result = await timedSend(() => sendAddressMessage(phoneNumberId, accessToken, to, addressOptions), endpoint);
     } else if (messageType === 'location_request_message' && locationRequestOptions) {
-      result = await sendLocationRequestMessage(phoneNumberId, accessToken, to, locationRequestOptions);
+      result = await timedSend(() => sendLocationRequestMessage(phoneNumberId, accessToken, to, locationRequestOptions), endpoint);
     } else if (messageType === 'cta_url' && ctaUrlOptions) {
-      result = await sendCtaUrlMessage(phoneNumberId, accessToken, to, ctaUrlOptions);
+      result = await timedSend(() => sendCtaUrlMessage(phoneNumberId, accessToken, to, ctaUrlOptions), endpoint);
     } else if (messageType === 'list' && listOptions) {
-      result = await sendListMessage(phoneNumberId, accessToken, to, listOptions);
+      result = await timedSend(() => sendListMessage(phoneNumberId, accessToken, to, listOptions), endpoint);
     } else if (messageType === 'product_list' && productListOptions) {
-      result = await sendProductListMessage(phoneNumberId, accessToken, to, productListOptions);
+      result = await timedSend(() => sendProductListMessage(phoneNumberId, accessToken, to, productListOptions), endpoint);
     } else if (messageType === 'button' && replyButtonsOptions) {
-      result = await sendReplyButtonsMessage(phoneNumberId, accessToken, to, replyButtonsOptions);
+      result = await timedSend(() => sendReplyButtonsMessage(phoneNumberId, accessToken, to, replyButtonsOptions), endpoint);
     } else if (messageType === 'location' && locationOptions) {
-      result = await sendLocationMessage(phoneNumberId, accessToken, to, locationOptions);
+      result = await timedSend(() => sendLocationMessage(phoneNumberId, accessToken, to, locationOptions), endpoint);
     } else if (messageType === 'reaction' && reactionOptions) {
-      result = await sendReactionMessage(phoneNumberId, accessToken, to, reactionOptions);
+      result = await timedSend(() => sendReactionMessage(phoneNumberId, accessToken, to, reactionOptions), endpoint);
     } else if (messageType === 'contacts' && contactsData) {
-      result = await sendContactsMessage(phoneNumberId, accessToken, to, contactsData);
+      result = await timedSend(() => sendContactsMessage(phoneNumberId, accessToken, to, contactsData), endpoint);
     } else if (messageType === 'text' || !mediaUrl) {
-      result = await sendTextMessage(phoneNumberId, accessToken, to, content, jobData.previewUrl);
+      result = await timedSend(() => sendTextMessage(phoneNumberId, accessToken, to, content, jobData.previewUrl), endpoint);
     } else {
-      result = await sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, content, messageType, filename, mediaMimeType);
+      result = await timedSend(() => sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, content, messageType, filename, mediaMimeType), endpoint);
     }
 
     // Update message status and external_id if available
@@ -580,6 +671,7 @@ module.exports = {
   sendMessage,
   sendTextMessage,
   sendMediaMessage,
+  sendTemplateMessage,
   sendAddressMessage,
   sendContactsMessage,
   sendCtaUrlMessage,

@@ -40,6 +40,15 @@ export function useAuth() {
     fetchUser();
   }, [fetchUser]);
 
+  const refreshUser = useCallback(async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setUser(res.data.user);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -49,5 +58,5 @@ export function useAuth() {
     }
   }, []);
 
-  return { user, loading, logout };
+  return { user, loading, logout, refreshUser };
 }

@@ -18,7 +18,8 @@ interface IncomingMessage {
 }
 
 interface ConversationUpdate {
-  id: string;
+  id?: string;
+  conversationId?: string;
   contactName?: string;
   contactPhone?: string;
   lastMessagePreview?: string;
@@ -88,11 +89,14 @@ export default function NotificationManager() {
     };
 
     const handleConversationUpdated = (updated: ConversationUpdate) => {
+      const convId = updated.id || updated.conversationId;
+      if (!convId) return;
+
       const currentPath = lastPathRef.current;
       const isInbox = currentPath === '/dashboard/inbox' || currentPath.startsWith('/dashboard/inbox/');
 
       if (isInbox && updated.unreadCount && updated.unreadCount > 0) {
-        const isViewingExactConv = currentPath === `/dashboard/inbox/${updated.id}`;
+        const isViewingExactConv = currentPath === `/dashboard/inbox/${convId}`;
         const isVisible = document.visibilityState === 'visible';
         if (!isViewingExactConv || !isVisible) {
           playRingtone();
@@ -103,7 +107,7 @@ export default function NotificationManager() {
       if (!areNotificationsEnabled()) return;
       if (!updated.unreadCount || updated.unreadCount === 0) return;
 
-      const isViewingConversation = currentPath === `/dashboard/inbox/${updated.id}`;
+      const isViewingConversation = currentPath === `/dashboard/inbox/${convId}`;
       const isVisible = document.visibilityState === 'visible';
 
       if (isViewingConversation && isVisible) return;
@@ -111,9 +115,9 @@ export default function NotificationManager() {
       showLocalNotification({
         title: updated.contactName || 'New message',
         body: updated.lastMessagePreview || 'You have a new message',
-        tag: `conv-${updated.id}`,
-        conversationId: updated.id,
-        url: `/dashboard/inbox/${updated.id}`,
+        tag: `conv-${convId}`,
+        conversationId: convId,
+        url: `/dashboard/inbox/${convId}`,
       });
     };
 

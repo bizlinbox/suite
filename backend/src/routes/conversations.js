@@ -263,4 +263,38 @@ router.post('/:id/close', async (req, res, next) => {
   }
 });
 
+// DELETE /:id - delete conversation (messages cascade)
+router.delete('/:id', async (req, res, next) => {
+  try {
+    // Verify conversation exists and user has access
+    let sql = `SELECT c.id, c.is_private, c.assigned_agent_id
+               FROM conversations c
+               WHERE c.id = $1 AND c.org_id = $2`;
+    const params = [req.params.id, req.user.org_id];
+    if (req.wabaAccountId) {
+      sql += ` AND c.waba_account_id = $${params.length + 1}`;
+      params.push(req.wabaAccountId);
+    }
+    const checkResult = await query(sql, params);
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    const conv = checkResult.rows[0];
+    if (conv.is_private && !isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+
+    await query('DELETE FROM conversations WHERE id = $1 AND org_id = $2', [
+      req.params.id,
+      req.user.org_id,
+    ]);
+
+    res.status(204).send();
+  } catch (err) {
+    logger.error('Delete conversation error', err);
+    next(err);
+  }
+});
+
 module.exports = router;

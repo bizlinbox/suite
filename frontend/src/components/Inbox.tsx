@@ -9,6 +9,8 @@ import { useWaba } from '@/context/WabaContext';
 import ConversationList, { Conversation } from '@/components/ConversationList';
 import ChatWindow, { Message } from '@/components/ChatWindow';
 import NewChatDialog from '@/components/NewChatDialog';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { toastError, toastSuccess } from '@/components/Toaster';
 import { Building2, MessageSquare } from 'lucide-react';
 
 interface InboxProps {
@@ -20,6 +22,8 @@ export default function Inbox({ selectedId }: InboxProps) {
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [newChatOpen, setNewChatOpen] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const { socket } = useSocket();
   const { selectedWabaId } = useWaba();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -57,24 +61,99 @@ export default function Inbox({ selectedId }: InboxProps) {
         }
       }
 
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === message.conversationId
-            ? {
-                ...c,
-                lastMessagePreview: message.content,
-                lastMessageAt: message.createdAt,
-                unreadCount: c.id === selectedId ? 0 : c.unreadCount + 1,
-              }
-            : c
-        )
-      );
+      setConversations((prev) => {
+        const exists = prev.find((c) => c.id === message.conversationId);
+        if (exists) {
+          return prev.map((c) =>
+            c.id === message.conversationId
+              ? {
+                  ...c,
+                  lastMessagePreview: message.content || '',
+                  lastMessageAt: message.createdAt,
+                  unreadCount: c.id === selectedId ? 0 : c.unreadCount + 1,
+                }
+              : c
+          );
+        }
+        // New conversation not in list yet — fetch and prepend
+        api.get(`/conversations/${message.conversationId}`)
+          .then((res) => {
+            const conv = res.data.conversation;
+            if (conv) {
+              setConversations((current) => {
+                if (current.find((c) => c.id === message.conversationId)) return current;
+                return [
+                  {
+                    id: conv.id,
+                    contactId: conv.contactId,
+                    contactName: conv.contactName || 'Unknown',
+                    contactPhone: conv.contactPhone || '',
+                    lastMessagePreview: message.content || '',
+                    lastMessageAt: message.createdAt,
+                    unreadCount: conv.id === selectedId ? 0 : 1,
+                    assignedAgentName: conv.assignedAgentName,
+                    isPrivate: conv.isPrivate,
+                    assignedAgentId: conv.assignedAgentId,
+                  },
+                  ...current,
+                ];
+              });
+            }
+          })
+          .catch(() => {});
+        return prev;
+      });
     };
 
-    const handleConversationUpdated = (updated: Conversation) => {
-      setConversations((prev) =>
-        prev.map((c) => (c.id === updated.id ? { ...c, ...updated } : c))
-      );
+    const handleConversationUpdated = (updated: Record<string, unknown>) => {
+      const convId = (updated.id as string) || (updated.conversationId as string);
+      if (!convId) return;
+
+      setConversations((prev) => {
+        const exists = prev.find((c) => c.id === convId);
+        if (exists) {
+          return prev.map((c) =>
+            c.id === convId
+              ? {
+                  ...c,
+                  ...(updated.lastMessageAt ? { lastMessageAt: String(updated.lastMessageAt) } : {}),
+                  ...(updated.lastMessagePreview ? { lastMessagePreview: String(updated.lastMessagePreview) } : {}),
+                  ...(typeof updated.unreadCount === 'number' ? { unreadCount: updated.unreadCount } : {}),
+                  ...(updated.assignedAgentName ? { assignedAgentName: String(updated.assignedAgentName) } : {}),
+                  ...(updated.assignedAgentId ? { assignedAgentId: String(updated.assignedAgentId) } : {}),
+                  ...(typeof updated.isPrivate === 'boolean' ? { isPrivate: updated.isPrivate } : {}),
+                }
+              : c
+          );
+        }
+        // New conversation — fetch and prepend
+        api.get(`/conversations/${convId}`)
+          .then((res) => {
+            const conv = res.data.conversation;
+            if (conv) {
+              setConversations((current) => {
+                if (current.find((c) => c.id === convId)) return current;
+                return [
+                  {
+                    id: conv.id,
+                    contactId: conv.contactId,
+                    contactName: conv.contactName || 'Unknown',
+                    contactPhone: conv.contactPhone || '',
+                    lastMessagePreview: (updated.lastMessagePreview as string) || '',
+                    lastMessageAt: (updated.lastMessageAt as string) || conv.lastMessageAt || conv.createdAt,
+                    unreadCount: 1,
+                    assignedAgentName: conv.assignedAgentName,
+                    isPrivate: conv.isPrivate,
+                    assignedAgentId: conv.assignedAgentId,
+                  },
+                  ...current,
+                ];
+              });
+            }
+          })
+          .catch(() => {});
+        return prev;
+      });
     };
 
     socket.on('new_message', handleNewMessage);
@@ -114,6 +193,28 @@ export default function Inbox({ selectedId }: InboxProps) {
     setConversations((prev) =>
       prev.map((c) => (c.id === selectedId ? { ...c, isPrivate } : c))
     );
+  };
+
+  const handleDeleteRequest = (id: string) => {
+    setConfirmDeleteId(id);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmDeleteId) return;
+    setDeletingId(confirmDeleteId);
+    try {
+      await api.delete(`/conversations/${confirmDeleteId}`);
+      setConversations((prev) => prev.filter((c) => c.id !== confirmDeleteId));
+      toastSuccess('Conversation deleted');
+      if (selectedId === confirmDeleteId) {
+        router.push('/dashboard/inbox');
+      }
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to delete conversation');
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
   };
 
   const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
@@ -158,6 +259,8 @@ export default function Inbox({ selectedId }: InboxProps) {
             selectedId={selectedId}
             onSelect={handleSelect}
             onNewChat={() => setNewChatOpen(true)}
+            onDelete={handleDeleteRequest}
+            deletingId={deletingId}
           />
         </div>
 
@@ -192,6 +295,16 @@ export default function Inbox({ selectedId }: InboxProps) {
         onClose={() => setNewChatOpen(false)}
         onSelect={handleNewChatSelect}
         existingConversations={conversations.map((c) => ({ id: c.id, contactId: c.contactId }))}
+      />
+
+      <ConfirmDialog
+        open={!!confirmDeleteId}
+        title="Delete Conversation"
+        message="This will permanently delete the conversation and all its messages. This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteId(null)}
       />
     </div>
   );

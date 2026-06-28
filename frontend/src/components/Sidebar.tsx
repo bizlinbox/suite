@@ -21,6 +21,8 @@ import {
   Moon,
   FileText,
   FormInput,
+  Settings,
+  Server,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -40,11 +42,12 @@ const allNavItems = [
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
   { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
+  { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
 ];
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/api-logs'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }
@@ -244,16 +247,28 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
               </div>
             )}
           </div>
-          <button
-            onClick={() => logout()}
-            className={`mt-2 flex w-full items-center justify-center rounded-md text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20 ${
-              isCollapsed ? 'gap-0 px-1 py-1.5' : 'gap-1.5 px-2 py-1.5'
-            }`}
-            title="Log out"
-          >
-            <LogOut size={12} />
-            {!isCollapsed && 'Log out'}
-          </button>
+          <div className={`mt-2 flex items-center ${isCollapsed ? 'justify-center gap-1' : 'gap-2'}`}>
+            <Link
+              href="/dashboard/profile"
+              className={`flex items-center rounded-md text-[11px] font-medium text-blue-200 transition-colors hover:bg-blue-800/40 hover:text-white ${
+                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
+              }`}
+              title="Profile"
+            >
+              <Settings size={12} />
+              {!isCollapsed && 'Profile'}
+            </Link>
+            <button
+              onClick={() => logout()}
+              className={`flex items-center rounded-md text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20 ${
+                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
+              }`}
+              title="Log out"
+            >
+              <LogOut size={12} />
+              {!isCollapsed && 'Log out'}
+            </button>
+          </div>
         </div>
       </div>
     </div>

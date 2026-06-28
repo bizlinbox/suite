@@ -115,7 +115,7 @@ CREATE TABLE IF NOT EXISTS messages (
     media_mime_type TEXT,
     filename TEXT,
     voice BOOLEAN DEFAULT false,
-    message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'unknown')),
+    message_type TEXT NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'template', 'unknown')),
     status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'delivered', 'read', 'failed')),
     external_id TEXT,
     error_message TEXT,
@@ -131,6 +131,44 @@ BEGIN
     CREATE INDEX IF NOT EXISTS idx_messages_reaction_to ON messages(reaction_to_message_id);
   END IF;
 END $$;
+
+-- Migrate: expand message_type CHECK constraint to include 'template'
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.check_constraints
+    WHERE constraint_name = 'messages_message_type_check'
+    AND check_clause NOT LIKE '%template%'
+  ) THEN
+    ALTER TABLE messages DROP CONSTRAINT messages_message_type_check;
+    ALTER TABLE messages ADD CONSTRAINT messages_message_type_check
+      CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'template', 'unknown'));
+  END IF;
+END $$;
+
+-- API Logs table for third-party platform logging
+CREATE TABLE IF NOT EXISTS api_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    org_id UUID REFERENCES organizations(id) ON DELETE CASCADE,
+    conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
+    direction TEXT NOT NULL CHECK (direction IN ('outgoing', 'incoming')),
+    provider TEXT NOT NULL DEFAULT 'whatsapp',
+    endpoint TEXT NOT NULL,
+    method TEXT NOT NULL,
+    request_body JSONB,
+    response_body JSONB,
+    status_code INTEGER,
+    duration_ms INTEGER,
+    success BOOLEAN DEFAULT true,
+    error_message TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_api_logs_org_id ON api_logs(org_id);
+CREATE INDEX IF NOT EXISTS idx_api_logs_conversation_id ON api_logs(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_api_logs_created_at ON api_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_api_logs_provider ON api_logs(provider);
+CREATE INDEX IF NOT EXISTS idx_api_logs_direction ON api_logs(direction);
 
 CREATE TABLE IF NOT EXISTS flows (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

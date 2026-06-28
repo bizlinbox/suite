@@ -34,6 +34,7 @@ const templateRoutes = require('./routes/templates');
 const flowRoutes = require('./routes/flows');
 const { router: campaignRoutes } = require('./routes/campaigns');
 const roleRoutes = require('./routes/roles');
+const apiLogRoutes = require('./routes/apiLogs');
 
 // Workers
 require('./queues/workers');
@@ -149,6 +150,7 @@ app.use('/api/v1/templates', templateRoutes);
 app.use('/api/v1/flows', flowRoutes);
 app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/roles', roleRoutes);
+app.use('/api/v1/api-logs', apiLogRoutes);
 
 // Global error handler
 app.use(errorHandler);

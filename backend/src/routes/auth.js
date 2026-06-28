@@ -315,6 +315,94 @@ router.get('/me', authenticate, async (req, res, next) => {
   }
 });
 
+// PATCH /me - update current user profile
+const updateProfileSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  email: z.string().email().optional(),
+  current_password: z.string().min(1).optional(),
+  new_password: z.string().min(8).max(128).optional(),
+});
+
+router.patch('/me', authenticate, async (req, res, next) => {
+  try {
+    const parse = updateProfileSchema.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ error: 'Invalid input', details: parse.error.errors });
+    }
+
+    const { name, email, current_password, new_password } = req.body;
+    const userId = req.user.id;
+    const orgId = req.user.org_id;
+
+    // Fetch current user
+    const userResult = await query(
+      'SELECT id, name, email, password_hash FROM users WHERE id = $1',
+      [userId]
+    );
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const currentUser = userResult.rows[0];
+
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined && name !== currentUser.name) {
+      updates.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+
+    if (email !== undefined && email !== currentUser.email) {
+      // Check email uniqueness within org
+      const emailCheck = await query(
+        'SELECT id FROM users WHERE email = $1 AND org_id = $2 AND id != $3',
+        [email, orgId, userId]
+      );
+      if (emailCheck.rows.length > 0) {
+        return res.status(409).json({ error: 'Email already in use' });
+      }
+      updates.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+
+    if (new_password) {
+      if (!current_password) {
+        return res.status(400).json({ error: 'Current password is required to change password' });
+      }
+      const valid = await bcrypt.compare(current_password, currentUser.password_hash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Current password is incorrect' });
+      }
+      const passwordHash = await bcrypt.hash(new_password, 12);
+      updates.push(`password_hash = $${paramIndex++}`);
+      values.push(passwordHash);
+    }
+
+    if (updates.length === 0) {
+      return res.json({ user: { id: currentUser.id, name: currentUser.name, email: currentUser.email } });
+    }
+
+    values.push(userId);
+    const sql = `UPDATE users SET ${updates.join(', ')} WHERE id = $${paramIndex} RETURNING id, name, email, role, status`;
+    const result = await query(sql, values);
+    const updatedUser = result.rows[0];
+
+    res.json({
+      user: {
+        id: updatedUser.id,
+        name: updatedUser.name,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        status: updatedUser.status,
+      },
+    });
+  } catch (err) {
+    logger.error('Update profile error', err);
+    next(err);
+  }
+});
+
 // GET /setup-required
 router.get('/setup-required', async (req, res, next) => {
   try {

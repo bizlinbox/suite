@@ -18,7 +18,9 @@ function getOrCreateSocket(): Promise<Socket | null> {
 
   globalConnectionPromise = new Promise((resolve) => {
     const runtimeEnv = (typeof window !== 'undefined' ? (window as any).__ENV__ : undefined);
-    const socketUrl = runtimeEnv?.NEXT_PUBLIC_API_URL || undefined;
+    const apiUrl = runtimeEnv?.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_URL || '';
+    // Strip /api/v1 suffix if present so Socket.IO connects to the backend root
+    const socketUrl = apiUrl ? apiUrl.replace(/\/api\/v1\/?$/, '') : undefined;
 
     const createSocket = () => {
       const socket = io(socketUrl, {

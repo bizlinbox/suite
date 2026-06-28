@@ -88,9 +88,15 @@ router.post('/', async (req, res, next) => {
     const filename = body.filename;
     const voice = body.voice;
     const media_mime_type = body.media_mime_type || body.mediaMimeType;
+    const template_name = body.template_name || body.templateName;
+    const template_language = body.template_language || body.templateLanguage;
+    const template_variables = body.template_variables || body.templateVariables;
 
     if (!conversation_id) {
       return res.status(400).json({ error: 'conversation_id is required' });
+    }
+    if (message_type === 'template' && !template_name) {
+      return res.status(400).json({ error: 'template_name is required for template type' });
     }
     if (message_type === 'address_message' && !address_options) {
       return res.status(400).json({ error: 'address_options is required for address_message type' });
@@ -119,7 +125,7 @@ router.post('/', async (req, res, next) => {
     if (message_type === 'contacts' && (!contactsData || !Array.isArray(contactsData))) {
       return res.status(400).json({ error: 'contacts array is required for contacts message type' });
     }
-    if (!content && !media_url && message_type !== 'address_message' && message_type !== 'contacts' && message_type !== 'cta_url' && message_type !== 'list' && message_type !== 'product_list' && message_type !== 'button' && message_type !== 'location' && message_type !== 'location_request_message' && message_type !== 'reaction') {
+    if (!content && !media_url && message_type !== 'address_message' && message_type !== 'contacts' && message_type !== 'cta_url' && message_type !== 'list' && message_type !== 'product_list' && message_type !== 'button' && message_type !== 'location' && message_type !== 'location_request_message' && message_type !== 'reaction' && message_type !== 'template') {
       return res.status(400).json({ error: 'content or media_url is required' });
     }
 
@@ -160,8 +166,14 @@ router.post('/', async (req, res, next) => {
     );
 
     // Emit real-time events
+    // Emit new_message to both the conversation room and org so all agents get real-time updates
     emitToConversation(req.user.org_id, conversation_id, 'new_message', camelize(message));
-    emitToOrg(req.user.org_id, 'conversation_updated', camelize({ conversation_id: conversation_id, last_message_at: message.created_at }));
+    emitToOrg(req.user.org_id, 'new_message', camelize(message));
+    emitToOrg(req.user.org_id, 'conversation_updated', camelize({
+      conversation_id: conversation_id,
+      last_message_at: message.created_at,
+      last_message_preview: message.content || '',
+    }));
 
     // Look up WABA account credentials
     let phoneNumberId = null;
@@ -189,6 +201,8 @@ router.post('/', async (req, res, next) => {
         messageType: message_type,
         messageId: message.id,
         wabaAccountId: conv.waba_account_id || null,
+        orgId: req.user.org_id,
+        conversationId: conversation_id,
       };
       if (voice) {
         jobData.voice = voice;
@@ -229,12 +243,53 @@ router.post('/', async (req, res, next) => {
       if (filename) {
         jobData.filename = filename;
       }
+      if (message_type === 'template') {
+        jobData.templateName = template_name;
+        jobData.templateLanguage = template_language || 'en';
+        if (template_variables) {
+          jobData.templateVariables = template_variables;
+        }
+      }
       await messageQueue.add('send-whatsapp-message', jobData);
     }
 
     res.status(201).json({ message: camelize(message) });
   } catch (err) {
     logger.error('Send message error', err);
+    next(err);
+  }
+});
+
+// GET /template-window/:conversationId - check if 24h conversation window is open
+router.get('/template-window/:conversationId', async (req, res, next) => {
+  try {
+    const { conversationId } = req.params;
+    const access = await checkConversationAccess(req, conversationId);
+    if (!access.allowed) {
+      return res.status(404).json({ error: access.reason });
+    }
+
+    // Find the most recent incoming (contact) message in this conversation
+    const result = await query(
+      `SELECT created_at FROM messages
+       WHERE conversation_id = $1 AND sender_type = 'contact'
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [conversationId]
+    );
+
+    const lastIncoming = result.rows[0]?.created_at;
+    const now = new Date();
+    const windowOpen = lastIncoming
+      ? new Date(lastIncoming).getTime() > now.getTime() - 24 * 60 * 60 * 1000
+      : false;
+
+    res.json({
+      windowOpen,
+      lastIncomingMessageAt: lastIncoming || null,
+    });
+  } catch (err) {
+    logger.error('Template window check error', err);
     next(err);
   }
 });

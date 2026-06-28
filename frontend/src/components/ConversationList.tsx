@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Trash2, Loader2 } from 'lucide-react';
 
 export interface Conversation {
   id: string;
@@ -21,9 +21,11 @@ interface ConversationListProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   onNewChat?: () => void;
+  onDelete?: (id: string) => void;
+  deletingId?: string | null;
 }
 
-export default function ConversationList({ conversations, selectedId, onSelect, onNewChat }: ConversationListProps) {
+export default function ConversationList({ conversations, selectedId, onSelect, onNewChat, onDelete, deletingId }: ConversationListProps) {
   const [search, setSearch] = useState('');
 
   const filtered = conversations.filter((c) =>
@@ -68,57 +70,79 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
         ) : (
           <div className="space-y-1">
             {filtered.map((conversation) => (
-              <button
+              <div
                 key={conversation.id}
-                onClick={() => onSelect(conversation.id)}
-                className={`flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                className={`group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
                   conversation.id === selectedId
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                 }`}
               >
-                <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
-                  conversation.id === selectedId
-                    ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                }`}>
-                  {getInitials(conversation.contactName)}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`truncate text-sm font-medium ${
-                      conversation.id === selectedId
-                        ? 'text-primary-800 dark:text-primary-300'
-                        : 'text-gray-900 dark:text-gray-100'
-                    }`}>
-                      {conversation.contactName}
-                    </span>
-                    <div className="flex items-center gap-1.5">
-                      {conversation.isPrivate && (
-                        <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Private</span>
-                      )}
-                      {conversation.lastMessageAt && (
-                        <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                          {new Date(conversation.lastMessageAt).toLocaleDateString() === new Date().toLocaleDateString()
-                            ? new Date(conversation.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                            : new Date(conversation.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                        </span>
-                      )}
-                      {conversation.unreadCount > 0 && (
-                        <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white">
-                          {conversation.unreadCount}
-                        </span>
-                      )}
-                    </div>
+                <button
+                  onClick={() => onSelect(conversation.id)}
+                  className="flex flex-1 items-start gap-3 text-left"
+                >
+                  <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
+                    conversation.id === selectedId
+                      ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
+                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                  }`}>
+                    {getInitials(conversation.contactName)}
                   </div>
-                  <p className="truncate text-xs text-gray-500 dark:text-gray-400">{conversation.lastMessagePreview}</p>
-                  {conversation.assignedAgentName && (
-                    <p className="mt-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400">
-                      Assigned to {conversation.assignedAgentName}
-                    </p>
-                  )}
-                </div>
-              </button>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`truncate text-sm font-medium ${
+                        conversation.id === selectedId
+                          ? 'text-primary-800 dark:text-primary-300'
+                          : 'text-gray-900 dark:text-gray-100'
+                      }`}>
+                        {conversation.contactName}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {conversation.isPrivate && (
+                          <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Private</span>
+                        )}
+                        {conversation.lastMessageAt && (
+                          <span className="text-[10px] text-gray-400 dark:text-gray-500">
+                            {new Date(conversation.lastMessageAt).toLocaleDateString() === new Date().toLocaleDateString()
+                              ? new Date(conversation.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                              : new Date(conversation.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                          </span>
+                        )}
+                        {conversation.unreadCount > 0 && (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary-600 px-1.5 text-[10px] font-semibold text-white">
+                            {conversation.unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{conversation.lastMessagePreview}</p>
+                    {conversation.assignedAgentName && (
+                      <p className="mt-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400">
+                        Assigned to {conversation.assignedAgentName}
+                      </p>
+                    )}
+                  </div>
+                </button>
+                {onDelete && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete(conversation.id);
+                    }}
+                    disabled={deletingId === conversation.id}
+                    className="mt-1 rounded-md p-1.5 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-50"
+                    aria-label="Delete conversation"
+                    title="Delete conversation"
+                  >
+                    {deletingId === conversation.id ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={14} />
+                    )}
+                  </button>
+                )}
+              </div>
             ))}
           </div>
         )}

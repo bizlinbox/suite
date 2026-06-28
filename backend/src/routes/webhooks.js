@@ -7,6 +7,7 @@ const logger = require('../utils/logger');
 const { emitToOrg, emitToConversation } = require('../services/socket');
 const config = require('../config');
 const camelize = require('../utils/camelize');
+const { logApiCall } = require('../services/apiLog');
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ const META_API_BASE = `https://graph.facebook.com/${config.whatsappApiVersion}`;
  * Download media from Meta's WhatsApp Cloud API
  */
 async function downloadMedia(mediaId, accessToken, orgId) {
+  const start = Date.now();
   try {
     // Step 1: Get temporary download URL from Meta
     const metaRes = await axios.get(`${META_API_BASE}/${mediaId}`, {
@@ -49,9 +51,35 @@ async function downloadMedia(mediaId, accessToken, orgId) {
       writer.on('error', reject);
     });
 
+    await logApiCall({
+      orgId,
+      direction: 'incoming',
+      provider: 'meta',
+      endpoint: `${META_API_BASE}/${mediaId}`,
+      method: 'GET',
+      requestBody: null,
+      responseBody: { url: downloadUrl, mime_type: mimeType },
+      statusCode: 200,
+      durationMs: Date.now() - start,
+      success: true,
+    });
+
     return { localPath: relativePath, mimeType };
   } catch (err) {
     logger.error('Media download failed', { mediaId, error: err.message });
+    await logApiCall({
+      orgId,
+      direction: 'incoming',
+      provider: 'meta',
+      endpoint: `${META_API_BASE}/${mediaId}`,
+      method: 'GET',
+      requestBody: null,
+      responseBody: err.response?.data || null,
+      statusCode: err.response?.status || 0,
+      durationMs: Date.now() - start,
+      success: false,
+      errorMessage: err.message,
+    });
     return null;
   }
 }
@@ -477,8 +505,14 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
     }
 
     // Emit Socket.IO events
+    // Emit new_message to both the conversation room and org so all agents get real-time updates
     emitToConversation(orgId, conversationId, 'new_message', camelize(message));
-    emitToOrg(orgId, 'conversation_updated', camelize({ conversation_id: conversationId, last_message_at: timestamp }));
+    emitToOrg(orgId, 'new_message', camelize(message));
+    emitToOrg(orgId, 'conversation_updated', camelize({
+      conversation_id: conversationId,
+      last_message_at: timestamp,
+      last_message_preview: message.content || '',
+    }));
 
     // TODO: Trigger automations (visual workflow engine)
     // await triggerWorkflows(orgId, 'message_received', { message, conversation_id: conversationId, contact_id: contactId });

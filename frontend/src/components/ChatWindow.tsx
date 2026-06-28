@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2 } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2, Mail } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
 import ContactProfilePopup from './ContactProfilePopup';
+import TemplateSendDialog from './TemplateSendDialog';
 import { toastError } from '@/components/Toaster';
 
 export interface Message {
@@ -61,17 +62,7 @@ interface ChatWindowProps {
 function MessageStatusIcon({ status, errorMessage }: { status?: Message['status']; errorMessage?: string }) {
   if (!status) return null;
   if (status === 'failed') {
-    return (
-      <span className="group relative inline-flex items-center">
-        <AlertCircle size={12} className="text-red-500" />
-        {errorMessage && (
-          <span className="pointer-events-none absolute bottom-full right-0 z-50 mb-1.5 hidden w-56 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700 shadow-lg group-hover:block dark:border-red-900/40 dark:bg-gray-900 dark:text-red-400">
-            <span className="mb-1 block font-semibold">Failed to send</span>
-            {errorMessage}
-          </span>
-        )}
-      </span>
-    );
+    return <FailedMessageIcon errorMessage={errorMessage} />;
   }
   if (status === 'read') {
     return <CheckCheck size={12} className="text-blue-600" />;
@@ -80,6 +71,42 @@ function MessageStatusIcon({ status, errorMessage }: { status?: Message['status'
     return <CheckCheck size={12} className="text-gray-500" />;
   }
   return <Check size={12} className="text-gray-400" />;
+}
+
+function FailedMessageIcon({ errorMessage }: { errorMessage?: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  return (
+    <span ref={ref} className="relative inline-flex items-center">
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        className="rounded-sm focus:outline-none focus:ring-1 focus:ring-red-400"
+        aria-label="Message failed to send"
+      >
+        <AlertCircle size={12} className="text-red-500" />
+      </button>
+      {open && errorMessage && (
+        <span className="absolute bottom-full right-0 z-50 mb-1.5 w-56 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs text-red-700 shadow-lg dark:border-red-900/40 dark:bg-gray-900 dark:text-red-400">
+          <span className="mb-1 block font-semibold">Failed to send</span>
+          {errorMessage}
+        </span>
+      )}
+    </span>
+  );
 }
 
 function formatMessageDate(createdAt: string): string {
@@ -338,11 +365,34 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [flowForm, setFlowForm] = useState({ body: '', header: '', footer: '', flowToken: `flow-${Date.now()}`, screen: '', data: '' });
   const [sendingFlow, setSendingFlow] = useState(false);
 
+  // Template sending state
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [templateWindowOpen, setTemplateWindowOpen] = useState(true);
+  const [lastIncomingMessageAt, setLastIncomingMessageAt] = useState<string | null>(null);
+
   useEffect(() => {
     if (!conversationId) return;
     api.get(`/messages?conversationId=${conversationId}`).then((res) => {
       setMessages(res.data.messages || []);
     });
+  }, [conversationId]);
+
+  // Check 24h conversation window status
+  useEffect(() => {
+    if (!conversationId) return;
+    const checkWindow = async () => {
+      try {
+        const res = await api.get(`/messages/template-window/${conversationId}`);
+        setTemplateWindowOpen(res.data.windowOpen);
+        setLastIncomingMessageAt(res.data.lastIncomingMessageAt);
+      } catch {
+        setTemplateWindowOpen(false);
+      }
+    };
+    checkWindow();
+    // Re-check every 60 seconds
+    const interval = setInterval(checkWindow, 60000);
+    return () => clearInterval(interval);
   }, [conversationId]);
 
   // Real-time socket: join conversation room and listen for new messages
@@ -1267,166 +1317,196 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         )}
 
         <div className="flex items-center gap-2">
-          {/* Attachment Button */}
-          <div className="relative self-center" ref={attachRef}>
-            <button
-              onClick={() => setAttachOpen((prev) => !prev)}
-              disabled={uploading || !!pendingMediaId || isRecording}
-              className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50 ${isRecording ? 'hidden' : ''}`}
-              aria-label="Attach"
-            >
-              <Paperclip size={20} />
-            </button>
-            {attachOpen && (
-              <div className="absolute bottom-full left-0 z-50 mb-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                {attachmentOptions.map((opt) => {
-                  const Icon = opt.icon;
-                  return (
-                    <button
-                      key={opt.key}
-                      onClick={() => handleAttachmentOption(opt)}
-                      className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                    >
-                      <Icon size={16} className="text-gray-400" />
-                      {opt.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
-
-          {isRecording ? (
-            <div className="flex flex-1 items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-900/20">
-              <span className="relative flex h-3 w-3">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
-                <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
+          {!templateWindowOpen ? (
+            // 24h window closed — only template sending allowed
+            <div className="flex flex-1 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900/40 dark:bg-amber-900/20">
+              <AlertCircle size={16} className="shrink-0 text-amber-600 dark:text-amber-400" />
+              <span className="flex-1 text-sm text-amber-700 dark:text-amber-300">
+                24-hour conversation window closed
               </span>
-              <span className="text-sm font-medium text-red-700 dark:text-red-300">Recording</span>
-              <span className="text-sm text-red-600 dark:text-red-400">
-                {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
-              </span>
-              <div className="flex-1"></div>
               <button
-                onClick={cancelRecording}
-                className="rounded-lg p-1.5 text-red-600 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
-                title="Cancel"
+                onClick={() => setTemplateDialogOpen(true)}
+                className="flex items-center gap-1.5 rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
               >
-                <X size={18} />
-              </button>
-              <button
-                onClick={stopRecording}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
-                title="Stop"
-              >
-                <StopCircle size={18} />
-              </button>
-            </div>
-          ) : voicePreviewBlob ? (
-            <div className="flex flex-1 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/20">
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleVoicePreview(); }}
-                className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
-              >
-                {voicePreviewPlaying ? <Pause size={14} /> : <Play size={14} />}
-              </button>
-              <div className="flex flex-1 flex-col">
-                <div className="flex items-center gap-1.5">
-                  <Mic size={12} className="text-gray-500 dark:text-gray-400" />
-                  <div className="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-gray-700">
-                    <div
-                      className="h-1.5 rounded-full bg-primary-600"
-                      style={{ width: `${recordingDuration > 0 ? (voicePreviewCurrentTime / recordingDuration) * 100 : 0}%` }}
-                    />
-                  </div>
-                </div>
-                <div className="mt-0.5 flex justify-between">
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(voicePreviewCurrentTime)}</span>
-                  <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(recordingDuration)}</span>
-                </div>
-              </div>
-              <audio ref={voicePreviewAudioRef} src={voicePreviewUrl} preload="metadata" className="hidden" />
-              <button
-                onClick={cancelVoicePreview}
-                className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
-                title="Delete"
-              >
-                <Trash2 size={16} />
-              </button>
-              <button
-                onClick={() => voicePreviewBlob && sendVoiceMessage(voicePreviewBlob)}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm hover:bg-secondary-500"
-                title="Send voice message"
-              >
-                <Send size={16} />
+                <Mail size={14} />
+                Send Template
               </button>
             </div>
           ) : (
             <>
-              <div className="relative flex-1 self-center" ref={slashRef}>
-                <textarea
-                  rows={1}
-                  placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
-                  value={input}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setInput(val);
-                    const words = val.split(/\s+/);
-                    const lastWord = words[words.length - 1];
-                    if (lastWord.startsWith('/')) {
-                      setSlashOpen(true);
-                      setSlashQuery(lastWord.slice(1));
-                      setSlashIndex(0);
-                    } else {
-                      setSlashOpen(false);
-                    }
-                  }}
-                  onKeyDown={handleKeyDown}
-                  className="input max-h-32 min-h-11 resize-none py-2.5"
-                />
-                {slashOpen && filteredQuickReplies.length > 0 && (
-                  <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                    {filteredQuickReplies.map((c, idx) => (
-                      <li
-                        key={c.id}
-                        onClick={() => insertQuickReply(c)}
-                        className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
-                          idx === slashIndex
-                            ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
-                            : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        <span className="font-medium">/{c.shortcut}</span>
-                        <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{c.content.slice(0, 60)}{c.content.length > 60 ? '...' : ''}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {slashOpen && filteredQuickReplies.length === 0 && (
-                  <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
-                    <p className="text-sm text-gray-400 dark:text-gray-500">No quick replies found</p>
+              {/* Attachment Button */}
+              <div className="relative self-center" ref={attachRef}>
+                <button
+                  onClick={() => setAttachOpen((prev) => !prev)}
+                  disabled={uploading || !!pendingMediaId || isRecording}
+                  className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 disabled:opacity-50 ${isRecording ? 'hidden' : ''}`}
+                  aria-label="Attach"
+                >
+                  <Paperclip size={20} />
+                </button>
+                {attachOpen && (
+                  <div className="absolute bottom-full left-0 z-50 mb-2 w-48 overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
+                    {attachmentOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => handleAttachmentOption(opt)}
+                          className="flex w-full items-center gap-3 px-3 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
+                        >
+                          <Icon size={16} className="text-gray-400" />
+                          {opt.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>
-              {!input.trim() && !pendingMediaId ? (
-                <button
-                  onClick={startRecording}
-                  disabled={uploading}
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
-                  title="Record voice message"
-                >
-                  <Mic size={18} />
-                </button>
+
+              <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
+
+              {isRecording ? (
+                <div className="flex flex-1 items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 dark:border-red-900/50 dark:bg-red-900/20">
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-red-500"></span>
+                  </span>
+                  <span className="text-sm font-medium text-red-700 dark:text-red-300">Recording</span>
+                  <span className="text-sm text-red-600 dark:text-red-400">
+                    {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                  </span>
+                  <div className="flex-1"></div>
+                  <button
+                    onClick={cancelRecording}
+                    className="rounded-lg p-1.5 text-red-600 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
+                    title="Cancel"
+                  >
+                    <X size={18} />
+                  </button>
+                  <button
+                    onClick={stopRecording}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+                    title="Stop"
+                  >
+                    <StopCircle size={18} />
+                  </button>
+                </div>
+              ) : voicePreviewBlob ? (
+                <div className="flex flex-1 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/20">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); toggleVoicePreview(); }}
+                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
+                  >
+                    {voicePreviewPlaying ? <Pause size={14} /> : <Play size={14} />}
+                  </button>
+                  <div className="flex flex-1 flex-col">
+                    <div className="flex items-center gap-1.5">
+                      <Mic size={12} className="text-gray-500 dark:text-gray-400" />
+                      <div className="h-1.5 flex-1 rounded-full bg-gray-300 dark:bg-gray-700">
+                        <div
+                          className="h-1.5 rounded-full bg-primary-600"
+                          style={{ width: `${recordingDuration > 0 ? (voicePreviewCurrentTime / recordingDuration) * 100 : 0}%` }}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-0.5 flex justify-between">
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(voicePreviewCurrentTime)}</span>
+                      <span className="text-[10px] text-gray-500 dark:text-gray-400">{formatAudioTime(recordingDuration)}</span>
+                    </div>
+                  </div>
+                  <audio ref={voicePreviewAudioRef} src={voicePreviewUrl} preload="metadata" className="hidden" />
+                  <button
+                    onClick={cancelVoicePreview}
+                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button
+                    onClick={() => voicePreviewBlob && sendVoiceMessage(voicePreviewBlob)}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm hover:bg-secondary-500"
+                    title="Send voice message"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
               ) : (
-                <button
-                  onClick={handleSend}
-                  disabled={uploading || (!input.trim() && !pendingMediaId)}
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
-                >
-                  <Send size={18} />
-                </button>
+                <>
+                  <div className="relative flex-1 self-center" ref={slashRef}>
+                    <textarea
+                      rows={1}
+                      placeholder={pendingFile ? 'Add a caption...' : 'Type a message... (type / for quick replies)'}
+                      value={input}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setInput(val);
+                        const words = val.split(/\s+/);
+                        const lastWord = words[words.length - 1];
+                        if (lastWord.startsWith('/')) {
+                          setSlashOpen(true);
+                          setSlashQuery(lastWord.slice(1));
+                          setSlashIndex(0);
+                        } else {
+                          setSlashOpen(false);
+                        }
+                      }}
+                      onKeyDown={handleKeyDown}
+                      className="input max-h-32 min-h-11 resize-none py-2.5"
+                    />
+                    {slashOpen && filteredQuickReplies.length > 0 && (
+                      <ul className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 max-h-56 overflow-y-auto dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
+                        {filteredQuickReplies.map((c, idx) => (
+                          <li
+                            key={c.id}
+                            onClick={() => insertQuickReply(c)}
+                            className={`cursor-pointer px-3 py-2 text-sm transition-colors ${
+                              idx === slashIndex
+                                ? 'bg-primary-50 text-primary-800 dark:bg-primary-900/20 dark:text-primary-300'
+                                : 'text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800'
+                            }`}
+                          >
+                            <span className="font-medium">/{c.shortcut}</span>
+                            <span className="ml-2 text-xs text-gray-400 dark:text-gray-500">{c.content.slice(0, 60)}{c.content.length > 60 ? '...' : ''}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {slashOpen && filteredQuickReplies.length === 0 && (
+                      <div className="absolute bottom-full left-0 z-50 mb-1.5 w-full max-w-sm rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5">
+                        <p className="text-sm text-gray-400 dark:text-gray-500">No quick replies found</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Template button */}
+                  <button
+                    onClick={() => setTemplateDialogOpen(true)}
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                    aria-label="Send template"
+                    title="Send template"
+                  >
+                    <Mail size={20} />
+                  </button>
+
+                  {!input.trim() && !pendingMediaId ? (
+                    <button
+                      onClick={startRecording}
+                      disabled={uploading}
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
+                      title="Record voice message"
+                    >
+                      <Mic size={18} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSend}
+                      disabled={uploading || (!input.trim() && !pendingMediaId)}
+                      className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-primary-600 text-white shadow-sm hover:bg-secondary-500 disabled:opacity-40"
+                    >
+                      <Send size={18} />
+                    </button>
+                  )}
+                </>
               )}
             </>
           )}
@@ -1614,6 +1694,12 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           </div>
         </div>
       )}
+
+      <TemplateSendDialog
+        open={templateDialogOpen}
+        conversationId={conversationId}
+        onClose={() => setTemplateDialogOpen(false)}
+      />
 
       <ContactProfilePopup
         contactId={contactId}

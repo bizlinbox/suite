@@ -1,0 +1,311 @@
+'use client';
+
+import { useEffect, useState, useCallback } from 'react';
+import { api } from '@/lib/api';
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  AlertCircle,
+  CheckCircle,
+  Clock,
+  Filter,
+  RefreshCw,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Server,
+} from 'lucide-react';
+import { toastError } from '@/components/Toaster';
+
+interface ApiLog {
+  id: string;
+  orgId: string;
+  conversationId: string | null;
+  direction: 'outgoing' | 'incoming';
+  provider: string;
+  endpoint: string;
+  method: string;
+  requestBody: Record<string, unknown> | null;
+  responseBody: Record<string, unknown> | null;
+  statusCode: number | null;
+  durationMs: number | null;
+  success: boolean;
+  errorMessage: string | null;
+  createdAt: string;
+}
+
+export default function ApiLogsPage() {
+  const [logs, setLogs] = useState<ApiLog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [limit] = useState(50);
+  const [directionFilter, setDirectionFilter] = useState<string>('');
+  const [providerFilter, setProviderFilter] = useState<string>('');
+  const [selectedLog, setSelectedLog] = useState<ApiLog | null>(null);
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      params.set('limit', String(limit));
+      params.set('offset', String(offset));
+      if (directionFilter) params.set('direction', directionFilter);
+      if (providerFilter) params.set('provider', providerFilter);
+
+      const res = await api.get(`/api-logs?${params.toString()}`);
+      setLogs(res.data.logs || []);
+      setTotal(res.data.total || 0);
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to load API logs');
+    } finally {
+      setLoading(false);
+    }
+  }, [offset, limit, directionFilter, providerFilter]);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
+  const totalPages = Math.ceil(total / limit);
+  const currentPage = Math.floor(offset / limit) + 1;
+
+  return (
+    <div className="mx-auto max-w-7xl">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">API Logs</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Platform API calls to third-party services
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={fetchLogs}
+            disabled={loading}
+            className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-2">
+          <Filter size={16} className="text-gray-400" />
+          <select
+            value={directionFilter}
+            onChange={(e) => { setDirectionFilter(e.target.value); setOffset(0); }}
+            className="input text-sm"
+          >
+            <option value="">All directions</option>
+            <option value="outgoing">Outgoing</option>
+            <option value="incoming">Incoming</option>
+          </select>
+        </div>
+        <div>
+          <select
+            value={providerFilter}
+            onChange={(e) => { setProviderFilter(e.target.value); setOffset(0); }}
+            className="input text-sm"
+          >
+            <option value="">All providers</option>
+            <option value="whatsapp">WhatsApp</option>
+            <option value="meta">Meta</option>
+          </select>
+        </div>
+        <span className="text-sm text-gray-500 dark:text-gray-400">
+          {total} total logs
+        </span>
+      </div>
+
+      {/* Table */}
+      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
+        <table className="w-full text-left text-sm">
+          <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+            <tr>
+              <th className="px-4 py-3">Direction</th>
+              <th className="px-4 py-3">Provider</th>
+              <th className="px-4 py-3">Method</th>
+              <th className="px-4 py-3">Endpoint</th>
+              <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Duration</th>
+              <th className="px-4 py-3">Time</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {logs.length === 0 && !loading && (
+              <tr>
+                <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  No API logs found
+                </td>
+              </tr>
+            )}
+            {logs.map((log) => (
+              <tr
+                key={log.id}
+                className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+              >
+                <td className="px-4 py-3">
+                  <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                    log.direction === 'outgoing'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                      : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                  }`}>
+                    {log.direction === 'outgoing' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
+                    {log.direction}
+                  </span>
+                </td>
+                <td className="px-4 py-3 capitalize text-gray-700 dark:text-gray-300">{log.provider}</td>
+                <td className="px-4 py-3">
+                  <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                    {log.method}
+                  </span>
+                </td>
+                <td className="px-4 py-3 max-w-xs truncate text-gray-700 dark:text-gray-300" title={log.endpoint}>
+                  {log.endpoint}
+                </td>
+                <td className="px-4 py-3">
+                  {log.success ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                      <CheckCircle size={14} />
+                      {log.statusCode || 'OK'}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-medium text-red-600 dark:text-red-400">
+                      <AlertCircle size={14} />
+                      {log.statusCode || 'Error'}
+                    </span>
+                  )}
+                </td>
+                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                  {log.durationMs ? `${log.durationMs}ms` : '—'}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                  {new Date(log.createdAt).toLocaleString()}
+                </td>
+                <td className="px-4 py-3 text-right">
+                  <button
+                    onClick={() => setSelectedLog(log)}
+                    className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+                    title="View details"
+                  >
+                    <ExternalLink size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <button
+            onClick={() => setOffset((prev) => Math.max(0, prev - limit))}
+            disabled={offset === 0}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <ChevronLeft size={16} /> Previous
+          </button>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Page {currentPage} of {totalPages}
+          </span>
+          <button
+            onClick={() => setOffset((prev) => prev + limit)}
+            disabled={offset + limit >= total}
+            className="flex items-center gap-1 rounded-lg border border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            Next <ChevronRight size={16} />
+          </button>
+        </div>
+      )}
+
+      {/* Detail Modal */}
+      {selectedLog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={(e) => { if (e.target === e.currentTarget) setSelectedLog(null); }}>
+          <div className="max-h-[85vh] w-full max-w-2xl overflow-y-auto rounded-xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">API Log Details</h2>
+              <button
+                onClick={() => setSelectedLog(null)}
+                className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Direction</span>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100 capitalize">{selectedLog.direction}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Provider</span>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100 capitalize">{selectedLog.provider}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Method</span>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">{selectedLog.method}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Status</span>
+                  <p className={`mt-1 font-medium ${selectedLog.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {selectedLog.success ? 'Success' : 'Failed'} {selectedLog.statusCode ? `(${selectedLog.statusCode})` : ''}
+                  </p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Duration</span>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">{selectedLog.durationMs ? `${selectedLog.durationMs}ms` : '—'}</p>
+                </div>
+                <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
+                  <span className="text-gray-500 dark:text-gray-400">Time</span>
+                  <p className="mt-1 font-medium text-gray-900 dark:text-gray-100">{new Date(selectedLog.createdAt).toLocaleString()}</p>
+                </div>
+              </div>
+
+              <div>
+                <span className="text-sm text-gray-500 dark:text-gray-400">Endpoint</span>
+                <p className="mt-1 break-all rounded-lg bg-gray-50 p-3 font-mono text-xs text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                  {selectedLog.endpoint}
+                </p>
+              </div>
+
+              {selectedLog.requestBody && (
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Request Body</span>
+                  <pre className="mt-1 max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 font-mono text-xs text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                    {JSON.stringify(selectedLog.requestBody, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {selectedLog.responseBody && (
+                <div>
+                  <span className="text-sm text-gray-500 dark:text-gray-400">Response Body</span>
+                  <pre className="mt-1 max-h-48 overflow-auto rounded-lg bg-gray-50 p-3 font-mono text-xs text-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+                    {JSON.stringify(selectedLog.responseBody, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {selectedLog.errorMessage && (
+                <div>
+                  <span className="text-sm text-red-500 dark:text-red-400">Error</span>
+                  <p className="mt-1 rounded-lg bg-red-50 p-3 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+                    {selectedLog.errorMessage}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

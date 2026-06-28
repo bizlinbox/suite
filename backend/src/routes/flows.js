@@ -351,8 +351,14 @@ router.post('/:id/send', async (req, res, next) => {
 
     // Emit real-time event
     const { emitToConversation, emitToOrg } = require('../services/socket');
+    // Emit new_message to both the conversation room and org so all agents get real-time updates
     emitToConversation(req.user.org_id, conversation_id, 'new_message', camelize(message));
-    emitToOrg(req.user.org_id, 'conversation_updated', camelize({ conversation_id, last_message_at: message.created_at }));
+    emitToOrg(req.user.org_id, 'new_message', camelize(message));
+    emitToOrg(req.user.org_id, 'conversation_updated', camelize({
+      conversation_id,
+      last_message_at: message.created_at,
+      last_message_preview: message.content || '',
+    }));
 
     // Send via WhatsApp
     const sendResult = await sendFlowMessage(phoneNumberId, accessToken, conv.contact_phone, {
