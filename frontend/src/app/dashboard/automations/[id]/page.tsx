@@ -15,22 +15,10 @@ export default function EditAutomationPage() {
   useEffect(() => {
     api.get(`/automations/${id}`)
       .then((res) => {
-        const automation = res.data.automation;
-        const nodes = res.data.nodes.map((n: any) => ({
-          id: n.id,
-          type: n.type,
-          position: { x: n.positionX, y: n.positionY },
-          data: { type: n.type, label: n.label, config: n.config || {} },
-        }));
-        const edges = res.data.edges.map((e: any) => ({
-          id: e.id,
-          source: e.sourceNodeId,
-          target: e.targetNodeId,
-          label: e.label,
-          animated: true,
-          style: { stroke: '#6366f1' },
-        }));
-        setData({ name: automation.name, nodes, edges });
+        setData({
+          name: res.data.automation.name,
+          steps: res.data.steps || [],
+        });
       })
       .catch(() => setData(null))
       .finally(() => setLoading(false));
@@ -56,8 +44,7 @@ export default function EditAutomationPage() {
     <AutomationEditor
       automationId={id}
       initialName={data.name}
-      initialNodes={data.nodes}
-      initialEdges={data.edges}
+      initialSteps={data.steps}
     />
   );
 }

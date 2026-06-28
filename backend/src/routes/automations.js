@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authenticate);
 router.use(resolveWabaAccount);
 
-const VALID_NODE_TYPES = new Set([
+const VALID_STEP_TYPES = new Set([
   'trigger_message',
   'trigger_conversation_opened',
   'trigger_webhook',
@@ -27,10 +27,10 @@ const VALID_NODE_TYPES = new Set([
   'assign_agent',
 ]);
 
-function validateNodeTypes(nodes) {
-  for (const node of nodes || []) {
-    if (!VALID_NODE_TYPES.has(node.type)) {
-      return `Invalid node type: ${node.type}`;
+function validateStepTypes(steps) {
+  for (const step of steps || []) {
+    if (!VALID_STEP_TYPES.has(step.type)) {
+      return `Invalid step type: ${step.type}`;
     }
   }
   return null;
@@ -55,7 +55,7 @@ router.get('/', async (req, res, next) => {
 
     const result = await query(
       `SELECT a.id, a.org_id, a.waba_account_id, a.name, a.is_active, a.created_at, a.updated_at,
-              COUNT(an.id)::int AS node_count
+              COUNT(an.id)::int AS step_count
        FROM automations a
        LEFT JOIN automation_nodes an ON an.automation_id = a.id
        WHERE ${whereClause}
@@ -71,7 +71,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-// GET /:id - get single automation with nodes and edges
+// GET /:id - get single automation with steps (ordered linearly)
 router.get('/:id', async (req, res, next) => {
   try {
     const automationResult = await query(
@@ -86,23 +86,20 @@ router.get('/:id', async (req, res, next) => {
 
     const automation = camelize(automationResult.rows[0]);
 
-    const [nodesResult, edgesResult] = await Promise.all([
-      query(
-        `SELECT id, automation_id, type, label, position_x, position_y, config, created_at
-         FROM automation_nodes WHERE automation_id = $1 ORDER BY created_at`,
-        [req.params.id]
-      ),
-      query(
-        `SELECT id, automation_id, source_node_id, target_node_id, label, created_at
-         FROM automation_edges WHERE automation_id = $1 ORDER BY created_at`,
-        [req.params.id]
-      ),
-    ]);
+    const nodesResult = await query(
+      `SELECT id, automation_id, type, label, config, created_at
+       FROM automation_nodes WHERE automation_id = $1 ORDER BY created_at`,
+      [req.params.id]
+    );
 
     res.json({
       automation,
-      nodes: camelize(nodesResult.rows),
-      edges: camelize(edgesResult.rows),
+      steps: camelize(nodesResult.rows).map((n) => ({
+        id: n.id,
+        type: n.type,
+        label: n.label,
+        config: n.config || {},
+      })),
     });
   } catch (err) {
     logger.error('Get automation error', err);
@@ -110,17 +107,17 @@ router.get('/:id', async (req, res, next) => {
   }
 });
 
-// POST / - create automation with nodes and edges
+// POST / - create automation with steps
 router.post('/', async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { name, waba_account_id, nodes = [], edges = [] } = req.body;
+    const { name, waba_account_id, steps = [] } = req.body;
 
     if (!name) {
       return res.status(400).json({ error: 'name is required' });
     }
 
-    const typeError = validateNodeTypes(nodes);
+    const typeError = validateStepTypes(steps);
     if (typeError) {
       return res.status(400).json({ error: typeError });
     }
@@ -136,56 +133,33 @@ router.post('/', async (req, res, next) => {
     const automation = automationResult.rows[0];
     const automationId = automation.id;
 
-    const nodeMap = new Map();
-    const insertedNodes = [];
-    for (const node of nodes) {
-      const nodeResult = await client.query(
+    const insertedSteps = [];
+    for (const step of steps) {
+      const stepResult = await client.query(
         `INSERT INTO automation_nodes (automation_id, type, label, position_x, position_y, config)
          VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, automation_id, type, label, position_x, position_y, config, created_at`,
+         RETURNING id, automation_id, type, label, config, created_at`,
         [
           automationId,
-          node.type,
-          node.label || null,
-          node.positionX || 0,
-          node.positionY || 0,
-          JSON.stringify(node.config || {}),
+          step.type,
+          step.label || null,
+          0, 0,
+          JSON.stringify(step.config || {}),
         ]
       );
-      const dbNode = nodeResult.rows[0];
-      insertedNodes.push(dbNode);
-      if (node.id) {
-        nodeMap.set(String(node.id), dbNode.id);
-      }
-    }
-
-    const insertedEdges = [];
-    for (const edge of edges) {
-      let sourceId = edge.sourceNodeId;
-      let targetId = edge.targetNodeId;
-
-      if (nodeMap.has(String(sourceId))) {
-        sourceId = nodeMap.get(String(sourceId));
-      }
-      if (nodeMap.has(String(targetId))) {
-        targetId = nodeMap.get(String(targetId));
-      }
-
-      const edgeResult = await client.query(
-        `INSERT INTO automation_edges (automation_id, source_node_id, target_node_id, label)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, automation_id, source_node_id, target_node_id, label, created_at`,
-        [automationId, sourceId, targetId, edge.label || null]
-      );
-      insertedEdges.push(edgeResult.rows[0]);
+      insertedSteps.push(stepResult.rows[0]);
     }
 
     await client.query('COMMIT');
 
     res.status(201).json({
       automation: camelize(automation),
-      nodes: camelize(insertedNodes),
-      edges: camelize(insertedEdges),
+      steps: camelize(insertedSteps).map((n) => ({
+        id: n.id,
+        type: n.type,
+        label: n.label,
+        config: n.config || {},
+      })),
     });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -196,18 +170,18 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-// PUT /:id - update automation (replace entire graph)
+// PUT /:id - update automation (replace entire step sequence)
 router.put('/:id', async (req, res, next) => {
   const client = await pool.connect();
   try {
-    const { name, waba_account_id, nodes = [], edges = [] } = req.body;
+    const { name, waba_account_id, steps = [] } = req.body;
     const automationId = req.params.id;
 
     if (!name) {
       return res.status(400).json({ error: 'name is required' });
     }
 
-    const typeError = validateNodeTypes(nodes);
+    const typeError = validateStepTypes(steps);
     if (typeError) {
       return res.status(400).json({ error: typeError });
     }
@@ -232,59 +206,35 @@ router.put('/:id', async (req, res, next) => {
     );
     const automation = automationResult.rows[0];
 
-    await client.query('DELETE FROM automation_edges WHERE automation_id = $1', [automationId]);
     await client.query('DELETE FROM automation_nodes WHERE automation_id = $1', [automationId]);
 
-    const nodeMap = new Map();
-    const insertedNodes = [];
-    for (const node of nodes) {
-      const nodeResult = await client.query(
+    const insertedSteps = [];
+    for (const step of steps) {
+      const stepResult = await client.query(
         `INSERT INTO automation_nodes (automation_id, type, label, position_x, position_y, config)
          VALUES ($1, $2, $3, $4, $5, $6)
-         RETURNING id, automation_id, type, label, position_x, position_y, config, created_at`,
+         RETURNING id, automation_id, type, label, config, created_at`,
         [
           automationId,
-          node.type,
-          node.label || null,
-          node.positionX || 0,
-          node.positionY || 0,
-          JSON.stringify(node.config || {}),
+          step.type,
+          step.label || null,
+          0, 0,
+          JSON.stringify(step.config || {}),
         ]
       );
-      const dbNode = nodeResult.rows[0];
-      insertedNodes.push(dbNode);
-      if (node.id) {
-        nodeMap.set(String(node.id), dbNode.id);
-      }
-    }
-
-    const insertedEdges = [];
-    for (const edge of edges) {
-      let sourceId = edge.sourceNodeId;
-      let targetId = edge.targetNodeId;
-
-      if (nodeMap.has(String(sourceId))) {
-        sourceId = nodeMap.get(String(sourceId));
-      }
-      if (nodeMap.has(String(targetId))) {
-        targetId = nodeMap.get(String(targetId));
-      }
-
-      const edgeResult = await client.query(
-        `INSERT INTO automation_edges (automation_id, source_node_id, target_node_id, label)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, automation_id, source_node_id, target_node_id, label, created_at`,
-        [automationId, sourceId, targetId, edge.label || null]
-      );
-      insertedEdges.push(edgeResult.rows[0]);
+      insertedSteps.push(stepResult.rows[0]);
     }
 
     await client.query('COMMIT');
 
     res.json({
       automation: camelize(automation),
-      nodes: camelize(insertedNodes),
-      edges: camelize(insertedEdges),
+      steps: camelize(insertedSteps).map((n) => ({
+        id: n.id,
+        type: n.type,
+        label: n.label,
+        config: n.config || {},
+      })),
     });
   } catch (err) {
     await client.query('ROLLBACK');
@@ -305,7 +255,7 @@ router.delete('/:id', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Automation not found' });
     }
-    res.json({ message: 'Automation deleted' });
+    res.json({ success: true });
   } catch (err) {
     logger.error('Delete automation error', err);
     next(err);
@@ -316,10 +266,9 @@ router.delete('/:id', async (req, res, next) => {
 router.post('/:id/toggle', async (req, res, next) => {
   try {
     const result = await query(
-      `UPDATE automations
-       SET is_active = NOT is_active, updated_at = NOW()
+      `UPDATE automations SET is_active = NOT is_active, updated_at = NOW()
        WHERE id = $1 AND org_id = $2
-       RETURNING id, org_id, waba_account_id, name, is_active, created_at, updated_at`,
+       RETURNING id, is_active`,
       [req.params.id, req.user.org_id]
     );
     if (result.rows.length === 0) {

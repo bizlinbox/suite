@@ -19,7 +19,7 @@ interface Automation {
   id: string;
   name: string;
   isActive: boolean;
-  nodeCount: number;
+  stepCount: number;
   wabaAccountId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -103,7 +103,7 @@ export default function AutomationsPage() {
             <tr>
               <th className="px-4 py-3">Name</th>
               <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Nodes</th>
+              <th className="px-4 py-3">Steps</th>
               <th className="px-4 py-3">Created</th>
               <th className="px-4 py-3 text-right">Actions</th>
             </tr>
@@ -138,7 +138,7 @@ export default function AutomationsPage() {
                     {a.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{a.nodeCount} nodes</td>
+                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{a.stepCount} steps</td>
                 <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
                   {new Date(a.createdAt).toLocaleDateString()}
                 </td>
