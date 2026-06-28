@@ -249,7 +249,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
               className={`group flex items-center rounded-lg transition-colors ${
                 active
                   ? 'bg-blue-800 text-white'
-                  : 'text-blue-200 hover:bg-gray-200 dark:bg-gray-700/50 hover:text-white'
+                  : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
               } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
             >
               <Icon
@@ -257,7 +257,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                 className={`shrink-0 transition-colors ${
                   active
                     ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-gray-400 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
+                    : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
                 }`}
               />
               {!isCollapsed && item.label}
@@ -289,7 +289,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                         className={`shrink-0 transition-colors ${
                           active
                             ? 'text-white'
-                            : 'text-blue-400 group-hover:text-white'
+                            : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
                         }`}
                       />
                     </Link>
@@ -315,7 +315,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                   <span className="flex-1 text-left">Manage</span>
                   <ChevronDown
                     size={16}
-                    className={`shrink-0 text-blue-400 transition-transform ${manageOpen ? 'rotate-180' : ''}`}
+                    className={`shrink-0 text-gray-500 transition-transform dark:text-gray-500 ${manageOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
                 {manageOpen && (
@@ -330,7 +330,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                           className={`group flex items-center rounded-lg transition-colors ${
                             active
                               ? 'bg-blue-800 text-white'
-                              : 'text-blue-200 hover:bg-gray-200 dark:bg-gray-700/50 hover:text-white'
+                              : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                           } gap-3 px-3 py-2 text-sm font-medium`}
                         >
                           <Icon
@@ -338,7 +338,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                             className={`shrink-0 transition-colors ${
                               active
                                 ? 'text-white'
-                                : 'text-blue-400 group-hover:text-white'
+                                : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
                             }`}
                           />
                           {item.label}
