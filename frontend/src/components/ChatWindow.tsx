@@ -1199,10 +1199,10 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
                   <div className="flex max-w-[75%] flex-col">
                     <div
-                      className={`relative px-3 py-2 ${
+                      className={`relative px-4 py-2.5 ${
                         isUser
-                          ? 'rounded-2xl rounded-tr-sm bg-tertiary-100 text-gray-900 dark:bg-primary-700 dark:text-gray-100'
-                          : 'rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-[#111b21] shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-[#202c33] dark:text-[#e9edef] dark:shadow-none'
+                          ? 'rounded-2xl rounded-tr-sm bg-primary-600 text-white shadow-sm dark:bg-primary-700'
+                          : 'rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-gray-900 shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:border-gray-700/60 dark:bg-gray-800 dark:text-gray-100 dark:shadow-none'
                       }`}
                     >
                       {hasMedia && (
@@ -1237,9 +1237,9 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                           )}
                           {msg.messageType === 'document' && (
                             <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
-                              <FileText size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <FileText size={18} className={isUser ? 'text-white/90 dark:text-white' : 'text-gray-600 dark:text-gray-400'} />
                               <div className="min-w-0 flex-1">
-                                <span className={`block truncate text-xs font-medium ${isUser ? 'text-[#111b21] dark:text-[#e9edef]' : 'text-gray-700 dark:text-gray-300'}`}>
+                                <span className={`block truncate text-xs font-medium ${isUser ? 'text-white dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                                   {msg.filename || 'Document'}
                                 </span>
                               </div>
@@ -1247,7 +1247,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                           )}
                           {msg.messageType === 'location' && (
                             <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
-                              <MapPin size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
+                              <MapPin size={18} className={isUser ? 'text-white/90 dark:text-white' : 'text-gray-600 dark:text-gray-400'} />
                               <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
                             </div>
                           )}
@@ -1262,14 +1262,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                       {msg.content && (
                         <div className="flex items-end gap-2">
                           <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
-                          <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
+                          <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-white/70 dark:text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatMessageDate(msg.createdAt)}
                             {isUser && <span className="ml-0.5 inline-block"><MessageStatusIcon status={msg.status} errorMessage={msg.errorMessage} /></span>}
                           </span>
                         </div>
                       )}
                       {!msg.content && hasMedia && (
-                        <span className={`flex items-center justify-end gap-1 text-[11px] opacity-70 ${isUser ? 'text-[#111b21]/70 dark:text-[#e9edef]/70' : 'text-[#667781] dark:text-[#8696a0]'}`}>
+                        <span className={`flex items-center justify-end gap-1 text-[11px] opacity-70 ${isUser ? 'text-white/70 dark:text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
                           {formatMessageDate(msg.createdAt)}
                           {isUser && <MessageStatusIcon status={msg.status} errorMessage={msg.errorMessage} />}
                         </span>
@@ -1308,7 +1308,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       </div>
 
       {/* Input Area */}
-      <div className="border-t border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80">
+      <div className="border-t border-gray-100/80 bg-white px-4 py-3 dark:border-gray-800/60 dark:bg-gray-900">
         {/* Attachment preview */}
         {pendingFile && (
           <div className="mb-2 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">

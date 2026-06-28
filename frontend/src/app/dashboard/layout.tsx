@@ -56,7 +56,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
         {/* Mobile menu button */}
         <button
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="fixed left-4 top-4 z-40 rounded-lg border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-800 dark:bg-gray-900 md:hidden"
+          className="fixed left-4 top-4 z-40 rounded-xl border border-gray-200 bg-white p-2 shadow-sm dark:border-gray-700 dark:bg-gray-800 md:hidden"
           aria-label="Open menu"
         >
           <Menu size={20} className="text-gray-700 dark:text-gray-200" />

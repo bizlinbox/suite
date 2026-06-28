@@ -31,7 +31,7 @@
 
   /* Focus visible styles */
   :focus-visible {
-    @apply outline-none ring-2 ring-primary-500 ring-offset-2 ring-offset-white;
+    @apply outline-none ring-2 ring-primary-500/60 ring-offset-2 ring-offset-white;
   }
 
   .dark :focus-visible {
@@ -40,8 +40,8 @@
 
   /* Better scrollbar styling */
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
@@ -49,11 +49,11 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full bg-gray-300;
+    @apply rounded-full bg-gray-300/80;
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700;
+    @apply bg-gray-700/80;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -72,16 +72,16 @@
   }
 
   .page-header h1 {
-    @apply text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100;
+    @apply text-2xl font-bold tracking-tight text-gray-900 dark:text-gray-100;
   }
 
   .page-header p {
     @apply text-sm text-gray-500 dark:text-gray-400;
   }
 
-  /* Card pattern */
+  /* Card pattern - soft modern shadow */
   .panel {
-    @apply rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900;
+    @apply rounded-2xl border border-gray-200/80 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.04),0_1px_2px_rgba(0,0,0,0.02)] dark:border-gray-800/60 dark:bg-gray-900/80 dark:shadow-none;
   }
 
   /* Table pattern */
@@ -90,24 +90,24 @@
   }
 
   .data-table thead {
-    @apply bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400;
+    @apply bg-gray-50/60 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/40 dark:text-gray-400;
   }
 
   .data-table thead th {
-    @apply px-4 py-3;
+    @apply px-5 py-3.5 font-medium;
   }
 
   .data-table tbody tr {
-    @apply border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50/60 dark:border-gray-800 dark:hover:bg-gray-800/40;
+    @apply border-b border-gray-100/80 transition-colors duration-150 last:border-b-0 hover:bg-gray-50/50 dark:border-gray-800/50 dark:hover:bg-gray-800/30;
   }
 
   .data-table tbody td {
-    @apply px-4 py-3 text-gray-700 dark:text-gray-300;
+    @apply px-5 py-3.5 text-gray-700 dark:text-gray-300;
   }
 
   /* Button patterns */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:ring-offset-2 focus:ring-offset-white disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98];
   }
 
   .dark .btn {
@@ -115,15 +115,15 @@
   }
 
   .btn-primary {
-    @apply btn bg-primary-600 text-white hover:bg-secondary-500;
+    @apply btn bg-primary-600 text-white shadow-sm hover:bg-primary-500 hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply btn border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700;
+    @apply btn border border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700 dark:hover:border-gray-600;
   }
 
   .btn-ghost {
-    @apply btn text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800;
+    @apply btn text-gray-600 hover:bg-gray-100/80 dark:text-gray-400 dark:hover:bg-gray-800/60;
   }
 
   .btn-danger {
@@ -132,16 +132,16 @@
 
   /* Input pattern */
   .input {
-    @apply w-full rounded-lg border border-gray-300 bg-white px-3.5 py-2.5 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500;
+    @apply w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 shadow-sm transition-all duration-200 focus:border-primary-500/60 focus:shadow-[0_0_0_3px_rgba(45,86,134,0.08)] focus:outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500;
   }
 
-  /* Badge pattern */
+  /* Badge pattern - softer, rounded-full */
   .badge {
-    @apply inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium;
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold tracking-wide;
   }
 
   .badge-green {
-    @apply badge bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+    @apply badge bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400;
   }
 
   .badge-gray {
@@ -149,18 +149,18 @@
   }
 
   .badge-red {
-    @apply badge bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+    @apply badge bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400;
   }
 
   .badge-amber {
-    @apply badge bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400;
+    @apply badge bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400;
   }
 
   .badge-blue {
-    @apply badge bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400;
+    @apply badge bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400;
   }
 
   .badge-purple {
-    @apply badge bg-purple-50 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400;
+    @apply badge bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400;
   }
 }

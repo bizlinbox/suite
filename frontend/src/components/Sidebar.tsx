@@ -111,20 +111,20 @@ function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
     <div className={`relative pb-3 ${collapsed ? 'px-2' : 'px-3'}`} ref={ref}>
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className={`flex w-full items-center rounded-lg border border-blue-800/40 bg-blue-900/40 text-blue-100 hover:border-blue-700 hover:bg-blue-800/50 ${
+        className={`flex w-full items-center rounded-lg border border-gray-200 bg-gray-100 text-gray-700 hover:border-gray-300 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-300 dark:hover:border-gray-600 dark:hover:bg-gray-700/60 ${
           collapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-2.5'
         }`}
         aria-label="Select WABA account"
         title={selectedWaba?.name || 'Select WABA'}
       >
-        <Building2 size={16} className="shrink-0 text-blue-400" />
+        <Building2 size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />
         {!collapsed && (
           <span className="flex-1 truncate text-left text-sm font-medium">{selectedWaba?.name || 'Select WABA'}</span>
         )}
       </button>
 
       {open && (
-        <div className={`absolute z-50 rounded-xl border border-blue-800/40 bg-[#0f172a] shadow-lg ring-1 ring-black/5 ${
+        <div className={`absolute z-50 rounded-xl border border-gray-200 bg-white shadow-lg ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-900 ${
           collapsed ? 'left-14 top-0 w-56' : 'left-3 right-3 top-14'
         }`}>
           <div className="px-1 py-1">
@@ -137,14 +137,14 @@ function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
                 }}
                 className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
                   waba.id === selectedWabaId
-                    ? 'bg-blue-800 text-white'
-                    : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                    ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                 }`}
               >
-                <Building2 size={16} className="shrink-0 text-blue-400" />
+                <Building2 size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />
                 <span className="flex-1 truncate font-medium">{waba.name}</span>
                 {waba.id === selectedWabaId && (
-                  <Check size={16} className="shrink-0 text-white" />
+                  <Check size={16} className="shrink-0 text-primary-700 dark:text-primary-300" />
                 )}
               </button>
             ))}
@@ -161,13 +161,13 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   return (
     <button
       onClick={toggleTheme}
-      className={`flex w-full items-center rounded-lg border border-blue-800/40 bg-blue-900/40 text-blue-200 transition-colors hover:bg-blue-800/50 hover:text-white ${
+      className={`flex w-full items-center rounded-lg border border-gray-200 bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
         collapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-2'
       }`}
       aria-label="Toggle theme"
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
     >
-      {theme === 'dark' ? <Sun size={16} className="shrink-0 text-blue-400" /> : <Moon size={16} className="shrink-0 text-blue-400" />}
+      {theme === 'dark' ? <Sun size={16} className="shrink-0 text-gray-400 dark:text-gray-500" /> : <Moon size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />}
       {!collapsed && <span className="text-sm font-medium">{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>}
     </button>
   );
@@ -204,14 +204,14 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             <MessageSquare size={18} />
           </div>
           {!isCollapsed && (
-            <span className="text-lg font-bold tracking-tight text-white">BizlInbox</span>
+            <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">BizlInbox</span>
           )}
         </Link>
         <div className="flex items-center gap-1">
           {onDesktopToggle && (
             <button
               onClick={onDesktopToggle}
-              className="hidden rounded-md p-1 text-blue-400 hover:bg-blue-800/40 hover:text-white md:block"
+              className="hidden rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-100 md:block"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
               title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
@@ -221,7 +221,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
           {!isCollapsed && mobileOpen && (
             <button
               onClick={onMobileClose}
-              className="rounded-md p-1.5 text-blue-400 hover:bg-blue-800/40 hover:text-white md:hidden"
+              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-100 md:hidden"
               aria-label="Close sidebar"
             >
               <X size={18} />
@@ -232,7 +232,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       <WabaSwitcher collapsed={isCollapsed} />
 
-      <div className={`mb-2 h-px bg-blue-800/40 ${isCollapsed ? 'mx-2' : 'mx-3'}`} />
+      <div className={`mb-2 h-px bg-gray-200 dark:bg-gray-700/50 ${isCollapsed ? 'mx-2' : 'mx-3'}`} />
 
       {/* Nav */}
       <nav className={`flex-1 space-y-0.5 overflow-y-auto py-2 ${isCollapsed ? 'px-2' : 'px-3'}`}>
@@ -247,15 +247,15 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
               className={`group flex items-center rounded-lg transition-colors ${
                 active
                   ? 'bg-blue-800 text-white'
-                  : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                  : 'text-blue-200 hover:bg-gray-200 dark:bg-gray-700/50 hover:text-white'
               } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
             >
               <Icon
                 size={18}
                 className={`shrink-0 transition-colors ${
                   active
-                    ? 'text-white'
-                    : 'text-blue-400 group-hover:text-white'
+                    ? 'text-primary-700 dark:text-primary-300'
+                    : 'text-gray-400 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
                 }`}
               />
               {!isCollapsed && item.label}
@@ -278,8 +278,8 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                       title={item.label}
                       className={`group flex items-center rounded-lg transition-colors ${
                         active
-                          ? 'bg-blue-800 text-white'
-                          : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                       } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
                     >
                       <Icon
@@ -300,14 +300,14 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                   onClick={() => setManageOpen((prev) => !prev)}
                   className={`flex w-full items-center rounded-lg transition-colors ${
                     isManageActive
-                      ? 'bg-blue-800 text-white'
-                      : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                   } gap-3 px-3 py-2.5 text-sm font-medium`}
                 >
                   <Settings2
                     size={18}
                     className={`shrink-0 transition-colors ${
-                      isManageActive ? 'text-white' : 'text-blue-400'
+                      isManageActive ? 'text-primary-700 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500'
                     }`}
                   />
                   <span className="flex-1 text-left">Manage</span>
@@ -328,7 +328,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                           className={`group flex items-center rounded-lg transition-colors ${
                             active
                               ? 'bg-blue-800 text-white'
-                              : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                              : 'text-blue-200 hover:bg-gray-200 dark:bg-gray-700/50 hover:text-white'
                           } gap-3 px-3 py-2 text-sm font-medium`}
                         >
                           <Icon
@@ -358,22 +358,22 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       {/* User / Logout */}
       <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <div className={`rounded-lg border border-blue-800/40 bg-blue-900/40 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
+        <div className={`rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-700 text-xs font-semibold text-white" title={user?.name || 'User'}>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white" title={user?.name || 'User'}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-medium text-white">{user?.name}</div>
-                <div className="truncate text-[10px] text-blue-300">{user?.email}</div>
+                <div className="truncate text-xs font-medium text-gray-900 dark:text-gray-100">{user?.name}</div>
+                <div className="truncate text-[10px] text-gray-500 dark:text-gray-400">{user?.email}</div>
               </div>
             )}
           </div>
           <div className={`mt-2 flex items-center ${isCollapsed ? 'justify-center gap-1' : 'gap-2'}`}>
             <Link
               href="/dashboard/profile"
-              className={`flex items-center rounded-md text-[11px] font-medium text-blue-200 transition-colors hover:bg-blue-800/40 hover:text-white ${
+              className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
                 isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
               }`}
               title="Profile"
@@ -409,7 +409,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       {/* Mobile drawer (always full width) */}
       <div
-        className={`fixed left-0 top-0 z-50 h-full bg-[#0f172a] shadow-2xl transition-transform duration-300 ease-out md:hidden ${
+        className={`fixed left-0 top-0 z-50 h-full bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-gray-900 md:hidden ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ width: DRAWER_WIDTH }}
@@ -419,7 +419,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       {/* Desktop drawer */}
       <div
-        className={`fixed left-0 top-0 z-30 hidden h-full border-r border-blue-800/30 bg-[#0f172a] transition-[width] duration-300 ease-out md:block ${
+        className={`fixed left-0 top-0 z-30 hidden h-full border-r border-gray-200 bg-white transition-[width] duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 md:block ${
           desktopOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
         style={{ width: sidebarWidth }}
@@ -431,7 +431,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
       {!desktopOpen && onDesktopToggle && (
         <button
           onClick={onDesktopToggle}
-          className="fixed left-4 top-4 z-30 hidden items-center gap-2 rounded-lg border border-blue-800/40 bg-[#0f172a] px-3 py-2 text-sm font-medium text-blue-200 shadow-sm hover:bg-blue-900/60 md:flex"
+          className="fixed left-4 top-4 z-30 hidden items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 md:flex"
           aria-label="Expand sidebar"
         >
           <ChevronRight size={16} />
