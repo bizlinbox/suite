@@ -3,14 +3,20 @@ name: Build and Push to DockerHub
 on:
   push:
     branches:
-      - '**'
+      - main
+      - develop
   workflow_dispatch:
 
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: bizlintech/bizlinbox
+
 jobs:
-  docker:
+  build-and-push:
+    name: Build and Push Multi-Arch Image
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up QEMU
@@ -18,6 +24,8 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver-opts: image=moby/buildkit:master
 
       - name: Login to DockerHub
         uses: docker/login-action@v3
@@ -25,22 +33,24 @@ jobs:
           username: bizlintech
           password: ${{ secrets.DOCKERHUB_PAT }}
 
-      - name: Determine tags
+      - name: Generate image tags
         id: meta
-        run: |
-          BRANCH=${GITHUB_REF_NAME//\//-}
-          TAGS="bizlintech/bizlinbox:${BRANCH}"
-          if [ "${GITHUB_REF_NAME}" = "main" ]; then
-            TAGS="${TAGS},bizlintech/bizlinbox:latest"
-          fi
-          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=raw,value=latest,enable={{is_default_branch}}
 
-      - name: Build and push
+      - name: Build and push multi-arch image
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:cache
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:cache,mode=max
+          provenance: false
+          sbom: false

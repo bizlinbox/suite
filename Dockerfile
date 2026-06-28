@@ -3,13 +3,17 @@
 # Image: bizlintech/bizlinbox:develop
 # ============================================================
 
+# syntax=docker/dockerfile:1
+
 # ---- Stage 1: Build Frontend ----
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
+# Cache npm dependencies
 COPY frontend/package*.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci
 
 COPY frontend/ .
 RUN npm run build
@@ -19,8 +23,10 @@ FROM node:20-alpine AS backend-builder
 
 WORKDIR /app/backend
 
+# Cache npm dependencies
 COPY backend/package*.json ./
-RUN npm install --omit=dev && npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --omit=dev && npm cache clean --force
 
 COPY backend/src ./src
 

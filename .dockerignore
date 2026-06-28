@@ -1,14 +1,54 @@
+# Dependencies
 node_modules/
+npm-debug.log*
+
+# Build outputs
 .next/
 dist/
 build/
+
+# Env files
 .env
+.env.local
 .env.*.local
+
+# Logs
 *.log
-npm-debug.log*
+
+# IDE
 .vscode/
 .idea/
+
+# OS
 .DS_Store
 Thumbs.db
+
+# Uploads & runtime data
 uploads/
 traefik/acme/
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Git
+.git/
+.gitignore
+.github/
+
+# Docs
+README.md
+CHANGELOG.md
+LICENSE
+
+# Backend-only dev files
+backend/.env.example
+backend/tests/
+backend/coverage/
+
+# Frontend-only dev files
+frontend/.env.example
+frontend/tests/
+frontend/coverage/
+frontend/tsconfig.tsbuildinfo
