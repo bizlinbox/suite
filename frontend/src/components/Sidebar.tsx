@@ -256,7 +256,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
                 size={18}
                 className={`shrink-0 transition-colors ${
                   active
-                    ? 'text-primary-700 dark:text-primary-300'
+                    ? 'text-white dark:text-white'
                     : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
                 }`}
               />
