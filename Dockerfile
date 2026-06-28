@@ -24,7 +24,7 @@ WORKDIR /app/backend
 
 COPY backend/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm install --omit=dev && npm cache clean --force
+    npm install --omit=dev
 
 COPY backend/src ./src
 
