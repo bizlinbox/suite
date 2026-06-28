@@ -60,6 +60,47 @@ function setTokenCookies(res, accessToken, refreshToken) {
   });
 }
 
+async function buildUserResponse(user) {
+  const roleResult = await query(
+    'SELECT permissions FROM roles WHERE org_id = $1 AND name = $2',
+    [user.org_id, user.role]
+  );
+  const permissions = roleResult.rows.length > 0 ? roleResult.rows[0].permissions : [];
+  const isAdmin = permissions.includes('users.manage');
+
+  let wabaQuery;
+  if (isAdmin) {
+    wabaQuery = await query(
+      'SELECT id, name, business_account_id, is_active FROM waba_accounts WHERE org_id = $1 AND is_active = true ORDER BY name',
+      [user.org_id]
+    );
+  } else {
+    wabaQuery = await query(
+      `SELECT w.id, w.name, w.business_account_id, w.is_active
+       FROM waba_accounts w
+       INNER JOIN agent_waba_access a ON a.waba_account_id = w.id
+       WHERE w.org_id = $1 AND a.agent_id = $2 AND w.is_active = true
+       ORDER BY w.name`,
+      [user.org_id, user.id]
+    );
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    role: user.role,
+    permissions,
+    organizationId: user.org_id,
+    wabaAccounts: wabaQuery.rows.map((r) => ({
+      id: r.id,
+      name: r.name,
+      businessAccountId: r.business_account_id,
+      isActive: r.is_active,
+    })),
+  };
+}
+
 // POST /register
 router.post('/register', async (req, res, next) => {
   const parse = registerSchema.safeParse(req.body);
@@ -126,16 +167,8 @@ router.post('/register', async (req, res, next) => {
 
     setTokenCookies(res, accessToken, refreshToken);
 
-    res.status(201).json({
-      user: {
-        id: user.id,
-        org_id: user.org_id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
+    const userResponse = await buildUserResponse(user);
+    res.status(201).json({ user: userResponse });
   } catch (err) {
     logger.error('Registration error', err);
     next(err);
@@ -185,16 +218,8 @@ router.post('/login', async (req, res, next) => {
 
     setTokenCookies(res, accessToken, refreshToken);
 
-    res.json({
-      user: {
-        id: user.id,
-        org_id: user.org_id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
+    const userResponse = await buildUserResponse(user);
+    res.json({ user: userResponse });
   } catch (err) {
     logger.error('Login error', err);
     next(err);
@@ -279,43 +304,8 @@ router.get('/me', authenticate, async (req, res, next) => {
     }
 
     const user = userResult.rows[0];
-    const permissions = req.user.permissions || [];
-    const isAdmin = permissions.includes('users.manage');
-
-    // Fetch accessible WABA accounts
-    let wabaQuery;
-    if (isAdmin) {
-      wabaQuery = await query(
-        'SELECT id, name, business_account_id, is_active FROM waba_accounts WHERE org_id = $1 AND is_active = true ORDER BY name',
-        [user.org_id]
-      );
-    } else {
-      wabaQuery = await query(
-        `SELECT w.id, w.name, w.business_account_id, w.is_active
-         FROM waba_accounts w
-         INNER JOIN agent_waba_access a ON a.waba_account_id = w.id
-         WHERE w.org_id = $1 AND a.agent_id = $2 AND w.is_active = true
-         ORDER BY w.name`,
-        [user.org_id, user.id]
-      );
-    }
-
-    res.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        permissions,
-        organizationId: user.org_id,
-        wabaAccounts: wabaQuery.rows.map((r) => ({
-          id: r.id,
-          name: r.name,
-          businessAccountId: r.business_account_id,
-          isActive: r.is_active,
-        })),
-      },
-    });
+    const userResponse = await buildUserResponse(user);
+    res.json({ user: userResponse });
   } catch (err) {
     logger.error('Get me error', err);
     next(err);
@@ -496,16 +486,8 @@ router.post('/setup', async (req, res, next) => {
 
     logger.info('Initial setup completed', { orgId, adminId: user.id, email });
 
-    res.status(201).json({
-      user: {
-        id: user.id,
-        org_id: user.org_id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        status: user.status,
-      },
-    });
+    const userResponse = await buildUserResponse(user);
+    res.status(201).json({ user: userResponse });
   } catch (err) {
     logger.error('Setup error', err);
     next(err);

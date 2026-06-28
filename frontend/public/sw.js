@@ -47,8 +47,10 @@ self.addEventListener('activate', (event) => {
 
 // Helper: is API request
 function isApiRequest(url) {
+  // Auth endpoints should NEVER be cached
+  if (url.pathname.startsWith('/auth/')) return false;
+
   return url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/auth/') ||
     url.pathname.startsWith('/conversations') ||
     url.pathname.startsWith('/messages') ||
     url.pathname.startsWith('/contacts') ||
@@ -125,6 +127,9 @@ self.addEventListener('fetch', (event) => {
 
   // Skip Next.js internal requests (RSC fetches, webpack HMR, etc.)
   if (isNextInternal(url, request)) return;
+
+  // Auth endpoints: always hit the network, never cache
+  if (url.pathname.startsWith('/auth/')) return;
 
   // Static assets: cache-first, stale-while-revalidate
   if (isStaticAsset(url) || isImage(url)) {

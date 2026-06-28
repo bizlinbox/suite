@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import PasswordInput from '@/components/PasswordInput';
 
 export default function SetupPage() {

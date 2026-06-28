@@ -31,6 +31,7 @@ function getOrCreateSocket(): Promise<Socket | null> {
       globalSocket = socket;
 
       socket.on('connect', () => {
+        globalConnectionPromise = null;
         resolve(socket);
       });
 
@@ -39,7 +40,10 @@ function getOrCreateSocket(): Promise<Socket | null> {
       });
 
       // Resolve after a timeout even if not connected, so callers aren't blocked
-      setTimeout(() => resolve(socket), 3000);
+      setTimeout(() => {
+        globalConnectionPromise = null;
+        resolve(socket);
+      }, 3000);
     };
 
     api.get('/auth/me')

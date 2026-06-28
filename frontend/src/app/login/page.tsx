@@ -5,10 +5,12 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { MessageSquare } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useAuth } from '@/hooks/useAuth';
 import PasswordInput from '@/components/PasswordInput';
 
 export default function LoginPage() {
   const router = useRouter();
+  const { setUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -33,7 +35,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      await api.post('/auth/login', { email, password });
+      const res = await api.post('/auth/login', { email, password });
+      if (res.data?.user) {
+        setUser(res.data.user);
+        localStorage.setItem('bizlinbox:user', JSON.stringify(res.data.user));
+      }
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.error || err.response?.data?.message || 'Login failed. Please try again.');

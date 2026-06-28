@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 
 export interface WabaAccount {
   id: string;
@@ -72,8 +72,10 @@ export function WabaProvider({ children, wabaAccounts }: WabaProviderProps) {
     }
   }, [wabaAccounts, mounted, selectedWabaId, setSelectedWabaId]);
 
+  const value = useMemo(() => ({ selectedWabaId, setSelectedWabaId }), [selectedWabaId, setSelectedWabaId]);
+
   return (
-    <WabaContext.Provider value={{ selectedWabaId, setSelectedWabaId }}>
+    <WabaContext.Provider value={value}>
       {children}
     </WabaContext.Provider>
   );

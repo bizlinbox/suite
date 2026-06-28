@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import MobileBottomNav from '@/components/MobileBottomNav';
@@ -19,6 +19,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { isAdmin } = usePermission();
 
   const isInbox = pathname === '/dashboard/inbox' || pathname.startsWith('/dashboard/inbox/');
 
@@ -31,8 +32,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const { isAdmin } = usePermission();
-  const noWaba = !loading && user && (user.wabaAccounts || []).length === 0;
+  const wabaAccounts = useMemo(() => user?.wabaAccounts || [], [user?.wabaAccounts]);
+  const noWaba = !loading && wabaAccounts.length === 0;
 
   useEffect(() => {
     if (noWaba && isAdmin && pathname !== '/dashboard/waba-accounts') {
@@ -50,8 +51,21 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
     }
   }, [isInbox]);
 
+  // Auth guard: show loading while fetching user, don't render if unauthenticated
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-950">
+        <div className="h-8 w-8 animate-spin rounded-xl border-4 border-gray-200 border-t-primary-700 dark:border-gray-800" />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
   return (
-    <WabaProvider wabaAccounts={user?.wabaAccounts || []}>
+    <WabaProvider wabaAccounts={wabaAccounts}>
       <div className="flex min-h-screen bg-gray-50 dark:bg-gray-950">
         {/* Mobile menu button */}
         <button

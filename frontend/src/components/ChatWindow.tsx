@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2, Mail, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';

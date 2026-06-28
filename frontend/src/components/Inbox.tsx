@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -40,9 +40,12 @@ export default function Inbox({ selectedId }: InboxProps) {
   const { socket } = useSocket();
   const { selectedWabaId } = useWaba();
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const convLoadingRef = useRef(false);
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchConversations = useCallback(async (offset = 0, search = '', append = false) => {
-    if (convLoading && offset > 0) return;
+    if (convLoadingRef.current && offset > 0) return;
+    convLoadingRef.current = true;
     setConvLoading(true);
     try {
       const params: Record<string, any> = { limit: CONV_PAGE_SIZE, offset };
@@ -58,13 +61,21 @@ export default function Inbox({ selectedId }: InboxProps) {
     } catch (err: any) {
       toastError(err?.response?.data?.error || 'Something went wrong');
     } finally {
+      convLoadingRef.current = false;
       setConvLoading(false);
     }
-  }, [convLoading]);
+  }, []);
 
   // Initial load
   useEffect(() => {
     fetchConversations(0, '');
+  }, []);
+
+  // Cleanup debounce timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -191,18 +202,30 @@ export default function Inbox({ selectedId }: InboxProps) {
     };
   }, [socket, selectedId]);
 
-  const handleSelect = (id: string) => {
+  const handleSelect = useCallback((id: string) => {
     setConversations((prev) =>
       prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
     );
     router.push(`/dashboard/inbox/${id}`);
-  };
+  }, [router]);
 
-  const handleBack = () => {
+  const handleBack = useCallback(() => {
     router.push('/dashboard/inbox');
-  };
+  }, [router]);
 
-  const handleAssignAgent = async (agentId: string) => {
+  const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    api.get('/agents').then((res) => {
+      const map: Record<string, string> = {};
+      (res.data.agents || []).forEach((a: any) => {
+        map[a.id] = a.name;
+      });
+      setAgentsMap(map);
+    });
+  }, []);
+
+  const handleAssignAgent = useCallback(async (agentId: string) => {
     if (!selectedId) return;
     try {
       await api.patch(`/conversations/${selectedId}/assign`, { agentId });
@@ -212,20 +235,20 @@ export default function Inbox({ selectedId }: InboxProps) {
     } catch (err: any) {
       toastError(err?.response?.data?.error || 'Something went wrong');
     }
-  };
+  }, [selectedId, agentsMap]);
 
-  const handleTogglePrivacy = (isPrivate: boolean) => {
+  const handleTogglePrivacy = useCallback((isPrivate: boolean) => {
     if (!selectedId) return;
     setConversations((prev) =>
       prev.map((c) => (c.id === selectedId ? { ...c, isPrivate } : c))
     );
-  };
+  }, [selectedId]);
 
-  const handleDeleteRequest = (id: string) => {
+  const handleDeleteRequest = useCallback((id: string) => {
     setConfirmDeleteId(id);
-  };
+  }, []);
 
-  const handleConfirmDelete = async () => {
+  const handleConfirmDelete = useCallback(async () => {
     if (!confirmDeleteId) return;
     setDeletingId(confirmDeleteId);
     try {
@@ -242,13 +265,13 @@ export default function Inbox({ selectedId }: InboxProps) {
       setDeletingId(null);
       setConfirmDeleteId(null);
     }
-  };
+  }, [confirmDeleteId, selectedId, router]);
 
-  const handleBulkDeleteRequest = (ids: string[]) => {
+  const handleBulkDeleteRequest = useCallback((ids: string[]) => {
     setBulkDeleteIds(ids);
-  };
+  }, []);
 
-  const handleConfirmBulkDelete = async () => {
+  const handleConfirmBulkDelete = useCallback(async () => {
     if (!bulkDeleteIds || bulkDeleteIds.length === 0) return;
     setBulkDeleting(true);
     try {
@@ -265,35 +288,26 @@ export default function Inbox({ selectedId }: InboxProps) {
       setBulkDeleting(false);
       setBulkDeleteIds(null);
     }
-  };
+  }, [bulkDeleteIds, selectedId, router]);
 
-  const handleLoadMoreConversations = () => {
-    if (convLoading) return;
+  const handleLoadMoreConversations = useCallback(() => {
+    if (convLoadingRef.current) return;
     const nextOffset = convOffset + CONV_PAGE_SIZE;
     if (nextOffset < convTotal) {
       fetchConversations(nextOffset, convSearch, true);
     }
-  };
+  }, [convOffset, convTotal, convSearch, fetchConversations]);
 
-  const handleSearchChange = (query: string) => {
+  const handleSearchChange = useCallback((query: string) => {
     setConvSearch(query);
     convSearchRef.current = query;
-    fetchConversations(0, query);
-  };
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
+    searchTimeoutRef.current = setTimeout(() => {
+      fetchConversations(0, query);
+    }, 300);
+  }, [fetchConversations]);
 
-  const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
-
-  useEffect(() => {
-    api.get('/agents').then((res) => {
-      const map: Record<string, string> = {};
-      (res.data.agents || []).forEach((a: any) => {
-        map[a.id] = a.name;
-      });
-      setAgentsMap(map);
-    });
-  }, []);
-
-  const selectedConversation = conversations.find((c) => c.id === selectedId);
+  const selectedConversation = useMemo(() => conversations.find((c) => c.id === selectedId), [conversations, selectedId]);
 
   // Fallback: fetch specific conversation if selected but not in loaded list
   useEffect(() => {
@@ -325,11 +339,11 @@ export default function Inbox({ selectedId }: InboxProps) {
       .catch(() => {});
   }, [selectedId, selectedConversation, convLoading]);
 
-  const handleNewChatSelect = (conversationId: string) => {
+  const handleNewChatSelect = useCallback((conversationId: string) => {
     setNewChatOpen(false);
     fetchConversations(0, convSearch);
     router.push(`/dashboard/inbox/${conversationId}`);
-  };
+  }, [convSearch, fetchConversations, router]);
 
   if (!selectedWabaId) {
     return (

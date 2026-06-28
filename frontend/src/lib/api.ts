@@ -38,14 +38,14 @@ api.interceptors.request.use(
 );
 
 let isRefreshing = false;
-let refreshSubscribers: Array<() => void> = [];
+let refreshSubscribers: Array<(error?: any) => void> = [];
 
-function subscribeTokenRefresh(callback: () => void) {
+function subscribeTokenRefresh(callback: (error?: any) => void) {
   refreshSubscribers.push(callback);
 }
 
-function onTokenRefreshed() {
-  refreshSubscribers.forEach((callback) => callback());
+function onTokenRefreshed(error?: any) {
+  refreshSubscribers.forEach((callback) => callback(error));
   refreshSubscribers = [];
 }
 
@@ -64,7 +64,7 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch (refreshError) {
           isRefreshing = false;
-          refreshSubscribers = [];
+          onTokenRefreshed(refreshError);
           if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
             window.location.href = '/login';
           }
@@ -72,9 +72,13 @@ api.interceptors.response.use(
         }
       }
 
-      return new Promise((resolve) => {
-        subscribeTokenRefresh(() => {
-          resolve(api(originalRequest));
+      return new Promise((resolve, reject) => {
+        subscribeTokenRefresh((error) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(api(originalRequest));
+          }
         });
       });
     }
