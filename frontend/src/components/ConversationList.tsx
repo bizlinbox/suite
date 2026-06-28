@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Search, Plus, Trash2, Loader2, X, CheckSquare, Square } from 'lucide-react';
 
 export interface Conversation {
   id: string;
@@ -22,17 +22,62 @@ interface ConversationListProps {
   onSelect: (id: string) => void;
   onNewChat?: () => void;
   onDelete?: (id: string) => void;
+  onBulkDelete?: (ids: string[]) => void;
   deletingId?: string | null;
   onOpenProfile?: (contactId: string) => void;
 }
 
-export default function ConversationList({ conversations, selectedId, onSelect, onNewChat, onDelete, deletingId, onOpenProfile }: ConversationListProps) {
+export default function ConversationList({
+  conversations,
+  selectedId,
+  onSelect,
+  onNewChat,
+  onDelete,
+  onBulkDelete,
+  deletingId,
+  onOpenProfile,
+}: ConversationListProps) {
   const [search, setSearch] = useState('');
+  const [selectMode, setSelectMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  const filtered = conversations.filter((c) =>
-    c.contactName.toLowerCase().includes(search.toLowerCase()) ||
-    c.contactPhone.includes(search)
+  const filtered = conversations.filter(
+    (c) =>
+      c.contactName.toLowerCase().includes(search.toLowerCase()) ||
+      c.contactPhone.includes(search)
   );
+
+  const allFilteredSelected =
+    filtered.length > 0 && filtered.every((c) => selectedIds.includes(c.id));
+
+  const toggleSelectMode = () => {
+    setSelectMode((prev) => !prev);
+    setSelectedIds([]);
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (allFilteredSelected) {
+      setSelectedIds((prev) =>
+        prev.filter((id) => !filtered.find((c) => c.id === id))
+      );
+    } else {
+      const newIds = filtered.map((c) => c.id).filter((id) => !selectedIds.includes(id));
+      setSelectedIds((prev) => [...prev, ...newIds]);
+    }
+  };
+
+  const handleBulkDelete = () => {
+    if (selectedIds.length === 0) return;
+    onBulkDelete?.(selectedIds);
+    setSelectMode(false);
+    setSelectedIds([]);
+  };
 
   const getInitials = (name: string) => {
     return name.charAt(0).toUpperCase();
@@ -43,23 +88,60 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
       <div className="border-b border-gray-100 p-4 dark:border-gray-800">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Inbox</h2>
-          {onNewChat && (
-            <button onClick={onNewChat} className="btn-primary px-3 py-1.5 text-xs">
-              <Plus size={14} />
-              New Chat
+          <div className="flex items-center gap-1.5">
+            {onDelete && (
+              <button
+                onClick={toggleSelectMode}
+                className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                  selectMode
+                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
+                }`}
+                title={selectMode ? 'Cancel selection' : 'Select conversations'}
+              >
+                {selectMode ? 'Cancel' : 'Select'}
+              </button>
+            )}
+            {onNewChat && (
+              <button onClick={onNewChat} className="btn-primary px-3 py-1.5 text-xs">
+                <Plus size={14} />
+                New Chat
+              </button>
+            )}
+          </div>
+        </div>
+
+        {selectMode ? (
+          <div className="flex items-center justify-between">
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+              {allFilteredSelected ? <CheckSquare size={16} /> : <Square size={16} />}
+              {allFilteredSelected ? 'Deselect all' : 'Select all'}
             </button>
-          )}
-        </div>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search conversations..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="input pl-9"
-          />
-        </div>
+            {selectedIds.length > 0 && (
+              <button
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1 rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/30"
+              >
+                <Trash2 size={12} />
+                Delete ({selectedIds.length})
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search conversations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input pl-9"
+            />
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 py-2">
@@ -73,55 +155,97 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
             {filtered.map((conversation) => (
               <div
                 key={conversation.id}
-                className={`group flex w-full items-start gap-3 rounded-lg px-3 py-2.5 text-left transition-colors ${
+                className={`group flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-colors ${
                   conversation.id === selectedId
                     ? 'bg-primary-50 dark:bg-primary-900/20'
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                 }`}
               >
-                <div
-                  onClick={() => onSelect(conversation.id)}
-                  className="flex flex-1 cursor-pointer items-start gap-3"
-                >
+                {selectMode && (
                   <button
                     type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenProfile?.(conversation.contactId);
-                    }}
-                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
-                      conversation.id === selectedId
-                        ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
-                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                    }`}
+                    onClick={() => toggleSelect(conversation.id)}
+                    className="mt-1 flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                   >
-                    {getInitials(conversation.contactName)}
+                    {selectedIds.includes(conversation.id) ? (
+                      <CheckSquare size={18} className="text-primary-600 dark:text-primary-400" />
+                    ) : (
+                      <Square size={18} />
+                    )}
                   </button>
+                )}
+                <div
+                  onClick={() => {
+                    if (selectMode) {
+                      toggleSelect(conversation.id);
+                    } else {
+                      onSelect(conversation.id);
+                    }
+                  }}
+                  className="flex flex-1 cursor-pointer items-start gap-3"
+                >
+                  {!selectMode && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenProfile?.(conversation.contactId);
+                      }}
+                      className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
+                        conversation.id === selectedId
+                          ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                      }`}
+                    >
+                      {getInitials(conversation.contactName)}
+                    </button>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenProfile?.(conversation.contactId);
-                        }}
-                        className={`truncate text-left text-sm font-medium ${
-                          conversation.id === selectedId
-                            ? 'text-primary-800 dark:text-primary-300'
-                            : 'text-gray-900 dark:text-gray-100'
-                        }`}
-                      >
-                        {conversation.contactName}
-                      </button>
+                      {!selectMode ? (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenProfile?.(conversation.contactId);
+                          }}
+                          className={`truncate text-left text-sm font-medium ${
+                            conversation.id === selectedId
+                              ? 'text-primary-800 dark:text-primary-300'
+                              : 'text-gray-900 dark:text-gray-100'
+                          }`}
+                        >
+                          {conversation.contactName}
+                        </button>
+                      ) : (
+                        <span
+                          className={`truncate text-sm font-medium ${
+                            conversation.id === selectedId
+                              ? 'text-primary-800 dark:text-primary-300'
+                              : 'text-gray-900 dark:text-gray-100'
+                          }`}
+                        >
+                          {conversation.contactName}
+                        </span>
+                      )}
                       <div className="flex items-center gap-1.5">
                         {conversation.isPrivate && (
-                          <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Private</span>
+                          <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
+                            Private
+                          </span>
                         )}
                         {conversation.lastMessageAt && (
                           <span className="text-[10px] text-gray-400 dark:text-gray-500">
-                            {new Date(conversation.lastMessageAt).toLocaleDateString() === new Date().toLocaleDateString()
-                              ? new Date(conversation.lastMessageAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                              : new Date(conversation.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            {new Date(conversation.lastMessageAt).toLocaleDateString() ===
+                            new Date().toLocaleDateString()
+                              ? new Date(conversation.lastMessageAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : new Date(conversation.lastMessageAt).toLocaleDateString([], {
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
                           </span>
                         )}
                         {conversation.unreadCount > 0 && (
@@ -131,7 +255,9 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                         )}
                       </div>
                     </div>
-                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">{conversation.lastMessagePreview}</p>
+                    <p className="truncate text-xs text-gray-500 dark:text-gray-400">
+                      {conversation.lastMessagePreview}
+                    </p>
                     {conversation.assignedAgentName && (
                       <p className="mt-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400">
                         Assigned to {conversation.assignedAgentName}
@@ -139,7 +265,7 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                     )}
                   </div>
                 </div>
-                {onDelete && (
+                {!selectMode && onDelete && (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();

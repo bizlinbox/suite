@@ -317,4 +317,52 @@ router.delete('/:id', async (req, res, next) => {
   }
 });
 
+// DELETE /bulk - delete multiple conversations
+router.delete('/bulk', async (req, res, next) => {
+  try {
+    const ids = req.body.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+
+    // Build parameterized IN clause
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+    const baseParams = [...ids, req.user.org_id];
+
+    // Verify all conversations belong to org and user has access
+    let accessSql = `SELECT id, is_private, assigned_agent_id FROM conversations WHERE id IN (${placeholders}) AND org_id = $${ids.length + 1}`;
+    const accessParams = [...baseParams];
+    if (req.wabaAccountId) {
+      accessSql += ` AND (waba_account_id = $${accessParams.length + 1} OR waba_account_id IS NULL)`;
+      accessParams.push(req.wabaAccountId);
+    }
+
+    const accessResult = await query(accessSql, accessParams);
+    if (accessResult.rows.length === 0) {
+      return res.status(404).json({ error: 'No conversations found' });
+    }
+
+    // Filter out private conversations the user cannot access
+    const isUserAdmin = isAdmin(req);
+    const allowedIds = accessResult.rows
+      .filter((r) => !r.is_private || isUserAdmin || r.assigned_agent_id === req.user.id)
+      .map((r) => r.id);
+
+    if (allowedIds.length === 0) {
+      return res.status(403).json({ error: 'No access to delete these conversations' });
+    }
+
+    const deletePlaceholders = allowedIds.map((_, i) => `$${i + 1}`).join(',');
+    await query(
+      `DELETE FROM conversations WHERE id IN (${deletePlaceholders}) AND org_id = $${allowedIds.length + 1}`,
+      [...allowedIds, req.user.org_id]
+    );
+
+    res.status(204).send();
+  } catch (err) {
+    logger.error('Bulk delete conversation error', err);
+    next(err);
+  }
+});
+
 module.exports = router;

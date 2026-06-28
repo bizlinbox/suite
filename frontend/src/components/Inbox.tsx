@@ -25,6 +25,8 @@ export default function Inbox({ selectedId }: InboxProps) {
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [bulkDeleteIds, setBulkDeleteIds] = useState<string[] | null>(null);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileContactId, setProfileContactId] = useState<string>('');
   const { socket } = useSocket();
@@ -224,6 +226,28 @@ export default function Inbox({ selectedId }: InboxProps) {
     }
   };
 
+  const handleBulkDeleteRequest = (ids: string[]) => {
+    setBulkDeleteIds(ids);
+  };
+
+  const handleConfirmBulkDelete = async () => {
+    if (!bulkDeleteIds || bulkDeleteIds.length === 0) return;
+    setBulkDeleting(true);
+    try {
+      await api.delete('/conversations/bulk', { data: { ids: bulkDeleteIds } });
+      setConversations((prev) => prev.filter((c) => !bulkDeleteIds.includes(c.id)));
+      toastSuccess(`${bulkDeleteIds.length} conversation(s) deleted`);
+      if (bulkDeleteIds.includes(selectedId || '')) {
+        router.push('/dashboard/inbox');
+      }
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to delete conversations');
+    } finally {
+      setBulkDeleting(false);
+      setBulkDeleteIds(null);
+    }
+  };
+
   const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -267,6 +291,7 @@ export default function Inbox({ selectedId }: InboxProps) {
             onSelect={handleSelect}
             onNewChat={() => setNewChatOpen(true)}
             onDelete={handleDeleteRequest}
+            onBulkDelete={handleBulkDeleteRequest}
             deletingId={deletingId}
             onOpenProfile={(contactId) => { setProfileContactId(contactId); setProfileOpen(true); }}
           />
@@ -314,6 +339,16 @@ export default function Inbox({ selectedId }: InboxProps) {
         cancelLabel="Cancel"
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmDeleteId(null)}
+      />
+
+      <ConfirmDialog
+        open={!!bulkDeleteIds}
+        title={`Delete ${bulkDeleteIds?.length || 0} Conversations`}
+        message="This will permanently delete the selected conversations and all their messages. This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={handleConfirmBulkDelete}
+        onCancel={() => setBulkDeleteIds(null)}
       />
 
       <ContactProfilePopup
