@@ -20,6 +20,13 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+const setupSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8).max(128),
+  name: z.string().min(1).max(100),
+  org_name: z.string().min(1).max(100),
+});
+
 const router = express.Router();
 
 function generateAccessToken(user) {
@@ -418,6 +425,11 @@ router.get('/setup-required', async (req, res, next) => {
 // POST /setup - create first super-admin without auth
 router.post('/setup', async (req, res, next) => {
   try {
+    const parse = setupSchema.safeParse(req.body);
+    if (!parse.success) {
+      return res.status(400).json({ error: 'Invalid input', details: parse.error.errors });
+    }
+
     // Block if any admin already exists
     const existing = await query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
     if (parseInt(existing.rows[0].count, 10) > 0) {

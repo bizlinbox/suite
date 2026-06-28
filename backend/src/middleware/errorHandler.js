@@ -5,13 +5,22 @@ function errorHandler(err, req, res, next) {
   const isServerError = statusCode >= 500;
   const isDev = process.env.NODE_ENV !== 'production';
 
-  logger.error('Unhandled error', {
-    message: err.message,
-    stack: err.stack,
-    path: req.path,
-    method: req.method,
-    statusCode,
-  });
+  if (statusCode >= 500) {
+    logger.error('Unhandled error', {
+      message: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+      statusCode,
+    });
+  } else {
+    logger.error('Client error', {
+      message: err.message,
+      path: req.path,
+      method: req.method,
+      statusCode,
+    });
+  }
 
   const message = isServerError && !isDev
     ? 'Internal Server Error'

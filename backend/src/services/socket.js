@@ -16,7 +16,8 @@ function initSocket(server, corsOptions) {
       ?.split('=')[1];
 
     if (!token) {
-      socket.disconnect(true);
+      socket.emit('auth_error', { message: 'Authentication failed. Please log in again.' });
+      setTimeout(() => socket.disconnect(true), 1000);
       return;
     }
 
@@ -25,7 +26,8 @@ function initSocket(server, corsOptions) {
       socket.user = decoded;
       socket.join(`org:${decoded.org_id}`);
     } catch {
-      socket.disconnect(true);
+      socket.emit('auth_error', { message: 'Authentication failed. Please log in again.' });
+      setTimeout(() => socket.disconnect(true), 1000);
       return;
     }
 

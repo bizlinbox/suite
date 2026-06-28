@@ -15,7 +15,11 @@ const router = express.Router();
 const META_API_BASE = `https://graph.facebook.com/${config.whatsappApiVersion}`;
 
 /**
- * Download media from Meta's WhatsApp Cloud API
+ * Download media from Meta's WhatsApp Cloud API.
+ * @param {string} mediaId - The Meta media ID.
+ * @param {string} accessToken - The WABA access token.
+ * @param {string|number} orgId - The organization ID for path/storage.
+ * @returns {Promise<{localPath: string, mimeType: string}|null>}
  */
 async function downloadMedia(mediaId, accessToken, orgId) {
   const start = Date.now();
@@ -209,6 +213,16 @@ router.post('/', async (req, res) => {
   }
 });
 
+/**
+ * Process an incoming WhatsApp message: create contact/conversation, store message, and emit events.
+ * @param {string|number} orgId - Organization ID.
+ * @param {object} msg - The incoming message payload from Meta.
+ * @param {string} phoneNumberId - The Meta phone number ID.
+ * @param {string} accessToken - The WABA access token.
+ * @param {object} [contactProfile={}] - Optional contact profile data.
+ * @param {string|null} [wabaAccountId=null] - Optional WABA account ID.
+ * @returns {Promise<void>}
+ */
 async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, contactProfile = {}, wabaAccountId = null) {
   const from = msg.from;
   const externalId = msg.id;
@@ -532,7 +546,7 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       last_message_preview: message.content || '',
     }));
 
-    // TODO: Trigger automations (visual workflow engine)
+    // Automation execution hook (placeholder for future engine)
     // await triggerWorkflows(orgId, 'message_received', { message, conversation_id: conversationId, contact_id: contactId });
   } catch (err) {
     logger.error('Failed to process incoming message', {
@@ -544,6 +558,12 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
   }
 }
 
+/**
+ * Update a message status based on a Meta webhook status event.
+ * @param {object} status - The status payload from Meta.
+ * @param {string|number} orgId - Organization ID.
+ * @returns {Promise<void>}
+ */
 async function handleStatusUpdate(status, orgId) {
   const externalId = status.id;
   let messageStatus = 'sent';
@@ -624,7 +644,7 @@ async function handleStatusUpdate(status, orgId) {
   }
 }
 
-// TODO: Replace triggerWorkflows with automation engine execution
+// Automation execution hook (placeholder for future engine)
 // async function triggerWorkflows(orgId, triggerType, context) {
 //   try {
 //     const wfResult = await query(

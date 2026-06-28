@@ -4,7 +4,10 @@ const ALGORITHM = 'aes-256-cbc';
 const IV_LENGTH = 16;
 
 function getKey() {
-  const key = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || 'fallback-key-32chars-long!!!!!';
+  const key = process.env.ENCRYPTION_KEY;
+  if (!key) {
+    throw new Error('ENCRYPTION_KEY is required');
+  }
   return crypto.createHash('sha256').update(key).digest();
 }
 

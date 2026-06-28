@@ -13,6 +13,7 @@ const { connectWithRetry } = require('./db');
 const logger = require('./utils/logger');
 const { initSocket } = require('./services/socket');
 const errorHandler = require('./middleware/errorHandler');
+const { rateLimit } = require('express-rate-limit');
 
 // Routes
 const authRoutes = require('./routes/auth');
@@ -22,7 +23,6 @@ const contactRoutes = require('./routes/contacts');
 const conversationRoutes = require('./routes/conversations');
 const messageRoutes = require('./routes/messages');
 const quickReplyRoutes = require('./routes/quickReplies');
-// const workflowRoutes = require('./routes/workflows');
 const automationRoutes = require('./routes/automations');
 const analyticsRoutes = require('./routes/analytics');
 const webhookRoutes = require('./routes/webhooks');
@@ -41,6 +41,13 @@ require('./queues/workers');
 
 const app = express();
 const server = http.createServer(app);
+
+// Request ID middleware
+app.use((req, res, next) => {
+  req.id = require('crypto').randomUUID();
+  req.log = logger.child({ requestId: req.id });
+  next();
+});
 
 // Trust proxy in production
 if (config.trustProxy) {
@@ -82,12 +89,44 @@ if (!fs.existsSync(config.uploadDir)) {
 }
 app.use('/uploads', express.static(path.resolve(config.uploadDir)));
 
+// Request timeout
+app.use((req, res, next) => {
+  req.setTimeout(30000);
+  res.setTimeout(30000);
+  next();
+});
+
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/v1/auth/login', authLimiter);
+app.use('/api/v1/auth/register', authLimiter);
+
 // Health check with DB + Redis
 app.get('/health', async (req, res) => {
   try {
     await connectWithRetry();
     const dbCheck = await require('./db').query('SELECT 1');
     if (!dbCheck) throw new Error('DB check failed');
+
+    const Redis = require('ioredis');
+    const redis = new Redis(config.redisUrl);
+    await redis.ping();
+    redis.disconnect();
+
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
   } catch (err) {
     logger.error('Health check failed', err);
@@ -104,7 +143,6 @@ app.use('/api/v1/conversations', conversationRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/quick-replies', quickReplyRoutes);
 app.use('/api/v1/automations', automationRoutes);
-// app.use('/api/v1/workflows', workflowRoutes);
 app.use('/api/v1/analytics', analyticsRoutes);
 app.use('/api/v1/webhooks', webhookRoutes);
 app.use('/api/v1/upload', uploadRoutes);
