@@ -17,7 +17,8 @@ A multi-tenant WhatsApp inbox platform built on the WhatsApp Cloud API, enabling
 
 ### Frontend
 -   Next.js (App Router)
--   MUI / Joy UI
+-   Tailwind CSS
+-   Lucide React
 -   Axios
 -   Socket.IO Client
 

@@ -32,8 +32,8 @@ export default function Inbox({ selectedId }: InboxProps) {
     try {
       const res = await api.get('/conversations');
       setConversations(res.data.conversations || []);
-    } catch {
-      // ignore
+    } catch (err: any) {
+      toastError(err?.response?.data?.error || 'Something went wrong');
     }
   }, []);
 
@@ -100,7 +100,9 @@ export default function Inbox({ selectedId }: InboxProps) {
               });
             }
           })
-          .catch(() => {});
+          .catch((err: any) => {
+            toastError(err?.response?.data?.error || 'Something went wrong');
+          });
         return prev;
       });
     };
@@ -151,7 +153,9 @@ export default function Inbox({ selectedId }: InboxProps) {
               });
             }
           })
-          .catch(() => {});
+          .catch((err: any) => {
+            toastError(err?.response?.data?.error || 'Something went wrong');
+          });
         return prev;
       });
     };
@@ -183,8 +187,8 @@ export default function Inbox({ selectedId }: InboxProps) {
       setConversations((prev) =>
         prev.map((c) => (c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId], assignedAgentId: agentId } : c))
       );
-    } catch {
-      // ignore
+    } catch (err: any) {
+      toastError(err?.response?.data?.error || 'Something went wrong');
     }
   };
 
