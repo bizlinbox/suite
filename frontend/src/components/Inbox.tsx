@@ -14,6 +14,8 @@ import ContactProfilePopup from '@/components/ContactProfilePopup';
 import { toastError, toastSuccess } from '@/components/Toaster';
 import { Building2, MessageSquare } from 'lucide-react';
 
+const CONV_PAGE_SIZE = 20;
+
 interface InboxProps {
   selectedId: string | null;
 }
@@ -22,6 +24,12 @@ export default function Inbox({ selectedId }: InboxProps) {
   const router = useRouter();
   const { user } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [convOffset, setConvOffset] = useState(0);
+  const [convTotal, setConvTotal] = useState(0);
+  const [convLoading, setConvLoading] = useState(false);
+  const [convSearch, setConvSearch] = useState('');
+  const convSearchRef = useRef('');
+
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -33,18 +41,31 @@ export default function Inbox({ selectedId }: InboxProps) {
   const { selectedWabaId } = useWaba();
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  const fetchConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async (offset = 0, search = '', append = false) => {
+    if (convLoading && offset > 0) return;
+    setConvLoading(true);
     try {
-      const res = await api.get('/conversations');
-      setConversations(res.data.conversations || []);
+      const params: Record<string, any> = { limit: CONV_PAGE_SIZE, offset };
+      if (search.trim()) params.q = search.trim();
+      const res = await api.get('/conversations', { params });
+      const newConvs = res.data.conversations || [];
+      setConvTotal(res.data.total || 0);
+      setConversations((prev) => {
+        if (append) return [...prev, ...newConvs];
+        return newConvs;
+      });
+      setConvOffset(offset);
     } catch (err: any) {
       toastError(err?.response?.data?.error || 'Something went wrong');
+    } finally {
+      setConvLoading(false);
     }
-  }, []);
+  }, [convLoading]);
 
+  // Initial load
   useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
+    fetchConversations(0, '');
+  }, []);
 
   useEffect(() => {
     audioRef.current = new Audio('/sounds/ting_iphone.mp3');
@@ -60,9 +81,7 @@ export default function Inbox({ selectedId }: InboxProps) {
         const isVisible = document.visibilityState === 'visible';
         if (!isViewingConversation || !isVisible) {
           audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {
-            // Ignore autoplay restrictions
-          });
+          audioRef.current.play().catch(() => {});
         }
       }
 
@@ -80,7 +99,7 @@ export default function Inbox({ selectedId }: InboxProps) {
               : c
           );
         }
-        // New conversation not in list yet — fetch and prepend
+        // New conversation not in list yet — fetch single and prepend
         api.get(`/conversations/${message.conversationId}`)
           .then((res) => {
             const conv = res.data.conversation;
@@ -103,11 +122,10 @@ export default function Inbox({ selectedId }: InboxProps) {
                   ...current,
                 ];
               });
+              setConvTotal((t) => t + 1);
             }
           })
-          .catch((err: any) => {
-            toastError(err?.response?.data?.error || 'Something went wrong');
-          });
+          .catch(() => {});
         return prev;
       });
     };
@@ -156,11 +174,10 @@ export default function Inbox({ selectedId }: InboxProps) {
                   ...current,
                 ];
               });
+              setConvTotal((t) => t + 1);
             }
           })
-          .catch((err: any) => {
-            toastError(err?.response?.data?.error || 'Something went wrong');
-          });
+          .catch(() => {});
         return prev;
       });
     };
@@ -214,6 +231,7 @@ export default function Inbox({ selectedId }: InboxProps) {
     try {
       await api.delete(`/conversations/${confirmDeleteId}`);
       setConversations((prev) => prev.filter((c) => c.id !== confirmDeleteId));
+      setConvTotal((t) => Math.max(0, t - 1));
       toastSuccess('Conversation deleted');
       if (selectedId === confirmDeleteId) {
         router.push('/dashboard/inbox');
@@ -236,6 +254,7 @@ export default function Inbox({ selectedId }: InboxProps) {
     try {
       await api.delete('/conversations/bulk', { data: { ids: bulkDeleteIds } });
       setConversations((prev) => prev.filter((c) => !bulkDeleteIds.includes(c.id)));
+      setConvTotal((t) => Math.max(0, t - bulkDeleteIds.length));
       toastSuccess(`${bulkDeleteIds.length} conversation(s) deleted`);
       if (bulkDeleteIds.includes(selectedId || '')) {
         router.push('/dashboard/inbox');
@@ -246,6 +265,20 @@ export default function Inbox({ selectedId }: InboxProps) {
       setBulkDeleting(false);
       setBulkDeleteIds(null);
     }
+  };
+
+  const handleLoadMoreConversations = () => {
+    if (convLoading) return;
+    const nextOffset = convOffset + CONV_PAGE_SIZE;
+    if (nextOffset < convTotal) {
+      fetchConversations(nextOffset, convSearch, true);
+    }
+  };
+
+  const handleSearchChange = (query: string) => {
+    setConvSearch(query);
+    convSearchRef.current = query;
+    fetchConversations(0, query);
   };
 
   const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
@@ -264,7 +297,7 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   const handleNewChatSelect = (conversationId: string) => {
     setNewChatOpen(false);
-    fetchConversations();
+    fetchConversations(0, convSearch);
     router.push(`/dashboard/inbox/${conversationId}`);
   };
 
@@ -294,6 +327,11 @@ export default function Inbox({ selectedId }: InboxProps) {
             onBulkDelete={handleBulkDeleteRequest}
             deletingId={deletingId}
             onOpenProfile={(contactId) => { setProfileContactId(contactId); setProfileOpen(true); }}
+            loading={convLoading}
+            hasMore={conversations.length < convTotal}
+            onLoadMore={handleLoadMoreConversations}
+            searchQuery={convSearch}
+            onSearchChange={handleSearchChange}
           />
         </div>
 

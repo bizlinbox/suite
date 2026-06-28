@@ -35,7 +35,7 @@ async function checkConversationAccess(req, conversation_id) {
   return { allowed: true, conversation: conv };
 }
 
-// GET /?conversation_id=... - list messages for a conversation
+// GET /?conversation_id=... - list messages for a conversation (paginated)
 router.get('/', async (req, res, next) => {
   try {
     const conversation_id = req.query.conversation_id || req.query.conversationId;
@@ -48,6 +48,10 @@ router.get('/', async (req, res, next) => {
       return res.status(404).json({ error: access.reason });
     }
 
+    const limit = Math.min(parseInt(req.query.limit, 10) || 50, 200);
+    const offset = parseInt(req.query.offset, 10) || 0;
+    const direction = req.query.direction === 'desc' ? 'DESC' : 'ASC';
+
     let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.error_message, m.reaction_to_message_id, m.created_at
                   FROM messages m
                   JOIN conversations c ON c.id = m.conversation_id
@@ -57,10 +61,21 @@ router.get('/', async (req, res, next) => {
       msgSql += ' AND (c.waba_account_id = $3 OR c.waba_account_id IS NULL)';
       msgParams.push(req.wabaAccountId);
     }
-    msgSql += ' ORDER BY m.created_at ASC';
+
+    // Count total
+    const countSql = msgSql.replace(
+      /SELECT m\.id.*?FROM/,
+      'SELECT COUNT(*) FROM'
+    );
+    const countResult = await query(countSql, msgParams);
+    const total = parseInt(countResult.rows[0].count, 10);
+
+    msgSql += ` ORDER BY m.created_at ${direction}`;
+    msgSql += ` LIMIT $${msgParams.length + 1} OFFSET $${msgParams.length + 2}`;
+    msgParams.push(limit, offset);
 
     const result = await query(msgSql, msgParams);
-    res.json({ messages: camelize(result.rows) });
+    res.json({ messages: camelize(result.rows), total, limit, offset, direction: direction.toLowerCase() });
   } catch (err) {
     logger.error('List messages error', err);
     next(err);

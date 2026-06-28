@@ -335,6 +335,10 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [isPrivate, setIsPrivate] = useState(initialIsPrivate || false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [msgOffset, setMsgOffset] = useState(0);
+  const [msgTotal, setMsgTotal] = useState(0);
+  const [msgLoading, setMsgLoading] = useState(false);
   const attachRef = useRef<HTMLDivElement>(null);
   const quickRef = useRef<HTMLDivElement>(null);
   const agentsRef = useRef<HTMLDivElement>(null);
@@ -381,12 +385,50 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     }).catch(() => {});
   }, []);
 
+  // Load messages with pagination (newest first via direction=desc, reversed for display)
   useEffect(() => {
     if (!conversationId) return;
-    api.get(`/messages?conversationId=${conversationId}`).then((res) => {
-      setMessages(res.data.messages || []);
-    });
+    setMsgLoading(true);
+    setMsgOffset(0);
+    api.get(`/messages?conversationId=${conversationId}&limit=50&offset=0&direction=desc`)
+      .then((res) => {
+        const fetched = (res.data.messages || []) as Message[];
+        setMsgTotal(res.data.total || 0);
+        // Reverse so oldest of the loaded set is at top
+        setMessages(fetched.slice().reverse());
+        setMsgOffset(0);
+      })
+      .finally(() => setMsgLoading(false));
   }, [conversationId]);
+
+  const handleLoadOlderMessages = async () => {
+    if (!conversationId || msgLoading) return;
+    const nextOffset = msgOffset + 50;
+    if (messages.length >= msgTotal) return;
+    setMsgLoading(true);
+    try {
+      // Save current scroll height to maintain position after prepend
+      const container = messagesContainerRef.current;
+      const prevScrollHeight = container?.scrollHeight || 0;
+      const res = await api.get(`/messages?conversationId=${conversationId}&limit=50&offset=${nextOffset}&direction=desc`);
+      const fetched = (res.data.messages || []) as Message[];
+      if (fetched.length > 0) {
+        setMessages((prev) => [...fetched.slice().reverse(), ...prev]);
+        setMsgOffset(nextOffset);
+        // Restore scroll position after prepend
+        requestAnimationFrame(() => {
+          if (container) {
+            const newScrollHeight = container.scrollHeight;
+            container.scrollTop = newScrollHeight - prevScrollHeight;
+          }
+        });
+      }
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to load older messages');
+    } finally {
+      setMsgLoading(false);
+    }
+  };
 
   // Check 24h conversation window status
   useEffect(() => {
@@ -461,8 +503,15 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     });
   }, []);
 
+  // Auto-scroll to bottom only when new messages are appended (not when older messages are loaded)
+  const lastMessageIdRef = useRef<string | null>(null);
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length === 0) return;
+    const lastId = messages[messages.length - 1]?.id;
+    if (lastId && lastId !== lastMessageIdRef.current) {
+      lastMessageIdRef.current = lastId;
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   // Sync reactingTo ref for use in document event listeners
@@ -1142,7 +1191,19 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       </div>
 
       {/* Messages */}
-      <div className="flex flex-1 flex-col overflow-y-auto px-4 py-3">
+      <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto px-4 py-3">
+        {msgTotal > messages.length && (
+          <div className="mb-2 flex justify-center">
+            <button
+              onClick={handleLoadOlderMessages}
+              disabled={msgLoading}
+              className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+            >
+              {msgLoading ? <Loader2 size={12} className="animate-spin" /> : null}
+              Load older messages
+            </button>
+          </div>
+        )}
         {(() => {
           const reactionsByTarget: Record<string, Message[]> = {};
           const regularMessages: Message[] = [];

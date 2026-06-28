@@ -23,10 +23,13 @@ function privateAccessFilter(req) {
   return { clause: ` AND (c.is_private = false OR c.assigned_agent_id = $PARAM)`, param: req.user.id };
 }
 
-// GET / - list conversations for org
+// GET / - list conversations for org (paginated + searchable)
 router.get('/', async (req, res, next) => {
   try {
-    const { status, assigned_to } = req.query;
+    const { status, assigned_to, q } = req.query;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
+    const offset = parseInt(req.query.offset, 10) || 0;
+
     let sql = `SELECT c.id, c.org_id, c.contact_id, c.assigned_agent_id, c.status, c.is_private, c.last_message_at, c.created_at,
                       con.name as contact_name, con.phone as contact_phone,
                       u.name as assigned_agent_name
@@ -50,6 +53,13 @@ router.get('/', async (req, res, next) => {
       params.push(assigned_to);
     }
 
+    // Search by contact name or phone (trigram index)
+    if (q && q.trim()) {
+      sql += ` AND (con.name ILIKE $${params.length + 1} OR con.phone ILIKE $${params.length + 2})`;
+      const like = `%${q.trim()}%`;
+      params.push(like, like);
+    }
+
     // Filter private conversations for non-admins/non-assigned
     const privacyFilter = privateAccessFilter(req);
     if (privacyFilter.clause) {
@@ -60,7 +70,17 @@ router.get('/', async (req, res, next) => {
       }
     }
 
+    // Count total
+    const countSql = sql.replace(
+      /SELECT c\.id.*?FROM/,
+      'SELECT COUNT(*) FROM'
+    );
+    const countResult = await query(countSql, params);
+    const total = parseInt(countResult.rows[0].count, 10);
+
     sql += ' ORDER BY c.last_message_at DESC NULLS LAST, c.created_at DESC';
+    sql += ` LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
 
     const result = await query(sql, params);
     const conversations = camelize(result.rows).map((r) => ({
@@ -68,7 +88,7 @@ router.get('/', async (req, res, next) => {
       unreadCount: 0,
       lastMessagePreview: '',
     }));
-    res.json({ conversations });
+    res.json({ conversations, total, limit, offset });
   } catch (err) {
     logger.error('List conversations error', err);
     next(err);

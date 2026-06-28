@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Plus, Trash2, Loader2, X, CheckSquare, Square } from 'lucide-react';
+import { useRef, useEffect, useState } from 'react';
+import { Search, Plus, Trash2, Loader2, CheckSquare, Square } from 'lucide-react';
 
 export interface Conversation {
   id: string;
@@ -25,6 +25,11 @@ interface ConversationListProps {
   onBulkDelete?: (ids: string[]) => void;
   deletingId?: string | null;
   onOpenProfile?: (contactId: string) => void;
+  loading?: boolean;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
+  searchQuery?: string;
+  onSearchChange?: (query: string) => void;
 }
 
 export default function ConversationList({
@@ -36,19 +41,19 @@ export default function ConversationList({
   onBulkDelete,
   deletingId,
   onOpenProfile,
+  loading = false,
+  hasMore = false,
+  onLoadMore,
+  searchQuery = '',
+  onSearchChange,
 }: ConversationListProps) {
-  const [search, setSearch] = useState('');
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-
-  const filtered = conversations.filter(
-    (c) =>
-      c.contactName.toLowerCase().includes(search.toLowerCase()) ||
-      c.contactPhone.includes(search)
-  );
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const allFilteredSelected =
-    filtered.length > 0 && filtered.every((c) => selectedIds.includes(c.id));
+    conversations.length > 0 && conversations.every((c) => selectedIds.includes(c.id));
 
   const toggleSelectMode = () => {
     setSelectMode((prev) => !prev);
@@ -63,12 +68,9 @@ export default function ConversationList({
 
   const toggleSelectAll = () => {
     if (allFilteredSelected) {
-      setSelectedIds((prev) =>
-        prev.filter((id) => !filtered.find((c) => c.id === id))
-      );
+      setSelectedIds([]);
     } else {
-      const newIds = filtered.map((c) => c.id).filter((id) => !selectedIds.includes(id));
-      setSelectedIds((prev) => [...prev, ...newIds]);
+      setSelectedIds(conversations.map((c) => c.id));
     }
   };
 
@@ -78,6 +80,23 @@ export default function ConversationList({
     setSelectMode(false);
     setSelectedIds([]);
   };
+
+  // Infinite scroll via IntersectionObserver
+  useEffect(() => {
+    if (!sentinelRef.current || !onLoadMore || !hasMore || loading) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          onLoadMore();
+        }
+      },
+      { root: scrollRef.current, rootMargin: '100px' }
+    );
+
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loading, onLoadMore]);
 
   const getInitials = (name: string) => {
     return name.charAt(0).toUpperCase();
@@ -136,23 +155,23 @@ export default function ConversationList({
             <input
               type="text"
               placeholder="Search conversations..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
               className="input pl-9"
             />
           </div>
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto px-2 py-2">
-        {filtered.length === 0 ? (
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-2 py-2">
+        {conversations.length === 0 && !loading ? (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <Search size={24} className="mb-2 text-gray-300 dark:text-gray-700" />
             <p className="text-sm text-gray-400 dark:text-gray-500">No conversations found</p>
           </div>
         ) : (
           <div className="space-y-1">
-            {filtered.map((conversation) => (
+            {conversations.map((conversation) => (
               <div
                 key={conversation.id}
                 className={`group flex w-full items-start gap-2 rounded-lg px-3 py-2.5 text-left transition-colors ${
@@ -285,6 +304,17 @@ export default function ConversationList({
                 )}
               </div>
             ))}
+
+            {/* Sentinel for infinite scroll */}
+            {hasMore && (
+              <div ref={sentinelRef} className="flex items-center justify-center py-3">
+                {loading ? (
+                  <Loader2 size={18} className="animate-spin text-gray-400" />
+                ) : (
+                  <div className="h-6" />
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
