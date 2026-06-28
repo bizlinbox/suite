@@ -14,6 +14,7 @@ import {
   Send,
   Eye,
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, TableLoading } from '@/components/Table';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
@@ -355,30 +356,30 @@ export default function FlowsPage() {
 
       {selectedWabaId && activeTab === 'flows' && (
         <div className="panel overflow-hidden">
-          <table className="data-table">
-            <thead>
+          <Table>
+            <TableHeader>
               <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Status</th>
-                <th>Updated</th>
-                <th className="w-40 text-right">Actions</th>
+                <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Updated</TableHead>
+                <TableHead className="w-40 text-right">Actions</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            </TableHeader>
+            <TableBody>
               {flows.map((f) => (
-                <tr key={f.id}>
-                  <td className="font-medium">{f.name}</td>
-                  <td>
+                <TableRow key={f.id}>
+                  <TableCell className="font-medium">{f.name}</TableCell>
+                  <TableCell>
                     <span className="badge badge-blue">{f.category || 'OTHER'}</span>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <span className={`badge ${statusBadgeClass[f.status] || 'badge-gray'}`}>
                       {f.status}
                     </span>
-                  </td>
-                  <td className="text-sm text-gray-500">{formatDate(f.updatedAt)}</td>
-                  <td className="text-right">
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">{formatDate(f.updatedAt)}</TableCell>
+                  <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => openPreview(f)}
@@ -418,52 +419,40 @@ export default function FlowsPage() {
                         <Trash2 size={15} />
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-              {flows.length === 0 && !loading && (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                    No flows yet. Sync from Meta or create one.
-                  </td>
-                </tr>
-              )}
-              {loading && (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center">
-                    <Loader2 size={24} className="animate-spin text-gray-400 dark:text-gray-500" />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              {flows.length === 0 && !loading && <TableEmpty colSpan={5}>No flows yet. Sync from Meta or create one.</TableEmpty>}
+              {loading && <TableLoading colSpan={5} />}
+            </TableBody>
+          </Table>
         </div>
       )}
 
       {activeTab === 'submissions' && (
         <div className="panel overflow-hidden">
-          <table className="data-table">
-            <thead>
+          <Table>
+            <TableHeader>
               <tr>
-                <th>Flow</th>
-                <th>Contact</th>
-                <th>Status</th>
-                <th>Completed</th>
-                <th className="w-24 text-right">Actions</th>
+                <TableHead>Flow</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Completed</TableHead>
+                <TableHead className="w-24 text-right">Actions</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            </TableHeader>
+            <TableBody>
               {submissions.map((s) => (
-                <tr key={s.id}>
-                  <td className="font-medium">{s.flowName || 'Unknown Flow'}</td>
-                  <td>{s.contactName || 'Unknown'}</td>
-                  <td>
+                <TableRow key={s.id}>
+                  <TableCell className="font-medium">{s.flowName || 'Unknown Flow'}</TableCell>
+                  <TableCell>{s.contactName || 'Unknown'}</TableCell>
+                  <TableCell>
                     <span className={`badge ${s.status === 'completed' ? 'badge-green' : s.status === 'failed' ? 'badge-red' : 'badge-amber'}`}>
                       {s.status}
                     </span>
-                  </td>
-                  <td className="text-sm text-gray-500">{formatDate(s.completedAt || s.createdAt)}</td>
-                  <td className="text-right">
+                  </TableCell>
+                  <TableCell className="text-sm text-gray-500">{formatDate(s.completedAt || s.createdAt)}</TableCell>
+                  <TableCell className="text-right">
                     <button
                       onClick={() => { setSubmissionDetail(s); setSubmissionDetailOpen(true); }}
                       className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -471,25 +460,13 @@ export default function FlowsPage() {
                     >
                       <Eye size={15} />
                     </button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-              {submissions.length === 0 && !submissionsLoading && (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                    No submissions yet. Send a flow and wait for responses.
-                  </td>
-                </tr>
-              )}
-              {submissionsLoading && (
-                <tr>
-                  <td colSpan={5} className="py-10 text-center">
-                    <Loader2 size={24} className="animate-spin text-gray-400 dark:text-gray-500" />
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              {submissions.length === 0 && !submissionsLoading && <TableEmpty colSpan={5}>No submissions yet. Send a flow and wait for responses.</TableEmpty>}
+              {submissionsLoading && <TableLoading colSpan={5} />}
+            </TableBody>
+          </Table>
         </div>
       )}
 

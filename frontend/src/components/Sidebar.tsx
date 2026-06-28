@@ -84,7 +84,6 @@ interface SidebarProps {
   mobileOpen: boolean;
   onMobileClose: () => void;
   onDesktopToggle?: () => void;
-  desktopOpen?: boolean;
   collapsed?: boolean;
 }
 
@@ -175,7 +174,7 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, desktopOpen = true, collapsed = false }: SidebarProps) {
+export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -421,25 +420,11 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       {/* Desktop drawer */}
       <div
-        className={`fixed left-0 top-0 z-30 hidden h-full border-r border-gray-200 bg-white transition-[width] duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 md:block ${
-          desktopOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="fixed left-0 top-0 z-30 hidden h-full border-r border-gray-200 bg-white transition-[width] duration-300 ease-out dark:border-gray-800 dark:bg-gray-900 md:block"
         style={{ width: sidebarWidth }}
       >
         <div className="h-full w-full">{drawerContent(collapsed)}</div>
       </div>
-
-      {/* Desktop expand button (when fully hidden) */}
-      {!desktopOpen && onDesktopToggle && (
-        <button
-          onClick={onDesktopToggle}
-          className="fixed left-4 top-4 z-30 hidden items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-600 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 md:flex"
-          aria-label="Expand sidebar"
-        >
-          <ChevronRight size={16} />
-          Menu
-        </button>
-      )}
     </>
   );
 }

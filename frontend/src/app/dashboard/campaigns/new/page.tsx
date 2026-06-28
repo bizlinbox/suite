@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Loader2,
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Contact {
   id: string;
@@ -774,46 +775,40 @@ export default function NewCampaignPage() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
-                  <table className="min-w-full text-left text-sm">
-                    <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300">
+                <div className="panel overflow-hidden">
+                  <Table className="min-w-full">
+                    <TableHeader>
                       <tr>
-                        <th className="px-4 py-2">
+                        <TableHead>
                           <input
                             type="checkbox"
                             checked={allSelected}
                             onChange={toggleSelectAll}
                             className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                           />
-                        </th>
-                        <th className="px-4 py-2 font-medium">Name</th>
-                        <th className="px-4 py-2 font-medium">Phone</th>
+                        </TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Phone</TableHead>
                       </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                    </TableHeader>
+                    <TableBody>
                       {filteredContacts.map((c) => (
-                        <tr key={c.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                          <td className="px-4 py-2">
+                        <TableRow key={c.id}>
+                          <TableCell>
                             <input
                               type="checkbox"
                               checked={selectedContactIds.has(c.id)}
                               onChange={() => toggleContact(c.id)}
                               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                             />
-                          </td>
-                          <td className="px-4 py-2 text-gray-900 dark:text-gray-100">{c.name}</td>
-                          <td className="px-4 py-2 text-gray-700 dark:text-gray-300">{c.phone}</td>
-                        </tr>
+                          </TableCell>
+                          <TableCell className="font-medium text-gray-900 dark:text-gray-100">{c.name}</TableCell>
+                          <TableCell>{c.phone}</TableCell>
+                        </TableRow>
                       ))}
-                      {filteredContacts.length === 0 && (
-                        <tr>
-                          <td colSpan={3} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                            No contacts found
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                      {filteredContacts.length === 0 && <TableEmpty colSpan={3}>No contacts found</TableEmpty>}
+                    </TableBody>
+                  </Table>
                 </div>
                 <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                   <Users size={16} className="inline mr-1 -mt-0.5" />

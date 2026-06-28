@@ -14,6 +14,7 @@ import {
   Trash2,
   Loader2,
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableLoading, TableEmpty } from '@/components/Table';
 
 interface Automation {
   id: string;
@@ -65,7 +66,7 @@ export default function AutomationsPage() {
     if (!confirm('Delete this automation?')) return;
     try {
       await api.delete(`/automations/${id}`);
-      setAutomations((prev) => prev.filter((a) => a.id !== id));
+      fetchAutomations();
     } catch {
       // ignore
     }
@@ -98,51 +99,41 @@ export default function AutomationsPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <table className="data-table">
-          <thead className="bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+        <Table>
+          <TableHeader>
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Steps</th>
-              <th className="px-4 py-3">Created</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <TableHead>Name</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Steps</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Loading...
-                </td>
-              </tr>
-            )}
+          </TableHeader>
+          <TableBody>
+            {loading && <TableLoading colSpan={5} />}
             {!loading && automations.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No automations yet. Create one to get started.
-                </td>
-              </tr>
+              <TableEmpty colSpan={5}>No automations yet. Create one to get started.</TableEmpty>
             )}
             {automations.map((a) => (
-              <tr key={a.id} className="border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50/60 dark:border-gray-800 dark:hover:bg-gray-800/40">
-                <td className="px-4 py-3">
+              <TableRow key={a.id}>
+                <TableCell>
                   <Link
                     href={`/dashboard/automations/${a.id}`}
                     className="font-medium text-gray-900 dark:text-gray-100 hover:text-primary-700 dark:hover:text-primary-400"
                   >
                     {a.name}
                   </Link>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <span className={a.isActive ? 'badge-green' : 'badge-gray'}>
                     {a.isActive ? 'Active' : 'Inactive'}
                   </span>
-                </td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{a.stepCount} steps</td>
-                <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
+                </TableCell>
+                <TableCell>{a.stepCount} steps</TableCell>
+                <TableCell className="text-gray-500 dark:text-gray-400">
                   {new Date(a.createdAt).toLocaleDateString()}
-                </td>
-                <td className="px-4 py-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   {can('automations.manage') && (
                     <>
                       <button
@@ -168,11 +159,11 @@ export default function AutomationsPage() {
                       </button>
                     </>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

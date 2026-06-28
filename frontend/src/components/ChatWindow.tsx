@@ -336,6 +336,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const initialScrollDoneRef = useRef(false);
   const [msgOffset, setMsgOffset] = useState(0);
   const [msgTotal, setMsgTotal] = useState(0);
   const [msgLoading, setMsgLoading] = useState(false);
@@ -390,6 +391,8 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     if (!conversationId) return;
     setMsgLoading(true);
     setMsgOffset(0);
+    initialScrollDoneRef.current = false;
+    lastMessageIdRef.current = null;
     api.get(`/messages?conversationId=${conversationId}&limit=50&offset=0&direction=desc`)
       .then((res) => {
         const fetched = (res.data.messages || []) as Message[];
@@ -397,6 +400,15 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         // Reverse so oldest of the loaded set is at top
         setMessages(fetched.slice().reverse());
         setMsgOffset(0);
+        // Pre-seed the last-message ref so the auto-scroll effect doesn't re-fire
+        lastMessageIdRef.current = fetched[0]?.id || null;
+        // Scroll to bottom on initial load after DOM updates
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
+            initialScrollDoneRef.current = true;
+          });
+        });
       })
       .finally(() => setMsgLoading(false));
   }, [conversationId]);
@@ -508,11 +520,29 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   useEffect(() => {
     if (messages.length === 0) return;
     const lastId = messages[messages.length - 1]?.id;
-    if (lastId && lastId !== lastMessageIdRef.current) {
-      lastMessageIdRef.current = lastId;
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (!lastId || lastId === lastMessageIdRef.current) return;
+    lastMessageIdRef.current = lastId;
+    // Use instant scroll for initial load, smooth for live updates
+    const behavior = initialScrollDoneRef.current ? 'smooth' : 'auto';
+    messagesEndRef.current?.scrollIntoView({ behavior });
   }, [messages]);
+
+  // Infinite scroll: load older messages when scrolling near the top
+  useEffect(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (msgLoading) return;
+      if (messages.length >= msgTotal) return;
+      if (container.scrollTop < 100) {
+        handleLoadOlderMessages();
+      }
+    };
+
+    container.addEventListener('scroll', handleScroll);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [msgLoading, messages.length, msgTotal, handleLoadOlderMessages]);
 
   // Sync reactingTo ref for use in document event listeners
   reactingToRef.current = reactingTo;
@@ -1192,16 +1222,9 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
       {/* Messages */}
       <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto px-4 py-3">
-        {msgTotal > messages.length && (
+        {msgTotal > messages.length && msgLoading && (
           <div className="mb-2 flex justify-center">
-            <button
-              onClick={handleLoadOlderMessages}
-              disabled={msgLoading}
-              className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-200 disabled:opacity-50 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
-            >
-              {msgLoading ? <Loader2 size={12} className="animate-spin" /> : null}
-              Load older messages
-            </button>
+            <Loader2 size={16} className="animate-spin text-gray-400" />
           </div>
         )}
         {(() => {

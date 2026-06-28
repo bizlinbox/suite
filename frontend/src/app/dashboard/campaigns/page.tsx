@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   XCircle,
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableLoading, TableEmpty } from '@/components/Table';
 
 interface Campaign {
   id: string;
@@ -125,7 +126,7 @@ export default function CampaignsPage() {
     if (!confirm('Are you sure you want to delete this campaign?')) return;
     try {
       await api.delete(`/campaigns/${id}`);
-      setCampaigns((prev) => prev.filter((c) => c.id !== id));
+      fetchCampaigns();
     } catch {
       // ignore
     }
@@ -253,55 +254,43 @@ export default function CampaignsPage() {
 
       {/* Table */}
       <div className="panel overflow-hidden">
-        <table className="data-table">
-          <thead className="bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+        <Table>
+          <TableHeader>
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Type</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Recipients</th>
-              <th className="px-4 py-3">Scheduled At</th>
-              <th className="px-4 py-3">Created At</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Recipients</TableHead>
+              <TableHead>Scheduled At</TableHead>
+              <TableHead>Created At</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {loading && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  Loading...
-                </td>
-              </tr>
-            )}
-            {!loading && filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No campaigns found
-                </td>
-              </tr>
-            )}
+          </TableHeader>
+          <TableBody>
+            {loading && <TableLoading colSpan={7} />}
+            {!loading && filtered.length === 0 && <TableEmpty colSpan={7}>No campaigns found</TableEmpty>}
             {filtered.map((c) => (
-              <tr key={c.id} className="border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50/60 dark:border-gray-800 dark:hover:bg-gray-800/40">
-                <td className="px-4 py-3">
+              <TableRow key={c.id}>
+                <TableCell>
                   <Link
                     href={`/dashboard/campaigns/${c.id}`}
                     className="font-medium text-gray-900 dark:text-gray-100 hover:text-primary-700 dark:hover:text-primary-400"
                   >
                     {c.name}
                   </Link>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <span className={typeBadgeClass[c.messageType]}>
                     {c.messageType}
                   </span>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <span className={statusBadgeClass[c.status]}>
                     {c.status === 'running' && <RunningDot />}
                     {c.status}
                   </span>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <div className="text-gray-900 dark:text-gray-100">
                     {c.sentCount}/{c.totalRecipients} sent
                   </div>
@@ -313,14 +302,14 @@ export default function CampaignsPage() {
                       />
                     </div>
                   )}
-                </td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                </TableCell>
+                <TableCell>
                   {formatDate(c.scheduledAt)}
-                </td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                </TableCell>
+                <TableCell>
                   {formatDate(c.createdAt)}
-                </td>
-                <td className="px-4 py-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   {can('campaigns.manage') && (
                     <div className="flex items-center justify-end gap-1">
                       {c.status === 'draft' && (
@@ -427,11 +416,11 @@ export default function CampaignsPage() {
                       )}
                     </div>
                   )}
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </div>
   );

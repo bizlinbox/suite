@@ -5,6 +5,7 @@ import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import ContactDialog, { ContactFormData } from '@/components/ContactDialog';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Contact {
   id: string;
@@ -58,7 +59,7 @@ export default function ContactsPage() {
     if (!confirm('Are you sure you want to delete this contact?')) return;
     try {
       await api.delete(`/contacts/${id}`);
-      setContacts((prev) => prev.filter((c) => c.id !== id));
+      fetchContacts();
     } catch {
       // ignore
     }
@@ -83,12 +84,11 @@ export default function ContactsPage() {
         zip_code: form.zipCode || null,
       };
       if (editingContact) {
-        const res = await api.put(`/contacts/${editingContact.id}`, payload);
-        setContacts((prev) => prev.map((c) => (c.id === editingContact.id ? res.data.contact : c)));
+        await api.put(`/contacts/${editingContact.id}`, payload);
       } else {
-        const res = await api.post('/contacts', payload);
-        setContacts((prev) => [...prev, res.data.contact]);
+        await api.post('/contacts', payload);
       }
+      fetchContacts();
     } catch {
       // ignore
     } finally {
@@ -161,83 +161,79 @@ export default function ContactsPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table min-w-full">
-            <thead>
-              <tr>
-                <th className="text-left">Name</th>
-                <th className="text-left">Phone</th>
-                <th className="text-left">Email</th>
-                <th className="text-left">Company</th>
-                <th className="text-left">Tags</th>
-                <th className="w-24 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {filtered.map((contact) => (
-                <tr key={contact.id}>
-                  <td>
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
-                        {contact.name.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{contact.name}</span>
+        <Table className="min-w-full">
+          <TableHeader>
+            <tr>
+              <TableHead className="text-left">Name</TableHead>
+              <TableHead className="text-left">Phone</TableHead>
+              <TableHead className="text-left">Email</TableHead>
+              <TableHead className="text-left">Company</TableHead>
+              <TableHead className="text-left">Tags</TableHead>
+              <TableHead className="w-24 text-right">Actions</TableHead>
+            </tr>
+          </TableHeader>
+          <TableBody>
+            {filtered.map((contact) => (
+              <TableRow key={contact.id}>
+                <TableCell>
+                  <div className="flex items-center gap-2.5">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-100 text-xs font-semibold text-primary-700 dark:bg-primary-900/30 dark:text-primary-400">
+                      {contact.name.charAt(0).toUpperCase()}
                     </div>
-                  </td>
-                  <td className="text-sm text-gray-600 dark:text-gray-300">{contact.phone}</td>
-                  <td className="text-sm text-gray-600 dark:text-gray-300">{contact.email || '-'}</td>
-                  <td className="text-sm text-gray-600 dark:text-gray-300">
-                    {contact.company || '-'}
-                  </td>
-                  <td>
-                    <div className="flex flex-wrap gap-1">
-                      {(contact.tags || []).slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                      {(contact.tags || []).length > 3 && (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                          +{(contact.tags || []).length - 3}
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="text-right">
-                    {can('contacts.manage') && (
-                      <div className="flex items-center justify-end gap-1">
-                        <button
-                          onClick={() => handleEdit(contact)}
-                          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
-                          aria-label="Edit"
-                        >
-                          <Edit size={15} />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(contact.id)}
-                          className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                          aria-label="Delete"
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">{contact.name}</span>
+                  </div>
+                </TableCell>
+                <TableCell className="text-sm text-gray-600 dark:text-gray-300">{contact.phone}</TableCell>
+                <TableCell className="text-sm text-gray-600 dark:text-gray-300">{contact.email || '-'}</TableCell>
+                <TableCell className="text-sm text-gray-600 dark:text-gray-300">
+                  {contact.company || '-'}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-wrap gap-1">
+                    {(contact.tags || []).slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-full bg-primary-50 px-2 py-0.5 text-[10px] font-medium text-primary-700 dark:bg-primary-900/20 dark:text-primary-300"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                    {(contact.tags || []).length > 3 && (
+                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+                        +{(contact.tags || []).length - 3}
+                      </span>
                     )}
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                    {contacts.length === 0 ? 'No contacts yet' : 'No contacts match your search'}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {can('contacts.manage') && (
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => handleEdit(contact)}
+                        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                        aria-label="Edit"
+                      >
+                        <Edit size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(contact.id)}
+                        className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        aria-label="Delete"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+            {filtered.length === 0 && (
+              <TableEmpty colSpan={6}>
+                {contacts.length === 0 ? 'No contacts yet' : 'No contacts match your search'}
+              </TableEmpty>
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       <ContactDialog

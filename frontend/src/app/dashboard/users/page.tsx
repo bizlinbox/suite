@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { useRouter } from 'next/navigation';
 import PasswordInput from '@/components/PasswordInput';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface TeamMember {
   id: string;
@@ -112,15 +113,7 @@ export default function UsersPage() {
       } else {
         await api.delete(`/waba-accounts/${wabaId}/agents/${agentId}`);
       }
-      setAgentWabaMap((prev) => {
-        const current = new Set(prev[agentId] || []);
-        if (assign) {
-          current.add(wabaId);
-        } else {
-          current.delete(wabaId);
-        }
-        return { ...prev, [agentId]: Array.from(current) };
-      });
+      await fetchWabaAccounts();
     } catch {
       // ignore
     }
@@ -220,28 +213,28 @@ export default function UsersPage() {
         )}
       </div>
 
-      <div className="panel">
-        <table className="data-table">
-          <thead>
+      <div className="panel overflow-hidden">
+        <Table>
+          <TableHeader>
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Role</th>
-              <th className="px-4 py-3">WABA Access</th>
-              {isAdmin && <th className="px-4 py-3 text-right">Actions</th>}
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>WABA Access</TableHead>
+              {isAdmin && <TableHead className="text-right">Actions</TableHead>}
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          </TableHeader>
+          <TableBody>
             {members.map((m) => (
-              <tr key={m.id}>
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{m.name}</td>
-                <td className="px-4 py-3">{m.email}</td>
-                <td className="px-4 py-3">
+              <TableRow key={m.id}>
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100">{m.name}</TableCell>
+                <TableCell>{m.email}</TableCell>
+                <TableCell>
                   <span className={m.role === 'admin' ? 'badge-purple' : 'badge-gray'}>
                     {m.role}
                   </span>
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   <div
                     className="relative inline-block"
                     ref={(el) => { wabaDropdownRefs.current[m.id] = el; }}
@@ -286,9 +279,9 @@ export default function UsersPage() {
                       </div>
                     )}
                   </div>
-                </td>
+                </TableCell>
                 {isAdmin && (
-                  <td className="px-4 py-3 text-right">
+                  <TableCell className="text-right">
                     <button
                       onClick={() => handleEdit(m)}
                       className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
@@ -303,19 +296,13 @@ export default function UsersPage() {
                     >
                       <Trash2 size={16} />
                     </button>
-                  </td>
+                  </TableCell>
                 )}
-              </tr>
+              </TableRow>
             ))}
-            {members.length === 0 && (
-              <tr>
-                <td colSpan={isAdmin ? 5 : 4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No users
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            {members.length === 0 && <TableEmpty colSpan={isAdmin ? 5 : 4}>No users</TableEmpty>}
+          </TableBody>
+        </Table>
       </div>
 
       {/* User Dialog */}

@@ -15,6 +15,7 @@ import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface TemplateComponent {
   type: string;
@@ -300,57 +301,57 @@ export default function TemplatesPage() {
                 <Loader2 size={32} className="animate-spin text-gray-400 dark:text-gray-500" />
               </div>
             ) : (
-              <table className="data-table">
-                <thead>
+              <Table>
+                <TableHeader>
                   <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Language</th>
-                    <th>Status</th>
-                    <th>Body Preview</th>
-                    <th>Last Updated</th>
-                    <th className="w-20 text-right">Actions</th>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Category</TableHead>
+                    <TableHead>Language</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Body Preview</TableHead>
+                    <TableHead>Last Updated</TableHead>
+                    <TableHead className="w-20 text-right">Actions</TableHead>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                </TableHeader>
+                <TableBody>
                   {filtered.map((t) => {
                     const bodyPreview = getTemplateBody(t.components);
                     const headerPreview = getTemplateHeader(t.components);
                     return (
-                      <tr key={t.id}>
-                        <td>
+                      <TableRow key={t.id}>
+                        <TableCell>
                           <div className="flex items-center gap-2">
                             <FileText size={16} className="shrink-0 text-gray-400" />
                             <span className="font-medium text-gray-900 dark:text-gray-100">
                               {t.templateName}
                             </span>
                           </div>
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           <span className={categoryBadgeClass[t.category] || 'badge-gray'}>
                             {t.category}
                           </span>
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           <span className="text-xs font-mono text-gray-500 dark:text-gray-400">
                             {t.language}
                           </span>
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
                           <span className={statusBadgeClass[t.status] || 'badge-gray'}>
                             {t.status}
                           </span>
-                        </td>
-                        <td className="max-w-xs">
+                        </TableCell>
+                        <TableCell className="max-w-xs">
                           <div className="truncate text-xs text-gray-500 dark:text-gray-400">
                             {headerPreview && <span className="font-medium text-gray-700 dark:text-gray-300">{headerPreview} &bull; </span>}
                             {bodyPreview || <em className="text-gray-400">No body text</em>}
                           </div>
-                        </td>
-                        <td className="text-xs text-gray-500 dark:text-gray-400">
+                        </TableCell>
+                        <TableCell className="text-xs text-gray-500 dark:text-gray-400">
                           {formatDate(t.updatedAt)}
-                        </td>
-                        <td className="text-right">
+                        </TableCell>
+                        <TableCell className="text-right">
                           <button
                             onClick={() => openPreview(t)}
                             className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
@@ -359,27 +360,25 @@ export default function TemplatesPage() {
                           >
                             <Eye size={15} />
                           </button>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
                   {filtered.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="py-12 text-center text-gray-400 dark:text-gray-500">
-                        {templates.length === 0 ? (
-                          <div className="flex flex-col items-center gap-2">
-                            <FileText size={32} className="text-gray-300 dark:text-gray-600" />
-                            <p>No templates found for this WABA account.</p>
-                            <p className="text-xs">Click Refresh to sync templates from Meta.</p>
-                          </div>
-                        ) : (
-                          <p>No templates match your filters.</p>
-                        )}
-                      </td>
-                    </tr>
+                    <TableEmpty colSpan={7}>
+                      {templates.length === 0 ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <FileText size={32} className="text-gray-300 dark:text-gray-600" />
+                          <p>No templates found for this WABA account.</p>
+                          <p className="text-xs">Click Refresh to sync templates from Meta.</p>
+                        </div>
+                      ) : (
+                        <p>No templates match your filters.</p>
+                      )}
+                    </TableEmpty>
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             )}
           </div>
         </>

@@ -19,6 +19,7 @@ import {
   AlertCircle,
   Megaphone,
 } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Campaign {
   id: string;
@@ -413,44 +414,38 @@ export default function CampaignDetailPage() {
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
           <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Recipients</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-gray-50 dark:bg-gray-800/50 text-gray-700 dark:text-gray-300">
+        <div className="panel overflow-hidden">
+          <Table className="min-w-full">
+            <TableHeader>
               <tr>
-                <th className="px-4 py-3 font-medium">Phone</th>
-                <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Sent At</th>
-                <th className="px-4 py-3 font-medium">Error</th>
+                <TableHead>Phone</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Sent At</TableHead>
+                <TableHead>Error</TableHead>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            </TableHeader>
+            <TableBody>
               {recipients.map((r) => (
-                <tr key={r.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <td className="px-4 py-3 text-gray-900 dark:text-gray-100">{r.phone}</td>
-                  <td className="px-4 py-3">
+                <TableRow key={r.id}>
+                  <TableCell className="font-medium text-gray-900 dark:text-gray-100">{r.phone}</TableCell>
+                  <TableCell>
                     <span
                       className={`inline-flex items-center rounded-xl px-2.5 py-0.5 text-xs font-medium ${recipientStatusBadgeStyles[r.status]}`}
                     >
                       {r.status}
                     </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                  </TableCell>
+                  <TableCell>
                     {formatDate(r.sentAt)}
-                  </td>
-                  <td className="px-4 py-3 text-red-600 dark:text-red-400 text-xs">
+                  </TableCell>
+                  <TableCell className="text-red-600 dark:text-red-400 text-xs">
                     {r.error || '-'}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-              {recipients.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                    No recipients found
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              {recipients.length === 0 && <TableEmpty colSpan={4}>No recipients found</TableEmpty>}
+            </TableBody>
+          </Table>
         </div>
 
         {/* Pagination */}

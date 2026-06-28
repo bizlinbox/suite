@@ -20,6 +20,7 @@ import { toastError, toastSuccess } from '@/components/Toaster';
 import { useSocket } from '@/hooks/useSocket';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import { usePermission } from '@/hooks/usePermission';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface ApiLog {
   id: string;
@@ -106,10 +107,8 @@ export default function ApiLogsPage() {
     setClearing(true);
     try {
       await api.delete('/api-logs');
-      setLogs([]);
-      setTotal(0);
-      setOffset(0);
       toastSuccess('API logs cleared');
+      fetchLogs();
     } catch (err: any) {
       toastError(err.response?.data?.error || 'Failed to clear API logs');
     } finally {
@@ -183,34 +182,25 @@ export default function ApiLogsPage() {
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs font-semibold uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400">
+      <div className="panel overflow-hidden">
+        <Table>
+          <TableHeader>
             <tr>
-              <th className="px-4 py-3">Direction</th>
-              <th className="px-4 py-3">Provider</th>
-              <th className="px-4 py-3">Method</th>
-              <th className="px-4 py-3">Endpoint</th>
-              <th className="px-4 py-3">Status</th>
-              <th className="px-4 py-3">Duration</th>
-              <th className="px-4 py-3">Time</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <TableHead>Direction</TableHead>
+              <TableHead>Provider</TableHead>
+              <TableHead>Method</TableHead>
+              <TableHead>Endpoint</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Duration</TableHead>
+              <TableHead>Time</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {logs.length === 0 && !loading && (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                  No API logs found
-                </td>
-              </tr>
-            )}
+          </TableHeader>
+          <TableBody>
+            {logs.length === 0 && !loading && <TableEmpty colSpan={8}>No API logs found</TableEmpty>}
             {logs.map((log) => (
-              <tr
-                key={log.id}
-                className="transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
-              >
-                <td className="px-4 py-3">
+              <TableRow key={log.id}>
+                <TableCell>
                   <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
                     log.direction === 'outgoing'
                       ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
@@ -219,17 +209,17 @@ export default function ApiLogsPage() {
                     {log.direction === 'outgoing' ? <ArrowUpRight size={12} /> : <ArrowDownLeft size={12} />}
                     {log.direction}
                   </span>
-                </td>
-                <td className="px-4 py-3 capitalize text-gray-700 dark:text-gray-300">{log.provider}</td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell className="capitalize">{log.provider}</TableCell>
+                <TableCell>
                   <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                     {log.method}
                   </span>
-                </td>
-                <td className="px-4 py-3 max-w-xs truncate text-gray-700 dark:text-gray-300" title={log.endpoint}>
+                </TableCell>
+                <TableCell className="max-w-xs truncate" title={log.endpoint}>
                   {log.endpoint}
-                </td>
-                <td className="px-4 py-3">
+                </TableCell>
+                <TableCell>
                   {log.success ? (
                     <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                       <CheckCircle size={14} />
@@ -241,14 +231,14 @@ export default function ApiLogsPage() {
                       {log.statusCode || 'Error'}
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3 text-gray-600 dark:text-gray-400">
+                </TableCell>
+                <TableCell>
                   {log.durationMs ? `${log.durationMs}ms` : '—'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
                   {new Date(log.createdAt).toLocaleString()}
-                </td>
-                <td className="px-4 py-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   <button
                     onClick={() => setSelectedLog(log)}
                     className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
@@ -256,11 +246,11 @@ export default function ApiLogsPage() {
                   >
                     <ExternalLink size={16} />
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}

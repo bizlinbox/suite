@@ -138,9 +138,22 @@ export default function PWARegister() {
 
   const handleUpdate = useCallback(() => {
     if (!swRegistration?.waiting) return;
+
+    // Wait for the new service worker to take control before reloading.
+    // This prevents the old worker from serving stale content.
+    const handleControllerChange = () => {
+      window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange);
+
     swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
     setUpdateAvailable(false);
-    window.location.reload();
+
+    // Fallback: force reload after 3s if the event never fires
+    setTimeout(() => {
+      navigator.serviceWorker.removeEventListener('controllerchange', handleControllerChange);
+      window.location.reload();
+    }, 3000);
   }, [swRegistration]);
 
   const dismissInstall = useCallback(() => {

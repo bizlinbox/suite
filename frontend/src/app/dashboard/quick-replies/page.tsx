@@ -5,6 +5,7 @@ import { Edit, Trash2, Plus, Loader2 } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import QuickReplyDialog, { QuickReplyFormData, QuickMessageType } from '@/components/QuickReplyDialog';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface QuickReply {
   id: string;
@@ -100,30 +101,30 @@ export default function QuickRepliesPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <table className="data-table">
-          <thead>
+        <Table>
+          <TableHeader>
             <tr>
-              <th>Shortcut</th>
-              <th>Type</th>
-              <th>Content</th>
-              <th className="w-24 text-right">Actions</th>
+              <TableHead>Shortcut</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Content</TableHead>
+              <TableHead className="w-24 text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          </TableHeader>
+          <TableBody>
             {quickReplies.map((c) => (
-              <tr key={c.id}>
-                <td>
+              <TableRow key={c.id}>
+                <TableCell>
                   <code className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">
                     {c.shortcut}
                   </code>
-                </td>
-                <td>
+                </TableCell>
+                <TableCell>
                   <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                     {c.messageType || 'text'}
                   </span>
-                </td>
-                <td className="max-w-md truncate">{c.content}</td>
-                <td className="text-right">
+                </TableCell>
+                <TableCell className="max-w-md truncate">{c.content}</TableCell>
+                <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     <button
                       onClick={() => { setEditingQuick(c); setQuickDialogOpen(true); }}
@@ -140,18 +141,12 @@ export default function QuickRepliesPage() {
                       <Trash2 size={15} />
                     </button>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-            {quickReplies.length === 0 && (
-              <tr>
-                <td colSpan={4} className="py-10 text-center text-gray-400 dark:text-gray-500">
-                  No quick replies yet
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            {quickReplies.length === 0 && <TableEmpty colSpan={4}>No quick replies yet</TableEmpty>}
+          </TableBody>
+        </Table>
       </div>
 
       <QuickReplyDialog

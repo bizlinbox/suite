@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, Plug, CheckCircle2, XCircle, Loader2, Copy, Link as LinkIcon, Radio, Plus } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/Table';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 
@@ -255,25 +256,25 @@ export default function WabaAccountsPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <table className="data-table">
-          <thead>
+        <Table>
+          <TableHeader>
             <tr>
-              <th>Name</th>
-              <th>Phone Number ID</th>
-              <th>Business Account ID</th>
-              <th>Status</th>
-              <th>Connection</th>
-              <th className="w-40 text-right">Actions</th>
+              <TableHead>Name</TableHead>
+              <TableHead>Phone Number ID</TableHead>
+              <TableHead>Business Account ID</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Connection</TableHead>
+              <TableHead className="w-40 text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          </TableHeader>
+          <TableBody>
             {wabaAccounts.map((waba) => (
               <>
-                <tr key={waba.id}>
-                  <td className="font-medium text-gray-900 dark:text-gray-100">{waba.name}</td>
-                  <td className="font-mono text-xs text-gray-500 dark:text-gray-400">{waba.phoneNumberId}</td>
-                  <td className="font-mono text-xs text-gray-500 dark:text-gray-400">{waba.businessAccountId}</td>
-                  <td>
+                <TableRow key={waba.id}>
+                  <TableCell className="font-medium text-gray-900 dark:text-gray-100">{waba.name}</TableCell>
+                  <TableCell className="font-mono text-xs text-gray-500 dark:text-gray-400">{waba.phoneNumberId}</TableCell>
+                  <TableCell className="font-mono text-xs text-gray-500 dark:text-gray-400">{waba.businessAccountId}</TableCell>
+                  <TableCell>
                     <button
                       onClick={() => handleToggleActive(waba.id, !waba.isActive)}
                       disabled={togglingId === waba.id}
@@ -290,8 +291,8 @@ export default function WabaAccountsPage() {
                         }`}
                       />
                     </button>
-                  </td>
-                  <td>
+                  </TableCell>
+                  <TableCell>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => handleTestWaba(waba.id)}
@@ -308,8 +309,8 @@ export default function WabaAccountsPage() {
                         </span>
                       )}
                     </div>
-                  </td>
-                  <td className="text-right">
+                  </TableCell>
+                  <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button
                         onClick={() => toggleExpandWaba(waba.id)}
@@ -342,8 +343,8 @@ export default function WabaAccountsPage() {
                         <Trash2 size={15} />
                       </button>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
                 {expandedWabaId === waba.id && (
                   <tr className="bg-gray-50/70 dark:bg-gray-800/40">
                     <td colSpan={6} className="px-4 py-5">
@@ -400,14 +401,14 @@ export default function WabaAccountsPage() {
               </>
             ))}
             {wabaAccounts.length === 0 && (
-              <tr>
+              <TableRow>
                 <td colSpan={6} className="py-10 text-center text-gray-400 dark:text-gray-500">
                   No WABA accounts configured
                 </td>
-              </tr>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
 
       <Dialog open={wabaDialogOpen} onClose={() => { setWabaDialogOpen(false); setEditingWaba(null); setDialogTestResult(null); }} title={editingWaba ? 'Edit WABA Account' : 'Add WABA Account'}>

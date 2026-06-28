@@ -10,27 +10,16 @@ import { usePermission } from '@/hooks/usePermission';
 import NotificationManager from '@/components/NotificationManager';
 import { Menu } from 'lucide-react';
 
-const DRAWER_WIDTH = 256;
-
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [desktopOpen, setDesktopOpen] = useState(true);
   const [collapsed, setCollapsed] = useState(false);
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const { isAdmin } = usePermission();
 
-  const isInbox = pathname === '/dashboard/inbox' || pathname.startsWith('/dashboard/inbox/');
-
   const handleMobileClose = () => setMobileOpen(false);
-  const handleDesktopToggle = () => {
-    if (isInbox) {
-      setCollapsed((prev) => !prev);
-    } else {
-      setDesktopOpen((prev) => !prev);
-    }
-  };
+  const handleDesktopToggle = () => setCollapsed((prev) => !prev);
 
   const wabaAccounts = useMemo(() => user?.wabaAccounts || [], [user?.wabaAccounts]);
   const noWaba = !loading && wabaAccounts.length === 0;
@@ -40,16 +29,6 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
       router.replace('/dashboard/waba-accounts');
     }
   }, [noWaba, isAdmin, pathname, router]);
-
-  // Auto-collapse on inbox page, restore on leave
-  useEffect(() => {
-    if (isInbox) {
-      setCollapsed(true);
-    } else {
-      setCollapsed(false);
-      setDesktopOpen(true);
-    }
-  }, [isInbox]);
 
   // Auth guard: show loading while fetching user, don't render if unauthenticated
   if (loading) {
@@ -80,18 +59,11 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           mobileOpen={mobileOpen}
           onMobileClose={handleMobileClose}
           onDesktopToggle={handleDesktopToggle}
-          desktopOpen={desktopOpen}
-          collapsed={isInbox ? collapsed : false}
+          collapsed={collapsed}
         />
         <main
           className={`flex-1 overflow-x-hidden p-4 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:p-6 md:pb-6 ${
-            isInbox
-              ? collapsed
-                ? 'md:ml-16'
-                : 'md:ml-[256px]'
-              : desktopOpen
-                ? 'md:ml-[256px]'
-                : 'md:ml-0'
+            collapsed ? 'md:ml-16' : 'md:ml-[256px]'
           }`}
         >
           {noWaba && !isAdmin ? (
@@ -114,7 +86,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           ) : (
-            <div className={isInbox ? '' : 'mx-auto max-w-7xl'}>{children}</div>
+            <div className="mx-auto max-w-7xl">{children}</div>
           )}
         </main>
 

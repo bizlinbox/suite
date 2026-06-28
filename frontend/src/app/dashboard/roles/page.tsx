@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { Loader2, Plus, Pencil, Trash2, Shield } from 'lucide-react';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Role {
   id: string;
@@ -156,23 +157,21 @@ export default function RolesPage() {
       </div>
 
       <div className="panel overflow-hidden">
-        <table className="data-table">
-          <thead className="bg-gray-50/80 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:bg-gray-800/50 dark:text-gray-400">
+        <Table>
+          <TableHeader>
             <tr>
-              <th className="px-4 py-3">Name</th>
-              <th className="px-4 py-3">Permissions</th>
-              <th className="px-4 py-3">System</th>
-              <th className="px-4 py-3 text-right">Actions</th>
+              <TableHead>Name</TableHead>
+              <TableHead>Permissions</TableHead>
+              <TableHead>System</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+          </TableHeader>
+          <TableBody>
             {roles.map((role) => (
-              <tr key={role.id} className="border-b border-gray-100 transition-colors duration-150 hover:bg-gray-50/60 dark:border-gray-800 dark:hover:bg-gray-800/40">
-                <td className="px-4 py-3 font-medium text-gray-900 dark:text-gray-100">{role.name}</td>
-                <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
-                  {role.permissions.length} permissions
-                </td>
-                <td className="px-4 py-3">
+              <TableRow key={role.id}>
+                <TableCell className="font-medium text-gray-900 dark:text-gray-100">{role.name}</TableCell>
+                <TableCell>{role.permissions.length} permissions</TableCell>
+                <TableCell>
                   {role.isSystem ? (
                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-primary-100 text-primary-800 dark:bg-primary-900/30 dark:text-primary-400">
                       Yes
@@ -182,8 +181,8 @@ export default function RolesPage() {
                       No
                     </span>
                   )}
-                </td>
-                <td className="px-4 py-3 text-right">
+                </TableCell>
+                <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-1">
                     {!role.isSystem && can('roles.manage') && (
                       <>
@@ -207,18 +206,12 @@ export default function RolesPage() {
                       <span className="text-xs text-gray-400 dark:text-gray-500">Read-only</span>
                     )}
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
-            {roles.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400 dark:text-gray-500">
-                  No roles found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+            {roles.length === 0 && <TableEmpty colSpan={4}>No roles found</TableEmpty>}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Dialog */}
