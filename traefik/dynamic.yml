@@ -8,3 +8,6 @@ http:
         forceSTSHeader: true
         stsIncludeSubdomains: true
         stsSeconds: 31536000
+    dashboard-auth:
+      basicAuth:
+        usersFile: /etc/traefik/.htpasswd

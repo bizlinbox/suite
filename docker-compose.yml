@@ -19,6 +19,7 @@ services:
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
       - ./traefik/acme:/letsencrypt
+      - ./traefik/.htpasswd:/etc/traefik/.htpasswd:ro
     networks:
       - bizlinbox
     labels:
@@ -27,6 +28,8 @@ services:
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik.service=api@internal"
+      # Uncomment after generating your own .htpasswd file to secure the Traefik dashboard
+      # - "traefik.http.routers.traefik.middlewares=dashboard-auth@file"
     deploy:
       resources:
         limits:
@@ -73,7 +76,7 @@ services:
           memory: 256M
 
   app:
-    image: bizlintech/bizlinbox:develop
+    image: bizlinbox-app:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -85,6 +88,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-in-production-32chars}
       PORT: 4000
       CLIENT_URL: https://${DOMAIN}
       PUBLIC_URL: https://${DOMAIN}

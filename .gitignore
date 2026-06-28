@@ -25,3 +25,6 @@ Thumbs.db
 
 # Uploads
 uploads/
+
+# Traefik credentials (keep .htpasswd.example in repo)
+traefik/.htpasswd
