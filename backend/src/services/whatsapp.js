@@ -91,25 +91,30 @@ async function sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, captio
   // If mediaUrl is a local file path (not a Meta media ID or public link),
   // upload it to Meta first to get a reliable media ID.
   if (!mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
-    // Resolve local path against the configured upload directory
-    const uploadsBase = path.resolve(config.uploadDir);
-    let fullPath = path.isAbsolute(mediaUrl) ? mediaUrl : path.join(uploadsBase, mediaUrl);
-
-    // Fallback: try legacy process.cwd() path if not found in uploadDir
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(process.cwd(), mediaUrl);
-    }
-
-    // Fallback: bare filename might be stored at upload root
-    if (!fs.existsSync(fullPath)) {
-      fullPath = path.join(uploadsBase, path.basename(mediaUrl));
-    }
-
-    if (fs.existsSync(fullPath)) {
-      const mime = mediaMimeType || 'application/octet-stream';
-      metaMediaId = await uploadMedia(phoneNumberId, accessToken, fullPath, mime);
+    // Meta media IDs are numeric strings — use directly without re-uploading
+    if (/^\d+$/.test(mediaUrl)) {
+      metaMediaId = mediaUrl;
     } else {
-      throw new Error(`Media file not found: ${fullPath}`);
+      // Resolve local path against the configured upload directory
+      const uploadsBase = path.resolve(config.uploadDir);
+      let fullPath = path.isAbsolute(mediaUrl) ? mediaUrl : path.join(uploadsBase, mediaUrl);
+
+      // Fallback: try legacy process.cwd() path if not found in uploadDir
+      if (!fs.existsSync(fullPath)) {
+        fullPath = path.join(process.cwd(), mediaUrl);
+      }
+
+      // Fallback: bare filename might be stored at upload root
+      if (!fs.existsSync(fullPath)) {
+        fullPath = path.join(uploadsBase, path.basename(mediaUrl));
+      }
+
+      if (fs.existsSync(fullPath)) {
+        const mime = mediaMimeType || 'application/octet-stream';
+        metaMediaId = await uploadMedia(phoneNumberId, accessToken, fullPath, mime);
+      } else {
+        throw new Error(`Media file not found: ${fullPath}`);
+      }
     }
   } else {
     // It's a public URL — try uploading to Meta for reliability
