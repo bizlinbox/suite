@@ -369,6 +369,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [templateWindowOpen, setTemplateWindowOpen] = useState(true);
   const [lastIncomingMessageAt, setLastIncomingMessageAt] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -404,6 +405,9 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     const handleNewMessage = (message: Message) => {
       if (message.conversationId !== conversationId) return;
       setMessages((prev) => {
+        // Deduplicate: backend emits to both conv and org rooms
+        if (prev.some((m) => m.id === message.id)) return prev;
+
         // Replace a matching temp message (same content/type/sender) instead of duplicating
         const tempIndex = prev.findIndex(
           (m) =>
@@ -1205,16 +1209,25 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                     >
                       {hasMedia && (
                         <div className="mb-1.5">
-                          {msg.messageType === 'image' && (
-                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
-                              <ImageIcon size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Image</span>
+                          {msg.messageType === 'image' && msg.mediaUrl && (
+                            <div className="mb-1.5 overflow-hidden rounded-xl">
+                              <img
+                                src={getMediaUrl(msg.mediaUrl)}
+                                alt="Image"
+                                className="max-h-60 w-auto cursor-pointer object-cover"
+                                onClick={() => setLightboxImage(getMediaUrl(msg.mediaUrl))}
+                                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                              />
                             </div>
                           )}
-                          {msg.messageType === 'video' && (
-                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
-                              <Video size={18} className={isUser ? 'text-gray-700 dark:text-[#e9edef]' : 'text-gray-600 dark:text-gray-400'} />
-                              <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Video</span>
+                          {msg.messageType === 'video' && msg.mediaUrl && (
+                            <div className="mb-1.5 overflow-hidden rounded-xl">
+                              <video
+                                src={getMediaUrl(msg.mediaUrl)}
+                                controls
+                                className="max-h-60 w-auto"
+                                onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}
+                              />
                             </div>
                           )}
                           {msg.messageType === 'audio' && (

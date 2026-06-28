@@ -9,6 +9,7 @@ import {
   BarChart3,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Megaphone,
   Building2,
   Check,
@@ -24,6 +25,7 @@ import {
   Settings,
   Server,
   Store,
+  Settings2,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -31,10 +33,23 @@ import { useTheme } from '@/components/ThemeProvider';
 
 const DRAWER_WIDTH = 256;
 
-const allNavItems = [
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ComponentType<any>;
+  permission: string | null;
+}
+
+interface NavGroup {
+  label: string;
+  icon: React.ComponentType<any>;
+  permission: string | null;
+  items: NavItem[];
+}
+
+const topNavItems: NavItem[] = [
   { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare, permission: 'conversations.read' as string | null },
   { label: 'Contacts', href: '/dashboard/contacts', icon: Users, permission: 'contacts.read' as string | null },
-  { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
   { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
   { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, permission: 'campaigns.read' as string | null },
   { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' as string | null },
@@ -42,10 +57,19 @@ const allNavItems = [
   { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
-  { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
-  { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
   { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
 ];
+
+const manageGroup: NavGroup = {
+  label: 'Manage',
+  icon: Settings2,
+  permission: null,
+  items: [
+    { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
+    { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
+    { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
+  ],
+};
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
@@ -153,11 +177,21 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const navItems = allNavItems.filter((item) => {
+  const [manageOpen, setManageOpen] = useState(false);
+
+  const filteredTopItems = topNavItems.filter((item) => {
     if (!item.permission) return true;
     const perms = user?.permissions || [];
     return perms.includes(item.permission);
   });
+
+  const filteredManageItems = manageGroup.items.filter((item) => {
+    if (!item.permission) return true;
+    const perms = user?.permissions || [];
+    return perms.includes(item.permission);
+  });
+
+  const isManageActive = filteredManageItems.some((item) => isActiveNav(pathname, item.href));
 
   const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
 
@@ -202,7 +236,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
 
       {/* Nav */}
       <nav className={`flex-1 space-y-0.5 overflow-y-auto py-2 ${isCollapsed ? 'px-2' : 'px-3'}`}>
-        {navItems.map((item) => {
+        {filteredTopItems.map((item) => {
           const active = isActiveNav(pathname, item.href);
           const Icon = item.icon;
           return (
@@ -228,6 +262,93 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, de
             </Link>
           );
         })}
+
+        {/* Manage submenu */}
+        {filteredManageItems.length > 0 && (
+          <div className="mt-1">
+            {isCollapsed ? (
+              <div className="space-y-0.5">
+                {filteredManageItems.map((item) => {
+                  const active = isActiveNav(pathname, item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      title={item.label}
+                      className={`group flex items-center rounded-lg transition-colors ${
+                        active
+                          ? 'bg-blue-800 text-white'
+                          : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                      } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
+                    >
+                      <Icon
+                        size={18}
+                        className={`shrink-0 transition-colors ${
+                          active
+                            ? 'text-white'
+                            : 'text-blue-400 group-hover:text-white'
+                        }`}
+                      />
+                    </Link>
+                  );
+                })}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={() => setManageOpen((prev) => !prev)}
+                  className={`flex w-full items-center rounded-lg transition-colors ${
+                    isManageActive
+                      ? 'bg-blue-800 text-white'
+                      : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                  } gap-3 px-3 py-2.5 text-sm font-medium`}
+                >
+                  <Settings2
+                    size={18}
+                    className={`shrink-0 transition-colors ${
+                      isManageActive ? 'text-white' : 'text-blue-400'
+                    }`}
+                  />
+                  <span className="flex-1 text-left">Manage</span>
+                  <ChevronDown
+                    size={16}
+                    className={`shrink-0 text-blue-400 transition-transform ${manageOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {manageOpen && (
+                  <div className="space-y-0.5 pl-3">
+                    {filteredManageItems.map((item) => {
+                      const active = isActiveNav(pathname, item.href);
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          className={`group flex items-center rounded-lg transition-colors ${
+                            active
+                              ? 'bg-blue-800 text-white'
+                              : 'text-blue-200 hover:bg-blue-800/40 hover:text-white'
+                          } gap-3 px-3 py-2 text-sm font-medium`}
+                        >
+                          <Icon
+                            size={16}
+                            className={`shrink-0 transition-colors ${
+                              active
+                                ? 'text-white'
+                                : 'text-blue-400 group-hover:text-white'
+                            }`}
+                          />
+                          {item.label}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
       </nav>
 
       {/* Theme Toggle */}

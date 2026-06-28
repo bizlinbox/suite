@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import {
   RefreshCw,
   Loader2,
-  Plus,
   Edit,
   Trash2,
   Play,
@@ -166,12 +165,6 @@ export default function FlowsPage() {
     }
   };
 
-  const openCreate = () => {
-    setEditingFlow(null);
-    setDialogForm({ name: '', category: 'OTHER', flowJson: '{}' });
-    setDialogOpen(true);
-  };
-
   const openEdit = (flow: Flow) => {
     setEditingFlow(flow);
     setDialogForm({
@@ -307,10 +300,6 @@ export default function FlowsPage() {
           >
             {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
             Sync
-          </button>
-          <button onClick={openCreate} className="btn-primary">
-            <Plus size={14} />
-            Create Flow
           </button>
         </div>
       </div>
