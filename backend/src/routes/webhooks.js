@@ -8,6 +8,7 @@ const { emitToOrg, emitToConversation } = require('../services/socket');
 const config = require('../config');
 const camelize = require('../utils/camelize');
 const { logApiCall } = require('../services/apiLog');
+const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
 
 const router = express.Router();
 
@@ -499,6 +500,23 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
           );
         }
         logger.info('Flow submission saved', { flowId, conversationId, flowToken });
+
+        // Google Chat notification
+        try {
+          const flowResult = await query('SELECT name FROM flows WHERE id = $1', [flowId]);
+          const flowName = flowResult.rows[0]?.name || 'Unknown Flow';
+          const contactResult = await query('SELECT name FROM contacts WHERE id = $1', [contactId]);
+          const contactName = contactResult.rows[0]?.name || 'Unknown Contact';
+          sendGoogleChatNotification({
+            taskName: flowName,
+            taskId: flowId,
+            user: contactName,
+            status: 'completed',
+            details: `Flow submitted by contact. Token: ${flowToken || 'N/A'}`,
+          });
+        } catch (notifErr) {
+          logger.warn('Google Chat notification skipped for flow submission', { error: notifErr.message });
+        }
       } catch (fsErr) {
         logger.warn('Failed to save flow submission', { error: fsErr.message });
       }

@@ -3,6 +3,7 @@ const { query } = require('../db');
 const { authenticate, resolveWabaAccount } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const camelize = require('../utils/camelize');
+const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
 
 const router = express.Router();
 
@@ -256,7 +257,26 @@ router.post('/:id/close', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    res.json({ conversation: camelize(result.rows[0]) });
+    const conversation = result.rows[0];
+
+    // Google Chat notification
+    try {
+      const contactResult = await query('SELECT name FROM contacts WHERE id = $1', [conversation.contact_id]);
+      const contactName = contactResult.rows[0]?.name || 'Unknown';
+      const agentResult = await query('SELECT name FROM users WHERE id = $1', [conversation.assigned_agent_id]);
+      const agentName = agentResult.rows[0]?.name || req.user.name || 'System';
+      sendGoogleChatNotification({
+        taskName: `Conversation with ${contactName}`,
+        taskId: conversation.id,
+        user: agentName,
+        status: 'closed',
+        details: `Conversation closed by agent`,
+      });
+    } catch (notifErr) {
+      logger.warn('Google Chat notification skipped for conversation close', { error: notifErr.message });
+    }
+
+    res.json({ conversation: camelize(conversation) });
   } catch (err) {
     logger.error('Close conversation error', err);
     next(err);

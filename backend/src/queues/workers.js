@@ -3,6 +3,7 @@ const config = require('../config');
 const whatsappService = require('../services/whatsapp');
 const { query } = require('../db');
 const logger = require('../utils/logger');
+const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
 
 const connection = {
   url: config.redisUrl,
@@ -168,6 +169,22 @@ try {
             [campaignId]
           );
           logger.info(`Campaign ${campaignId} completed`);
+
+          // Google Chat notification
+          try {
+            const campaignName = campaign.name || 'Unnamed Campaign';
+            const userResult = await query('SELECT name FROM users WHERE id = $1', [campaign.created_by]);
+            const creatorName = userResult.rows[0]?.name || 'System';
+            sendGoogleChatNotification({
+              taskName: campaignName,
+              taskId: campaignId,
+              user: creatorName,
+              status: 'completed',
+              details: `All recipients processed. Sent: ${campaign.sent_count || 0}`,
+            });
+          } catch (notifErr) {
+            logger.warn('Google Chat notification skipped for campaign', { error: notifErr.message });
+          }
           return;
         }
 
@@ -229,6 +246,22 @@ try {
             [campaignId]
           );
           logger.info(`Campaign ${campaignId} completed (all recipients queued)`);
+
+          // Google Chat notification
+          try {
+            const campaignName = campaign.name || 'Unnamed Campaign';
+            const userResult = await query('SELECT name FROM users WHERE id = $1', [campaign.created_by]);
+            const creatorName = userResult.rows[0]?.name || 'System';
+            sendGoogleChatNotification({
+              taskName: campaignName,
+              taskId: campaignId,
+              user: creatorName,
+              status: 'completed',
+              details: `All recipients queued. Total sent: ${newSentCount}`,
+            });
+          } catch (notifErr) {
+            logger.warn('Google Chat notification skipped for campaign', { error: notifErr.message });
+          }
         }
       }
     },
