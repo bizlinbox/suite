@@ -14,8 +14,12 @@ import {
   ChevronRight,
   ExternalLink,
   Server,
+  Trash2,
 } from 'lucide-react';
-import { toastError } from '@/components/Toaster';
+import { toastError, toastSuccess } from '@/components/Toaster';
+import { useSocket } from '@/hooks/useSocket';
+import ConfirmDialog from '@/components/ConfirmDialog';
+import { usePermission } from '@/hooks/usePermission';
 
 interface ApiLog {
   id: string;
@@ -43,6 +47,9 @@ export default function ApiLogsPage() {
   const [directionFilter, setDirectionFilter] = useState<string>('');
   const [providerFilter, setProviderFilter] = useState<string>('');
   const [selectedLog, setSelectedLog] = useState<ApiLog | null>(null);
+  const [showClearDialog, setShowClearDialog] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const { can } = usePermission();
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -67,6 +74,50 @@ export default function ApiLogsPage() {
     fetchLogs();
   }, [fetchLogs]);
 
+  const { socket } = useSocket();
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewApiLog = (log: ApiLog) => {
+      const matchesDirection = !directionFilter || log.direction === directionFilter;
+      const matchesProvider = !providerFilter || log.provider === providerFilter;
+      if (!matchesDirection || !matchesProvider) return;
+
+      setTotal((prev) => prev + 1);
+
+      if (offset !== 0) return;
+
+      setLogs((prev) => {
+        if (prev.some((l) => l.id === log.id)) return prev;
+        const next = [log, ...prev];
+        if (next.length > limit) next.pop();
+        return next;
+      });
+    };
+
+    socket.on('new_api_log', handleNewApiLog);
+    return () => {
+      socket.off('new_api_log', handleNewApiLog);
+    };
+  }, [socket, offset, limit, directionFilter, providerFilter]);
+
+  const handleClearLogs = async () => {
+    setClearing(true);
+    try {
+      await api.delete('/api-logs');
+      setLogs([]);
+      setTotal(0);
+      setOffset(0);
+      toastSuccess('API logs cleared');
+    } catch (err: any) {
+      toastError(err.response?.data?.error || 'Failed to clear API logs');
+    } finally {
+      setClearing(false);
+      setShowClearDialog(false);
+    }
+  };
+
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
@@ -80,6 +131,16 @@ export default function ApiLogsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {can('settings.manage') && total > 0 && (
+            <button
+              onClick={() => setShowClearDialog(true)}
+              disabled={clearing}
+              className="flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-50 dark:border-red-900/30 dark:bg-gray-800 dark:text-red-400 dark:hover:bg-red-900/20"
+            >
+              <Trash2 size={16} />
+              Clear All
+            </button>
+          )}
           <button
             onClick={fetchLogs}
             disabled={loading}
@@ -224,6 +285,15 @@ export default function ApiLogsPage() {
           </button>
         </div>
       )}
+
+      <ConfirmDialog
+        open={showClearDialog}
+        title="Clear All API Logs"
+        message="This will permanently delete all API logs for your organization. This action cannot be undone."
+        confirmLabel="Clear All"
+        onConfirm={handleClearLogs}
+        onCancel={() => setShowClearDialog(false)}
+      />
 
       {/* Detail Modal */}
       {selectedLog && (

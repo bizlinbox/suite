@@ -1,6 +1,6 @@
 const express = require('express');
 const { query } = require('../db');
-const { authenticate } = require('../middleware/auth');
+const { authenticate, requirePermission } = require('../middleware/auth');
 const camelize = require('../utils/camelize');
 const logger = require('../utils/logger');
 
@@ -54,6 +54,18 @@ router.get('/', async (req, res, next) => {
     });
   } catch (err) {
     logger.error('List API logs error', err);
+    next(err);
+  }
+});
+
+// DELETE /api/v1/api-logs - clear all API logs for the current org
+router.delete('/', requirePermission('settings.manage'), async (req, res, next) => {
+  try {
+    const orgId = req.user.org_id;
+    const result = await query('DELETE FROM api_logs WHERE org_id = $1', [orgId]);
+    res.json({ message: 'API logs cleared', deleted: result.rowCount });
+  } catch (err) {
+    logger.error('Clear API logs error', err);
     next(err);
   }
 });

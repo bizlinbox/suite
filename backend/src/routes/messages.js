@@ -21,7 +21,7 @@ async function checkConversationAccess(req, conversation_id) {
   let sql = `SELECT c.id, c.assigned_agent_id, c.is_private, c.waba_account_id, con.phone as contact_phone FROM conversations c JOIN contacts con ON con.id = c.contact_id WHERE c.id = $1 AND c.org_id = $2`;
   const params = [conversation_id, req.user.org_id];
   if (req.wabaAccountId) {
-    sql += ` AND waba_account_id = $3`;
+    sql += ` AND (waba_account_id = $3 OR waba_account_id IS NULL)`;
     params.push(req.wabaAccountId);
   }
   const result = await query(sql, params);
@@ -54,7 +54,7 @@ router.get('/', async (req, res, next) => {
                   WHERE m.conversation_id = $1 AND c.org_id = $2`;
     const msgParams = [conversation_id, req.user.org_id];
     if (req.wabaAccountId) {
-      msgSql += ' AND c.waba_account_id = $3';
+      msgSql += ' AND (c.waba_account_id = $3 OR c.waba_account_id IS NULL)';
       msgParams.push(req.wabaAccountId);
     }
     msgSql += ' ORDER BY m.created_at ASC';

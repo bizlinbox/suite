@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search, User } from 'lucide-react';
 import { api } from '@/lib/api';
+import { useWaba } from '@/context/WabaContext';
 
 interface Contact {
   id: string;
@@ -19,6 +20,7 @@ interface NewChatDialogProps {
 }
 
 export default function NewChatDialog({ open, onClose, onSelect, existingConversations }: NewChatDialogProps) {
+  const { selectedWabaId } = useWaba();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
@@ -55,7 +57,9 @@ export default function NewChatDialog({ open, onClose, onSelect, existingConvers
     }
 
     try {
-      const res = await api.post('/conversations', { contact_id: contact.id });
+      const payload: Record<string, string> = { contact_id: contact.id };
+      if (selectedWabaId) payload.waba_account_id = selectedWabaId;
+      const res = await api.post('/conversations', payload);
       const newConversationId = res.data.conversation?.id;
       if (newConversationId) {
         onSelect(newConversationId);

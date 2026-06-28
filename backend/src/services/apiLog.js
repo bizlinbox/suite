@@ -1,5 +1,7 @@
 const { query } = require('../db');
 const logger = require('../utils/logger');
+const camelize = require('../utils/camelize');
+const { emitToOrg } = require('./socket');
 
 /**
  * Log an API call to a third-party service.
@@ -34,11 +36,12 @@ async function logApiCall(params) {
       errorMessage,
     } = params;
 
-    await query(
+    const result = await query(
       `INSERT INTO api_logs (
         org_id, conversation_id, direction, provider, endpoint, method,
         request_body, response_body, status_code, duration_ms, success, error_message
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      RETURNING *`,
       [
         orgId || null,
         conversationId || null,
@@ -54,6 +57,13 @@ async function logApiCall(params) {
         errorMessage || null,
       ]
     );
+
+    try {
+      const log = camelize(result.rows[0]);
+      emitToOrg(orgId, 'new_api_log', log);
+    } catch (emitErr) {
+      logger.error('Failed to emit API log event', { error: emitErr.message });
+    }
   } catch (err) {
     // Never throw — API logging must not break the main flow
     logger.error('Failed to write API log', { error: err.message });

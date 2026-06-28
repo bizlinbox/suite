@@ -132,6 +132,9 @@ BEGIN
   END IF;
 END $$;
 
+-- Migrate: add media_mime_type if missing
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS media_mime_type TEXT;
+
 -- Migrate: expand message_type CHECK constraint to include 'template'
 DO $$
 BEGIN
@@ -298,7 +301,7 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 -- Migrate message_type CHECK constraint for existing databases to support all outgoing interactive subtypes
 ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_message_type_check;
 ALTER TABLE messages ADD CONSTRAINT messages_message_type_check
-CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'unknown'));
+CHECK (message_type IN ('text', 'image', 'document', 'audio', 'video', 'location', 'sticker', 'contacts', 'reaction', 'button_reply', 'list_reply', 'interactive', 'order', 'system', 'button', 'nfm_reply', 'address_message', 'cta_url', 'list', 'product_list', 'location_request_message', 'template', 'unknown'));
 
 -- Migrate whatsapp_numbers to add business_account_id for existing databases
 ALTER TABLE whatsapp_numbers ADD COLUMN IF NOT EXISTS business_account_id TEXT;

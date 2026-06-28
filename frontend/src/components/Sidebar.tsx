@@ -23,6 +23,7 @@ import {
   FormInput,
   Settings,
   Server,
+  Store,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -43,6 +44,7 @@ const allNavItems = [
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
   { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
   { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
+  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
 ];
 
 function isActiveNav(pathname: string, href: string): boolean {

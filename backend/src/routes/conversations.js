@@ -36,7 +36,7 @@ router.get('/', async (req, res, next) => {
     const params = [req.user.org_id];
 
     if (req.wabaAccountId) {
-      sql += ` AND c.waba_account_id = $${params.length + 1}`;
+      sql += ` AND (c.waba_account_id = $${params.length + 1} OR c.waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
 
@@ -85,7 +85,7 @@ router.get('/:id', async (req, res, next) => {
     const params = [req.params.id, req.user.org_id];
 
     if (req.wabaAccountId) {
-      sql += ` AND c.waba_account_id = $${params.length + 1}`;
+      sql += ` AND (c.waba_account_id = $${params.length + 1} OR c.waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
 
@@ -156,7 +156,7 @@ router.patch('/:id/assign', async (req, res, next) => {
                WHERE id = $2 AND org_id = $3`;
     const params = [agent_id || null, req.params.id, req.user.org_id];
     if (req.wabaAccountId) {
-      sql += ` AND waba_account_id = $${params.length + 1}`;
+      sql += ` AND (waba_account_id = $${params.length + 1} OR waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
     sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
@@ -183,7 +183,7 @@ router.patch('/:id/status', async (req, res, next) => {
                WHERE id = $2 AND org_id = $3`;
     const params = [status, req.params.id, req.user.org_id];
     if (req.wabaAccountId) {
-      sql += ` AND waba_account_id = $${params.length + 1}`;
+      sql += ` AND (waba_account_id = $${params.length + 1} OR waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
     sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
@@ -225,7 +225,7 @@ router.patch('/:id/private', async (req, res, next) => {
                WHERE id = $2 AND org_id = $3`;
     const params = [is_private, req.params.id, req.user.org_id];
     if (req.wabaAccountId) {
-      sql += ` AND waba_account_id = $${params.length + 1}`;
+      sql += ` AND (waba_account_id = $${params.length + 1} OR waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
     sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
@@ -248,7 +248,7 @@ router.post('/:id/close', async (req, res, next) => {
                WHERE id = $1 AND org_id = $2`;
     const params = [req.params.id, req.user.org_id];
     if (req.wabaAccountId) {
-      sql += ` AND waba_account_id = $${params.length + 1}`;
+      sql += ` AND (waba_account_id = $${params.length + 1} OR waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
     sql += ` RETURNING id, org_id, contact_id, assigned_agent_id, status, is_private, last_message_at, created_at`;
@@ -272,7 +272,7 @@ router.delete('/:id', async (req, res, next) => {
                WHERE c.id = $1 AND c.org_id = $2`;
     const params = [req.params.id, req.user.org_id];
     if (req.wabaAccountId) {
-      sql += ` AND c.waba_account_id = $${params.length + 1}`;
+      sql += ` AND (c.waba_account_id = $${params.length + 1} OR c.waba_account_id IS NULL)`;
       params.push(req.wabaAccountId);
     }
     const checkResult = await query(sql, params);
