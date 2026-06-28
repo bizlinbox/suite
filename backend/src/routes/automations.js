@@ -25,6 +25,7 @@ const VALID_STEP_TYPES = new Set([
   'delay',
   'tag_contact',
   'assign_agent',
+  'ai_agent',
 ]);
 
 function validateStepTypes(steps) {

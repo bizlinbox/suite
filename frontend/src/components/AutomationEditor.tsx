@@ -47,6 +47,12 @@ const STEP_CATEGORIES = [
       { type: 'assign_agent', label: 'Assign Agent', icon: UserCheck, desc: 'Assign to an agent' },
     ],
   },
+  {
+    label: 'AI',
+    items: [
+      { type: 'ai_agent', label: 'AI Agent', icon: Sparkles, desc: 'Generate AI reply and send' },
+    ],
+  },
 ];
 
 const STEP_TYPE_MAP: Record<string, { label: string; icon: React.FC<any>; color: string; bg: string; border: string }> = {};
@@ -78,6 +84,7 @@ STEP_TYPE_MAP.condition = { ...STEP_TYPE_MAP.condition, color: 'text-orange-700 
 STEP_TYPE_MAP.delay = { ...STEP_TYPE_MAP.delay, color: 'text-cyan-700 dark:text-cyan-300', bg: 'bg-cyan-50 dark:bg-cyan-900/20', border: 'border-cyan-200 dark:border-cyan-800' };
 STEP_TYPE_MAP.tag_contact = { ...STEP_TYPE_MAP.tag_contact, color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' };
 STEP_TYPE_MAP.assign_agent = { ...STEP_TYPE_MAP.assign_agent, color: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-50 dark:bg-emerald-900/20', border: 'border-emerald-200 dark:border-emerald-800' };
+STEP_TYPE_MAP.ai_agent = { ...STEP_TYPE_MAP.ai_agent, color: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-50 dark:bg-purple-900/20', border: 'border-purple-200 dark:border-purple-800' };
 
 interface Step {
   id: string;
@@ -187,6 +194,20 @@ function StepConfigPanel({ step, onUpdate }: { step: Step; onUpdate: (config: Re
         <div className="space-y-1">
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Agent ID</label>
           <input type="text" value={config.agentId || ''} onChange={(e) => set({ agentId: e.target.value })} className="input" />
+        </div>
+      )}
+
+      {type === 'ai_agent' && (
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">AI Agent</label>
+            <input type="text" value={config.agentId || ''} onChange={(e) => set({ agentId: e.target.value })} className="input" placeholder="AI Agent ID" />
+            <p className="text-[11px] text-gray-400 dark:text-gray-500">The ID of the AI agent to use for generating replies</p>
+          </div>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Extra Context <span className="font-normal">(optional)</span></label>
+            <textarea value={config.context || ''} onChange={(e) => set({ context: e.target.value })} rows={2} className="input" placeholder="Additional instructions for the AI..." />
+          </div>
         </div>
       )}
     </div>

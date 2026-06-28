@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2, Mail } from 'lucide-react';
+import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2, Mail, Sparkles } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
@@ -370,6 +370,15 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [templateWindowOpen, setTemplateWindowOpen] = useState(true);
   const [lastIncomingMessageAt, setLastIncomingMessageAt] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAgents, setAiAgents] = useState<{ id: string; name: string }[]>([]);
+  const [aiMenuOpen, setAiMenuOpen] = useState(false);
+
+  useEffect(() => {
+    api.get('/ai-agents').then((res) => {
+      setAiAgents((res.data.agents || []).filter((a: any) => a.isActive).map((a: any) => ({ id: a.id, name: a.name })));
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!conversationId) return;
@@ -1498,6 +1507,52 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   >
                     <Mail size={20} />
                   </button>
+
+                  {/* AI Assist button */}
+                  {aiAgents.length > 0 && (
+                    <div className="relative">
+                      <button
+                        onClick={() => setAiMenuOpen((p) => !p)}
+                        disabled={aiLoading}
+                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-purple-500 hover:bg-purple-50 hover:text-purple-700 dark:border-gray-700 dark:bg-gray-800 dark:text-purple-400 dark:hover:bg-purple-900/20"
+                        title="AI Assist"
+                      >
+                        {aiLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
+                      </button>
+                      {aiMenuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-30" onClick={() => setAiMenuOpen(false)} />
+                          <div className="absolute bottom-full right-0 z-40 mb-2 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+                            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Generate reply with</div>
+                            {aiAgents.map((agent) => (
+                              <button
+                                key={agent.id}
+                                onClick={async () => {
+                                  setAiMenuOpen(false);
+                                  setAiLoading(true);
+                                  try {
+                                    const res = await api.post('/ai-agents/generate', {
+                                      conversation_id: conversationId,
+                                      agent_id: agent.id,
+                                    });
+                                    setInput(res.data.response);
+                                  } catch (err: any) {
+                                    toastError(err.response?.data?.error || 'AI generation failed');
+                                  } finally {
+                                    setAiLoading(false);
+                                  }
+                                }}
+                                className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-purple-50 dark:text-gray-300 dark:hover:bg-purple-900/20"
+                              >
+                                <Sparkles size={16} className="text-purple-500" />
+                                <span className="font-medium">{agent.name}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
 
                   {!input.trim() && !pendingMediaId ? (
                     <button

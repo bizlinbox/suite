@@ -26,6 +26,7 @@ import {
   Server,
   Store,
   Settings2,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -67,6 +68,7 @@ const manageGroup: NavGroup = {
   items: [
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
     { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
+    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, permission: 'settings.read' as string | null },
     { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
   ],
 };
