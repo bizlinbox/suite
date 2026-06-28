@@ -91,8 +91,20 @@ async function sendMediaMessage(phoneNumberId, accessToken, to, mediaUrl, captio
   // If mediaUrl is a local file path (not a Meta media ID or public link),
   // upload it to Meta first to get a reliable media ID.
   if (!mediaUrl.startsWith('http://') && !mediaUrl.startsWith('https://')) {
-    // Local path — resolve full path and upload
-    const fullPath = path.isAbsolute(mediaUrl) ? mediaUrl : path.join(process.cwd(), mediaUrl);
+    // Resolve local path against the configured upload directory
+    const uploadsBase = path.resolve(config.uploadDir);
+    let fullPath = path.isAbsolute(mediaUrl) ? mediaUrl : path.join(uploadsBase, mediaUrl);
+
+    // Fallback: try legacy process.cwd() path if not found in uploadDir
+    if (!fs.existsSync(fullPath)) {
+      fullPath = path.join(process.cwd(), mediaUrl);
+    }
+
+    // Fallback: bare filename might be stored at upload root
+    if (!fs.existsSync(fullPath)) {
+      fullPath = path.join(uploadsBase, path.basename(mediaUrl));
+    }
+
     if (fs.existsSync(fullPath)) {
       const mime = mediaMimeType || 'application/octet-stream';
       metaMediaId = await uploadMedia(phoneNumberId, accessToken, fullPath, mime);
