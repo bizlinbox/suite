@@ -88,12 +88,14 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-in-production-32chars}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-in-production-32chars!}
       PORT: 4000
       CLIENT_URL: https://${DOMAIN}
       PUBLIC_URL: https://${DOMAIN}
       INTERNAL_API_URL: http://localhost:4000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
+      GOOGLE_CHAT_NOTIFICATIONS_ENABLED: ${GOOGLE_CHAT_NOTIFICATIONS_ENABLED:-false}
+      GOOGLE_CHAT_WEBHOOK_URL: ${GOOGLE_CHAT_WEBHOOK_URL:-}
     networks:
       - bizlinbox
     volumes:
