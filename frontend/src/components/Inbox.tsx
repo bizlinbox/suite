@@ -10,6 +10,7 @@ import ConversationList, { Conversation } from '@/components/ConversationList';
 import ChatWindow, { Message } from '@/components/ChatWindow';
 import NewChatDialog from '@/components/NewChatDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
+import ContactProfilePopup from '@/components/ContactProfilePopup';
 import { toastError, toastSuccess } from '@/components/Toaster';
 import { Building2, MessageSquare } from 'lucide-react';
 
@@ -24,6 +25,8 @@ export default function Inbox({ selectedId }: InboxProps) {
   const [newChatOpen, setNewChatOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profileContactId, setProfileContactId] = useState<string>('');
   const { socket } = useSocket();
   const { selectedWabaId } = useWaba();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -265,6 +268,7 @@ export default function Inbox({ selectedId }: InboxProps) {
             onNewChat={() => setNewChatOpen(true)}
             onDelete={handleDeleteRequest}
             deletingId={deletingId}
+            onOpenProfile={(contactId) => { setProfileContactId(contactId); setProfileOpen(true); }}
           />
         </div>
 
@@ -281,6 +285,7 @@ export default function Inbox({ selectedId }: InboxProps) {
               onAssignAgent={handleAssignAgent}
               onTogglePrivacy={handleTogglePrivacy}
               onBack={handleBack}
+              onOpenProfile={() => { setProfileContactId(selectedConversation.contactId); setProfileOpen(true); }}
             />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center">
@@ -309,6 +314,12 @@ export default function Inbox({ selectedId }: InboxProps) {
         cancelLabel="Cancel"
         onConfirm={handleConfirmDelete}
         onCancel={() => setConfirmDeleteId(null)}
+      />
+
+      <ContactProfilePopup
+        contactId={profileContactId}
+        open={profileOpen}
+        onClose={() => setProfileOpen(false)}
       />
     </div>
   );

@@ -23,9 +23,10 @@ interface ConversationListProps {
   onNewChat?: () => void;
   onDelete?: (id: string) => void;
   deletingId?: string | null;
+  onOpenProfile?: (contactId: string) => void;
 }
 
-export default function ConversationList({ conversations, selectedId, onSelect, onNewChat, onDelete, deletingId }: ConversationListProps) {
+export default function ConversationList({ conversations, selectedId, onSelect, onNewChat, onDelete, deletingId, onOpenProfile }: ConversationListProps) {
   const [search, setSearch] = useState('');
 
   const filtered = conversations.filter((c) =>
@@ -78,26 +79,40 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                 }`}
               >
-                <button
+                <div
                   onClick={() => onSelect(conversation.id)}
-                  className="flex flex-1 items-start gap-3 text-left"
+                  className="flex flex-1 cursor-pointer items-start gap-3"
                 >
-                  <div className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
-                    conversation.id === selectedId
-                      ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
-                      : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
-                  }`}>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenProfile?.(conversation.contactId);
+                    }}
+                    className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-sm font-semibold ${
+                      conversation.id === selectedId
+                        ? 'bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300'
+                        : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+                    }`}
+                  >
                     {getInitials(conversation.contactName)}
-                  </div>
+                  </button>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className={`truncate text-sm font-medium ${
-                        conversation.id === selectedId
-                          ? 'text-primary-800 dark:text-primary-300'
-                          : 'text-gray-900 dark:text-gray-100'
-                      }`}>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenProfile?.(conversation.contactId);
+                        }}
+                        className={`truncate text-left text-sm font-medium ${
+                          conversation.id === selectedId
+                            ? 'text-primary-800 dark:text-primary-300'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                      >
                         {conversation.contactName}
-                      </span>
+                      </button>
                       <div className="flex items-center gap-1.5">
                         {conversation.isPrivate && (
                           <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">Private</span>
@@ -123,7 +138,7 @@ export default function ConversationList({ conversations, selectedId, onSelect, 
                       </p>
                     )}
                   </div>
-                </button>
+                </div>
                 {onDelete && (
                   <button
                     onClick={(e) => {

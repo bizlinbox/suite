@@ -5,7 +5,6 @@ import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin,
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
-import ContactProfilePopup from './ContactProfilePopup';
 import TemplateSendDialog from './TemplateSendDialog';
 import { toastError } from '@/components/Toaster';
 
@@ -57,6 +56,7 @@ interface ChatWindowProps {
   onAssignAgent?: (agentId: string) => void;
   onTogglePrivacy?: (isPrivate: boolean) => void;
   onBack?: () => void;
+  onOpenProfile?: () => void;
 }
 
 function MessageStatusIcon({ status, errorMessage }: { status?: Message['status']; errorMessage?: string }) {
@@ -311,7 +311,7 @@ const attachmentOptions = [
   { key: 'flow', label: 'Flow', icon: FormInput, accept: '' },
 ];
 
-export default function ChatWindow({ conversationId, contactId, contactName, isPrivate: initialIsPrivate, assignedAgentId, currentUserId, onAssignAgent, onTogglePrivacy, onBack }: ChatWindowProps) {
+export default function ChatWindow({ conversationId, contactId, contactName, isPrivate: initialIsPrivate, assignedAgentId, currentUserId, onAssignAgent, onTogglePrivacy, onBack, onOpenProfile }: ChatWindowProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -332,7 +332,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [locationForm, setLocationForm] = useState({ latitude: '', longitude: '', name: '', address: '' });
   const [locationError, setLocationError] = useState('');
   const [reactingTo, setReactingTo] = useState<string | null>(null);
-  const [profileOpen, setProfileOpen] = useState(false);
   const [isPrivate, setIsPrivate] = useState(initialIsPrivate || false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -1065,13 +1064,13 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           </button>
         )}
         <button
-          onClick={() => setProfileOpen(true)}
+          onClick={() => onOpenProfile?.()}
           className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary-100 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:hover:bg-primary-800/40"
         >
           {contactName.charAt(0).toUpperCase()}
         </button>
         <button
-          onClick={() => setProfileOpen(true)}
+          onClick={() => onOpenProfile?.()}
           className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-gray-900 hover:text-primary-700 dark:text-gray-100 dark:hover:text-primary-400"
         >
           {contactName}
@@ -1769,11 +1768,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         onClose={() => setTemplateDialogOpen(false)}
       />
 
-      <ContactProfilePopup
-        contactId={contactId}
-        open={profileOpen}
-        onClose={() => setProfileOpen(false)}
-      />
     </div>
   );
 }
