@@ -1,16 +1,15 @@
+# syntax=docker/dockerfile:1
+
 # ============================================================
 # BizlInbox — Single Image (Backend + Frontend)
 # Image: bizlintech/bizlinbox:develop
 # ============================================================
-
-# syntax=docker/dockerfile:1
 
 # ---- Stage 1: Build Frontend ----
 FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Cache npm dependencies
 COPY frontend/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
@@ -23,10 +22,9 @@ FROM node:20-alpine AS backend-builder
 
 WORKDIR /app/backend
 
-# Cache npm dependencies
 COPY backend/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --omit=dev && npm cache clean --force
+    npm install --omit=dev && npm cache clean --force
 
 COPY backend/src ./src
 
