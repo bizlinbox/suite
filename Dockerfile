@@ -10,12 +10,15 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
+ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY frontend/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci
 
 COPY frontend/ .
-RUN npm run build
+RUN --mount=type=cache,target=/app/frontend/.next/cache \
+    npm run build
 
 # ---- Stage 2: Build Backend ----
 FROM node:20-alpine AS backend-builder
