@@ -1166,13 +1166,12 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                 )}
                 <div className={`group flex items-end gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
                   {!isUser && isFirstInGroup && (
-                    <button
-                      onClick={() => setProfileOpen(true)}
-                      className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+                    <div
+                      className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300"
                       title={contactName}
                     >
                       {contactName.charAt(0).toUpperCase()}
-                    </button>
+                    </div>
                   )}
                   {/* Reaction picker button */}
                   <div data-reaction-container={msg.id} className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
@@ -1200,8 +1199,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
                   <div className="flex max-w-[75%] flex-col">
                     <div
-                      onClick={!isUser ? () => setProfileOpen(true) : undefined}
-                      className={`relative px-3 py-2 ${!isUser ? 'cursor-pointer hover:opacity-90 transition-opacity' : ''} ${
+                      className={`relative px-3 py-2 ${
                         isUser
                           ? 'rounded-2xl rounded-tr-sm bg-tertiary-100 text-gray-900 dark:bg-primary-700 dark:text-gray-100'
                           : 'rounded-2xl rounded-tl-sm border border-gray-100 bg-white text-[#111b21] shadow-[0_1px_2px_rgba(0,0,0,0.08)] dark:border-gray-700 dark:bg-[#202c33] dark:text-[#e9edef] dark:shadow-none'

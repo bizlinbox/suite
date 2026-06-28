@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Phone, Mail, Building2, MapPin, Calendar, Tag, FileText } from 'lucide-react';
+import { X, Phone, Mail, Building2, MapPin, Calendar, Tag, FileText, Edit } from 'lucide-react';
 import { api } from '@/lib/api';
+import { usePermission } from '@/hooks/usePermission';
+import ContactDialog, { ContactFormData } from './ContactDialog';
 
 interface ContactProfile {
   id: string;
@@ -31,6 +33,8 @@ interface ContactProfilePopupProps {
 export default function ContactProfilePopup({ contactId, open, onClose }: ContactProfilePopupProps) {
   const [contact, setContact] = useState<ContactProfile | null>(null);
   const [loading, setLoading] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const { can } = usePermission();
 
   useEffect(() => {
     if (!open || !contactId) return;
@@ -57,6 +61,33 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
     return () => document.removeEventListener('keydown', handleEsc);
   }, [open, onClose]);
 
+  const handleSubmit = async (form: ContactFormData) => {
+    if (!contact) return;
+    try {
+      const payload = {
+        name: form.name,
+        phone: form.phone,
+        email: form.email || null,
+        company: form.company || null,
+        job_title: form.jobTitle || null,
+        notes: form.notes || null,
+        birthday: form.birthday || null,
+        language: form.language || null,
+        tags: form.tags || null,
+        address: form.address || null,
+        city: form.city || null,
+        state: form.state || null,
+        country: form.country || null,
+        zip_code: form.zipCode || null,
+      };
+      const res = await api.put(`/contacts/${contactId}`, payload);
+      setContact(res.data.contact);
+      setEditOpen(false);
+    } catch {
+      // ignore
+    }
+  };
+
   if (!open) return null;
 
   return (
@@ -65,12 +96,23 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contact Profile</h2>
-          <button
-            onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            {contact && can('contacts.manage') && (
+              <button
+                onClick={() => setEditOpen(true)}
+                className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+                title="Edit contact"
+              >
+                <Edit size={18} />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         {/* Content */}
@@ -145,6 +187,31 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
           )}
         </div>
       </div>
+
+      {contact && (
+        <ContactDialog
+          open={editOpen}
+          contact={{
+            id: contact.id,
+            name: contact.name,
+            phone: contact.phone,
+            email: contact.email || '',
+            company: contact.company || '',
+            jobTitle: contact.jobTitle || '',
+            notes: contact.notes || '',
+            birthday: contact.birthday || '',
+            language: contact.language || '',
+            tags: (contact.tags || []).join(', '),
+            address: contact.address || '',
+            city: contact.city || '',
+            state: contact.state || '',
+            country: contact.country || '',
+            zipCode: contact.zipCode || '',
+          }}
+          onClose={() => setEditOpen(false)}
+          onSubmit={handleSubmit}
+        />
+      )}
     </div>
   );
 }
