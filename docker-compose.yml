@@ -73,7 +73,7 @@ services:
           memory: 256M
 
   app:
-    image: bizlintech/bizinbox:develop
+    image: bizlintech/bizlinbox:develop
     build:
       context: .
       dockerfile: Dockerfile

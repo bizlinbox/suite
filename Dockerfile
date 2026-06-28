@@ -1,6 +1,6 @@
 # ============================================================
 # BizlInbox — Single Image (Backend + Frontend)
-# Image: bizlintech/bizinbox:develop
+# Image: bizlintech/bizlinbox:develop
 # ============================================================
 
 # ---- Stage 1: Build Frontend ----

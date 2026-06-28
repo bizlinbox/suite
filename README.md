@@ -1,4 +1,4 @@
-![BizInbox Logo](bizinbox.png)
+![BizlInbox Logo](bizinbox.png)
 
 # BizlInbox - WhatsApp Cloud API Inbox
 
