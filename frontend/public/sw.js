@@ -84,6 +84,34 @@ function isImage(url) {
     url.pathname.startsWith('/api/media/');
 }
 
+// Helper: is Next.js internal request (RSC, _next, webpack HMR)
+function isNextInternal(url, request) {
+  return url.pathname.startsWith('/_next/') ||
+    url.pathname.startsWith('/__nextjs') ||
+    url.searchParams.has('__rsc') ||
+    url.searchParams.has('_rsc') ||
+    request.headers.get('RSC') === '1' ||
+    request.headers.get('Next-Action') ||
+    request.headers.get('Accept') === 'text/x-component';
+}
+
+// Safe clone helper: catches body-already-used errors
+function safeClone(response) {
+  try {
+    return response.clone();
+  } catch {
+    return null;
+  }
+}
+
+// Safe cache put
+function safeCachePut(cache, request, response) {
+  const clone = safeClone(response);
+  if (clone) {
+    cache.put(request, clone).catch(() => {});
+  }
+}
+
 // Fetch handler
 self.addEventListener('fetch', (event) => {
   const { request } = event;
@@ -95,6 +123,9 @@ self.addEventListener('fetch', (event) => {
   // Skip chrome-extension / non-http requests
   if (!url.protocol.startsWith('http')) return;
 
+  // Skip Next.js internal requests (RSC fetches, webpack HMR, etc.)
+  if (isNextInternal(url, request)) return;
+
   // Static assets: cache-first, stale-while-revalidate
   if (isStaticAsset(url) || isImage(url)) {
     const cacheName = isImage(url) ? IMAGE_CACHE : STATIC_CACHE;
@@ -104,12 +135,12 @@ self.addEventListener('fetch', (event) => {
         if (cached) {
           // Revalidate in background
           fetch(request).then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.ok) safeCachePut(cache, request, response);
           }).catch(() => {});
           return cached;
         }
         const response = await fetch(request);
-        if (response.ok) cache.put(request, response.clone());
+        if (response.ok) safeCachePut(cache, request, response);
         return response;
       })
     );
@@ -123,7 +154,7 @@ self.addEventListener('fetch', (event) => {
         const cached = await cache.match(request);
         const networkPromise = fetch(request)
           .then((response) => {
-            if (response.ok) cache.put(request, response.clone());
+            if (response.ok) safeCachePut(cache, request, response);
             return response;
           })
           .catch(() => {
@@ -138,7 +169,8 @@ self.addEventListener('fetch', (event) => {
         // Prefer cached immediately, then update
         if (cached) {
           networkPromise.catch(() => {});
-          return cached.clone();
+          const clone = safeClone(cached);
+          return clone || cached;
         }
         return networkPromise;
       })
@@ -152,7 +184,9 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           if (response.ok) {
-            caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
+            caches.open(STATIC_CACHE).then((cache) => {
+              safeCachePut(cache, request, response);
+            }).catch(() => {});
           }
           return response;
         })
@@ -171,7 +205,9 @@ self.addEventListener('fetch', (event) => {
     fetch(request)
       .then((response) => {
         if (response.ok) {
-          caches.open(STATIC_CACHE).then((cache) => cache.put(request, response.clone()));
+          caches.open(STATIC_CACHE).then((cache) => {
+            safeCachePut(cache, request, response);
+          }).catch(() => {});
         }
         return response;
       })

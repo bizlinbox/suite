@@ -183,7 +183,10 @@ export default function ConversationList({
                 {selectMode && (
                   <button
                     type="button"
-                    onClick={() => toggleSelect(conversation.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleSelect(conversation.id);
+                    }}
                     className="mt-1 flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                   >
                     {selectedIds.includes(conversation.id) ? (

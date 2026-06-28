@@ -295,6 +295,36 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   const selectedConversation = conversations.find((c) => c.id === selectedId);
 
+  // Fallback: fetch specific conversation if selected but not in loaded list
+  useEffect(() => {
+    if (!selectedId || selectedConversation || convLoading) return;
+    api.get(`/conversations/${selectedId}`)
+      .then((res) => {
+        const conv = res.data.conversation;
+        if (conv) {
+          setConversations((prev) => {
+            if (prev.find((c) => c.id === conv.id)) return prev;
+            return [
+              {
+                id: conv.id,
+                contactId: conv.contactId,
+                contactName: conv.contactName || 'Unknown',
+                contactPhone: conv.contactPhone || '',
+                lastMessagePreview: '',
+                lastMessageAt: conv.lastMessageAt || conv.createdAt,
+                unreadCount: 0,
+                assignedAgentName: conv.assignedAgentName,
+                isPrivate: conv.isPrivate,
+                assignedAgentId: conv.assignedAgentId,
+              },
+              ...prev,
+            ];
+          });
+        }
+      })
+      .catch(() => {});
+  }, [selectedId, selectedConversation, convLoading]);
+
   const handleNewChatSelect = (conversationId: string) => {
     setNewChatOpen(false);
     fetchConversations(0, convSearch);
