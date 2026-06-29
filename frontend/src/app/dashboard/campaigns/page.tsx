@@ -111,6 +111,10 @@ export default function CampaignsPage() {
 
   useEffect(() => {
     fetchCampaigns();
+    const interval = setInterval(() => {
+      fetchCampaigns();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [fetchCampaigns]);
 
   const handleAction = async (id: string, action: string) => {

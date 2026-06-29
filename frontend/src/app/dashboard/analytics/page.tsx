@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
-import { LuBuilding2 as Building2, LuLoader as Loader2 } from 'react-icons/lu';
+import { LuBuilding2 as Building2, LuLoader as Loader2, LuDownload as Download } from 'react-icons/lu';
 
 interface DayCount {
   day: string;
@@ -188,6 +188,55 @@ function DonutChart({ data }: { data: MsgByType[] }) {
   );
 }
 
+function exportAnalyticsToCsv(data: AnalyticsData) {
+  const escape = (val: string | number) => {
+    const str = String(val);
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const rows: string[] = [];
+
+  rows.push('Summary');
+  rows.push('Metric,Value');
+  rows.push(`Total Conversations,${escape(data.totalConversations)}`);
+  rows.push(`Total Messages,${escape(data.totalMessages)}`);
+  const mins = Math.floor(data.avgResponseTimeSeconds / 60);
+  const secs = Math.round(data.avgResponseTimeSeconds % 60);
+  rows.push(`Avg Response Time,${mins}m ${secs}s`);
+  rows.push('');
+
+  rows.push('Messages per Day');
+  rows.push('Date,Count');
+  data.messagesPerDay.forEach((d) => rows.push(`${escape(d.day)},${escape(d.count)}`));
+  rows.push('');
+
+  rows.push('Conversations per Day');
+  rows.push('Date,Count');
+  data.conversationsPerDay.forEach((d) => rows.push(`${escape(d.day)},${escape(d.count)}`));
+  rows.push('');
+
+  rows.push('Top Agents');
+  rows.push('Agent,Conversations Handled');
+  data.topAgents.forEach((d) => rows.push(`${escape(d.name)},${escape(d.conversationsHandled)}`));
+  rows.push('');
+
+  rows.push('Messages by Type');
+  rows.push('Type,Count');
+  data.messagesByType.forEach((d) => rows.push(`${escape(d.messageType)},${escape(d.count)}`));
+
+  const csv = rows.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 export default function AnalyticsPage() {
   const [data, setData] = useState<AnalyticsData | null>(null);
   const { selectedWabaId } = useWaba();
@@ -239,6 +288,16 @@ export default function AnalyticsPage() {
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">Analytics</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400">Overview of conversations, messages, and team performance</p>
         </div>
+        {data && (
+          <button
+            onClick={() => exportAnalyticsToCsv(data)}
+            className="btn-secondary flex items-center gap-1.5 text-xs"
+            title="Export analytics to CSV"
+          >
+            <Download size={14} />
+            Export
+          </button>
+        )}
       </div>
 
       {/* Stats cards */}

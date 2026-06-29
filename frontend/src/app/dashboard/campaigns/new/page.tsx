@@ -614,7 +614,7 @@ export default function NewCampaignPage() {
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                WABA Account
+                WA Business Account
               </label>
               <select
                 value={wabaAccountId}

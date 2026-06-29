@@ -11,7 +11,7 @@ router.use(authenticate);
 router.get('/', async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT id, name, created_at FROM organizations WHERE id = $1',
+      'SELECT id, name, timezone, platform_name, platform_logo, enable_public_registration, created_at FROM organizations WHERE id = $1',
       [req.user.org_id]
     );
     res.json({ organizations: result.rows });
@@ -25,7 +25,7 @@ router.get('/', async (req, res, next) => {
 router.get('/:id', async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT id, name, created_at FROM organizations WHERE id = $1',
+      'SELECT id, name, timezone, platform_name, platform_logo, enable_public_registration, created_at FROM organizations WHERE id = $1',
       [req.params.id]
     );
     if (result.rows.length === 0 || result.rows[0].id !== req.user.org_id) {
@@ -41,13 +41,20 @@ router.get('/:id', async (req, res, next) => {
 // PUT /:id
 router.put('/:id', async (req, res, next) => {
   try {
-    const { name } = req.body;
-    if (!name) {
+    const { name, timezone, platform_name, platform_logo, enable_public_registration } = req.body;
+    if (!name || typeof name !== 'string') {
       return res.status(400).json({ error: 'Name is required' });
     }
     const result = await query(
-      'UPDATE organizations SET name = $1 WHERE id = $2 RETURNING id, name, created_at',
-      [name, req.params.id]
+      `UPDATE organizations
+       SET name = $1,
+           timezone = COALESCE($2, timezone),
+           platform_name = COALESCE($3, platform_name),
+           platform_logo = COALESCE($4, platform_logo),
+           enable_public_registration = COALESCE($5, enable_public_registration)
+       WHERE id = $6
+       RETURNING id, name, timezone, platform_name, platform_logo, enable_public_registration, created_at`,
+      [name, timezone, platform_name, platform_logo, enable_public_registration, req.params.id]
     );
     if (result.rows.length === 0 || result.rows[0].id !== req.user.org_id) {
       return res.status(404).json({ error: 'Organization not found' });

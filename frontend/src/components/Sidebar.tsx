@@ -171,7 +171,6 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
     >
       {theme === 'dark' ? <Sun size={16} className="shrink-0 text-gray-400 dark:text-gray-500" /> : <Moon size={16} className="shrink-0 text-gray-400 dark:text-gray-500" />}
-      {!collapsed && <span className="text-sm font-medium">{theme === 'dark' ? 'Light mode' : 'Dark mode'}</span>}
     </button>
   );
 }
@@ -211,16 +210,6 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
           )}
         </Link>
         <div className="flex items-center gap-1">
-          {onDesktopToggle && (
-            <button
-              onClick={onDesktopToggle}
-              className="hidden rounded-md p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-100 md:block"
-              aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              {isCollapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
-            </button>
-          )}
           {!isCollapsed && mobileOpen && (
             <button
               onClick={onMobileClose}
@@ -358,7 +347,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
       <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
         <div className={`rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
           <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white" title={user?.name || 'User'}>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white" title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'User'}>
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </div>
             {!isCollapsed && (
@@ -376,7 +365,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
               className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
                 isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
               }`}
-              title="Profile"
+              title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'Profile'}
             >
               <Settings size={12} />
               {!isCollapsed && 'Profile'}
@@ -423,6 +412,16 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
         style={{ width: sidebarWidth }}
       >
         <div className="h-full w-full">{drawerContent(collapsed)}</div>
+        {onDesktopToggle && (
+          <button
+            onClick={onDesktopToggle}
+            className="absolute right-0 top-20 z-40 flex h-7 w-7 translate-x-1/2 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow-md transition-all hover:border-gray-300 hover:text-gray-900 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-600 dark:hover:text-gray-100"
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+          </button>
+        )}
       </div>
     </>
   );

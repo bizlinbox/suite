@@ -352,7 +352,7 @@ export default function Inbox({ selectedId }: InboxProps) {
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
           <Building2 size={32} className="text-gray-400 dark:text-gray-500" />
         </div>
-        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Select a WABA Account</h2>
+        <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Select a WA Business Account</h2>
         <p className="max-w-xs text-sm text-gray-500 dark:text-gray-400">Choose a WhatsApp Business Account from the sidebar to view conversations.</p>
       </div>
     );

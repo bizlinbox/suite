@@ -7,6 +7,12 @@ import { LuMessageSquare as MessageSquare } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import PasswordInput from '@/components/PasswordInput';
 
+interface PublicSettings {
+  platformName: string;
+  platformLogo: string | null;
+  enablePublicRegistration: boolean;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -16,12 +22,31 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
+  const [publicSettings, setPublicSettings] = useState<PublicSettings>({
+    platformName: 'BizlInbox',
+    platformLogo: null,
+    enablePublicRegistration: true,
+  });
 
   useEffect(() => {
-    api.get('/auth/setup-required')
-      .then((res) => {
-        if (res.data.needsSetup) {
+    Promise.all([
+      api.get('/auth/setup-required'),
+      api.get('/auth/public-settings').catch(() => null),
+    ])
+      .then(([setupRes, settingsRes]) => {
+        if (setupRes.data.needsSetup) {
           router.push('/setup');
+        }
+        if (settingsRes?.data) {
+          const settings = {
+            platformName: settingsRes.data.platformName || 'BizlInbox',
+            platformLogo: settingsRes.data.platformLogo || null,
+            enablePublicRegistration: settingsRes.data.enablePublicRegistration ?? true,
+          };
+          setPublicSettings(settings);
+          if (settings.enablePublicRegistration === false) {
+            router.push('/login');
+          }
         }
       })
       .catch(() => {
@@ -61,11 +86,19 @@ export default function RegisterPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 px-4">
       <div className="w-full max-w-md panel rounded-2xl p-8">
         <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-700 text-white">
-            <MessageSquare size={20} />
-          </div>
+          {publicSettings.platformLogo ? (
+            <img
+              src={publicSettings.platformLogo}
+              alt={publicSettings.platformName}
+              className="h-10 w-10 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-700 text-white">
+              <MessageSquare size={20} />
+            </div>
+          )}
           <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            BizlInbox
+            {publicSettings.platformName}
           </span>
         </div>
 

@@ -35,6 +35,7 @@ const { router: campaignRoutes } = require('./routes/campaigns');
 const roleRoutes = require('./routes/roles');
 const apiLogRoutes = require('./routes/apiLogs');
 const aiAgentRoutes = require('./routes/aiAgents');
+const fileRoutes = require('./routes/files');
 
 // Workers
 require('./queues/workers');
@@ -154,6 +155,7 @@ app.use('/api/v1/campaigns', campaignRoutes);
 app.use('/api/v1/roles', roleRoutes);
 app.use('/api/v1/api-logs', apiLogRoutes);
 app.use('/api/v1/ai-agents', aiAgentRoutes);
+app.use('/api/v1/files', fileRoutes);
 
 // Global error handler
 app.use(errorHandler);

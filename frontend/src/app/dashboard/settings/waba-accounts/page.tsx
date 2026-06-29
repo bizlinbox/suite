@@ -251,7 +251,7 @@ export default function WabaAccountsPage() {
       <div className="flex justify-end">
         <button onClick={handleAddWaba} className="btn-primary">
           <Plus size={16} />
-          Add WABA Account
+          Add WA Business Account
         </button>
       </div>
 
@@ -411,7 +411,7 @@ export default function WabaAccountsPage() {
         </Table>
       </div>
 
-      <Dialog open={wabaDialogOpen} onClose={() => { setWabaDialogOpen(false); setEditingWaba(null); setDialogTestResult(null); }} title={editingWaba ? 'Edit WABA Account' : 'Add WABA Account'}>
+      <Dialog open={wabaDialogOpen} onClose={() => { setWabaDialogOpen(false); setEditingWaba(null); setDialogTestResult(null); }} title={editingWaba ? 'Edit WA Business Account' : 'Add WA Business Account'}>
         <div className="flex flex-col gap-4">
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">Name <span className="text-red-500">*</span></label>

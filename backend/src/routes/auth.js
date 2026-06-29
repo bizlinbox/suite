@@ -114,6 +114,14 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
+    // Check if public registration is enabled
+    const settingsResult = await query(
+      'SELECT enable_public_registration FROM organizations ORDER BY created_at LIMIT 1'
+    );
+    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enable_public_registration === false) {
+      return res.status(403).json({ error: 'Public registration is disabled' });
+    }
+
     const passwordHash = await bcrypt.hash(password, 12);
 
     const orgResult = await query(
@@ -396,6 +404,31 @@ router.patch('/me', authenticate, async (req, res, next) => {
     });
   } catch (err) {
     logger.error('Update profile error', err);
+    next(err);
+  }
+});
+
+// GET /public-settings
+router.get('/public-settings', async (req, res, next) => {
+  try {
+    const result = await query(
+      'SELECT platform_name, platform_logo, enable_public_registration FROM organizations ORDER BY created_at LIMIT 1'
+    );
+    if (result.rows.length === 0) {
+      return res.json({
+        platformName: 'BizlInbox',
+        platformLogo: null,
+        enablePublicRegistration: true,
+      });
+    }
+    const row = result.rows[0];
+    res.json({
+      platformName: row.platform_name || 'BizlInbox',
+      platformLogo: row.platform_logo || null,
+      enablePublicRegistration: row.enable_public_registration ?? true,
+    });
+  } catch (err) {
+    logger.error('Public settings error', err);
     next(err);
   }
 });

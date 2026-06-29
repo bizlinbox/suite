@@ -8,6 +8,12 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import PasswordInput from '@/components/PasswordInput';
 
+interface PublicSettings {
+  platformName: string;
+  platformLogo: string | null;
+  enablePublicRegistration: boolean;
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const { setUser } = useAuth();
@@ -16,12 +22,27 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [checkingSetup, setCheckingSetup] = useState(true);
+  const [publicSettings, setPublicSettings] = useState<PublicSettings>({
+    platformName: 'BizlInbox',
+    platformLogo: null,
+    enablePublicRegistration: true,
+  });
 
   useEffect(() => {
-    api.get('/auth/setup-required')
-      .then((res) => {
-        if (res.data.needsSetup) {
+    Promise.all([
+      api.get('/auth/setup-required'),
+      api.get('/auth/public-settings').catch(() => null),
+    ])
+      .then(([setupRes, settingsRes]) => {
+        if (setupRes.data.needsSetup) {
           router.push('/setup');
+        }
+        if (settingsRes?.data) {
+          setPublicSettings({
+            platformName: settingsRes.data.platformName || 'BizlInbox',
+            platformLogo: settingsRes.data.platformLogo || null,
+            enablePublicRegistration: settingsRes.data.enablePublicRegistration ?? true,
+          });
         }
       })
       .catch(() => {
@@ -60,11 +81,19 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 px-4">
       <div className="w-full max-w-md panel rounded-2xl p-8">
         <div className="mb-8 flex items-center justify-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-700 text-white">
-            <MessageSquare size={20} />
-          </div>
+          {publicSettings.platformLogo ? (
+            <img
+              src={publicSettings.platformLogo}
+              alt={publicSettings.platformName}
+              className="h-10 w-10 rounded-lg object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-700 text-white">
+              <MessageSquare size={20} />
+            </div>
+          )}
           <span className="text-lg font-bold tracking-tight text-gray-900 dark:text-gray-100">
-            BizlInbox
+            {publicSettings.platformName}
           </span>
         </div>
 
@@ -116,12 +145,14 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          Don&apos;t have an account?{' '}
-          <Link href="/register" className="font-medium text-primary-700 hover:text-primary-800 transition-colors">
-            Register
-          </Link>
-        </p>
+        {publicSettings.enablePublicRegistration && (
+          <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="font-medium text-primary-700 hover:text-primary-800 transition-colors">
+              Register
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );
