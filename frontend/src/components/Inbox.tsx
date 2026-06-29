@@ -12,7 +12,7 @@ import NewChatDialog from '@/components/NewChatDialog';
 import ConfirmDialog from '@/components/ConfirmDialog';
 import ContactProfilePopup from '@/components/ContactProfilePopup';
 import { toastError, toastSuccess } from '@/components/Toaster';
-import { Building2, MessageSquare } from 'lucide-react';
+import { LuBuilding2 as Building2, LuMessageSquare as MessageSquare } from 'react-icons/lu';
 
 const CONV_PAGE_SIZE = 20;
 

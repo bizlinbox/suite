@@ -1,6 +1,6 @@
 'use client';
 
-import { Store, Sparkles, ArrowLeft } from 'lucide-react';
+import { LuStore as Store, LuSparkles as Sparkles, LuArrowLeft as ArrowLeft } from 'react-icons/lu';
 import Link from 'next/link';
 
 export default function MarketplacePage() {

@@ -7,18 +7,18 @@ import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
 import {
-  Plus,
-  Play,
-  Pause,
-  Pencil,
-  Trash2,
-  X,
-  Building2,
-  RefreshCw,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-} from 'lucide-react';
+  LuPlus as Plus,
+  LuPlay as Play,
+  LuPause as Pause,
+  LuPencil as Pencil,
+  LuTrash2 as Trash2,
+  LuX as X,
+  LuBuilding2 as Building2,
+  LuRefreshCw as RefreshCw,
+  LuLoader as Loader2,
+  LuCircleCheck as CheckCircle2,
+  LuCircleX as XCircle,
+} from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableLoading, TableEmpty } from '@/components/Table';
 
 interface Campaign {

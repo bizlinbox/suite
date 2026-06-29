@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
-import { Loader2, Plus, Pencil, Trash2, Shield } from 'lucide-react';
+import { LuLoader as Loader2, LuPlus as Plus, LuPencil as Pencil, LuTrash2 as Trash2, LuShield as Shield } from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Role {

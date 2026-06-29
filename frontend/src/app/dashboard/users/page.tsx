@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { Edit, Trash2, Copy, Check, ChevronDown, Loader2 } from 'lucide-react';
+import { LuPenLine as Edit, LuTrash2 as Trash2, LuCopy as Copy, LuCheck as Check, LuChevronDown as ChevronDown, LuLoader as Loader2 } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';

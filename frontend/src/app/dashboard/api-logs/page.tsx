@@ -3,19 +3,19 @@
 import { useEffect, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
 import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Filter,
-  RefreshCw,
-  ChevronLeft,
-  ChevronRight,
-  ExternalLink,
-  Server,
-  Trash2,
-} from 'lucide-react';
+  LuArrowDownLeft as ArrowDownLeft,
+  LuArrowUpRight as ArrowUpRight,
+  LuCircleAlert as AlertCircle,
+  LuCircleCheck as CheckCircle,
+  LuClock as Clock,
+  LuFilter as Filter,
+  LuRefreshCw as RefreshCw,
+  LuChevronLeft as ChevronLeft,
+  LuChevronRight as ChevronRight,
+  LuExternalLink as ExternalLink,
+  LuServer as Server,
+  LuTrash2 as Trash2,
+} from 'react-icons/lu';
 import { toastError, toastSuccess } from '@/components/Toaster';
 import { useSocket } from '@/hooks/useSocket';
 import ConfirmDialog from '@/components/ConfirmDialog';

@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { MessageSquare, Users, Megaphone, BookOpen } from 'lucide-react';
+import { LuMessageSquare as MessageSquare, LuUsers as Users, LuMegaphone as Megaphone, LuBookOpen as BookOpen } from 'react-icons/lu';
 
 const bottomNavItems = [
   { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare },

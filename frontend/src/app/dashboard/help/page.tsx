@@ -1,22 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  MessageSquare, 
-  Users, 
-  Megaphone, 
-  BarChart3, 
-  GitBranch, 
-  FileText, 
-  Settings, 
-  ChevronDown, 
-  ChevronRight,
-  Mail,
-  BookOpen,
-  AlertCircle,
-  CheckCircle,
-  Zap
-} from 'lucide-react';
+import {
+  LuMessageSquare as MessageSquare,
+  LuUsers as Users,
+  LuMegaphone as Megaphone,
+  LuChartColumn as BarChart3,
+  LuGitBranch as GitBranch,
+  LuFileText as FileText,
+  LuSettings as Settings,
+  LuChevronDown as ChevronDown,
+  LuChevronRight as ChevronRight,
+  LuMail as Mail,
+  LuBookOpen as BookOpen,
+  LuCircleAlert as AlertCircle,
+  LuCircleCheck as CheckCircle,
+  LuZap as Zap,
+} from 'react-icons/lu';
 
 interface FAQItem {
   question: string;

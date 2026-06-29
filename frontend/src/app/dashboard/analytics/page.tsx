@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';
-import { Building2, Loader2 } from 'lucide-react';
+import { LuBuilding2 as Building2, LuLoader as Loader2 } from 'react-icons/lu';
 
 interface DayCount {
   day: string;

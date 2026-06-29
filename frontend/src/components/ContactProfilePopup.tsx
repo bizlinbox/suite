@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, Phone, Mail, Building2, MapPin, Calendar, Tag, FileText, Edit } from 'lucide-react';
+import { LuX as X, LuPhone as Phone, LuMail as Mail, LuBuilding2 as Building2, LuMapPin as MapPin, LuCalendar as Calendar, LuTag as Tag, LuFileText as FileText, LuPenLine as Edit } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import ContactForm, { ContactFormData } from './ContactForm';

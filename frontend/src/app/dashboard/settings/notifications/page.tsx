@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Bell, BellOff, Check, AlertTriangle } from 'lucide-react';
+import { LuBell as Bell, LuBellOff as BellOff, LuCheck as Check, LuTriangleAlert as AlertTriangle } from 'react-icons/lu';
 import {
   isNotificationsSupported,
   getNotificationPermission,

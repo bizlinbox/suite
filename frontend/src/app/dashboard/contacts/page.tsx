@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
+import { LuPenLine as Edit, LuTrash2 as Trash2, LuPlus as Plus, LuLoader as Loader2, LuSearch as Search } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import ContactDialog from '@/components/ContactDialog';

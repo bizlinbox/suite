@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { MessageSquare } from 'lucide-react';
+import { LuMessageSquare as MessageSquare } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import PasswordInput from '@/components/PasswordInput';
 

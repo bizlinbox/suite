@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { Download, X, WifiOff, Wifi } from 'lucide-react';
+import { LuDownload as Download, LuX as X, LuWifiOff as WifiOff, LuWifi as Wifi } from 'react-icons/lu';
 
 const INSTALL_DISMISS_KEY = 'bizlinbox_install_dismissed';
 const INSTALL_DISMISS_DAYS = 7;

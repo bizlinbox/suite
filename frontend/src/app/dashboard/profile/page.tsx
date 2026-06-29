@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { toastError, toastSuccess } from '@/components/Toaster';
-import { User, Mail, Lock, Loader2, Save } from 'lucide-react';
+import { LuUser as User, LuMail as Mail, LuLock as Lock, LuLoader as Loader2, LuSave as Save } from 'react-icons/lu';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuth();

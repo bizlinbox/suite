@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Plug, CheckCircle2, XCircle, Loader2, Copy, Link as LinkIcon, Radio, Plus } from 'lucide-react';
+import { LuPenLine as Edit, LuTrash2 as Trash2, LuPlug as Plug, LuCircleCheck as CheckCircle2, LuCircleX as XCircle, LuLoader as Loader2, LuCopy as Copy, LuLink as LinkIcon, LuRadio as Radio, LuPlus as Plus } from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/Table';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';

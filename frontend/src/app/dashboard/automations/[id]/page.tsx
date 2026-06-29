@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import AutomationEditor from '@/components/AutomationEditor';
-import { Loader2 } from 'lucide-react';
+import { LuLoader as Loader2 } from 'react-icons/lu';
 
 export default function EditAutomationPage() {
   const params = useParams();

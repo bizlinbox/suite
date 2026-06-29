@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useEffect, useState } from 'react';
-import { Search, Plus, Trash2, Loader2, CheckSquare, Square } from 'lucide-react';
+import { LuSearch as Search, LuPlus as Plus, LuTrash2 as Trash2, LuLoader as Loader2, LuSquareCheck as CheckSquare, LuSquare as Square } from 'react-icons/lu';
 
 export interface Conversation {
   id: string;

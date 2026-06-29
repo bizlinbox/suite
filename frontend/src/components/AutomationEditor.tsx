@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import FlowBuilder from './FlowBuilder';
 import { FlowNode, FlowEdge } from './FlowBuilder/types';
-import { AlertCircle } from 'lucide-react';
+import { LuCircleAlert as AlertCircle } from 'react-icons/lu';
 import { useWaba } from '@/context/WabaContext';
 
 interface Step {

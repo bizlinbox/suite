@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Search, User } from 'lucide-react';
+import { LuX as X, LuSearch as Search, LuUser as User } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 

@@ -8,7 +8,7 @@ import { WabaProvider } from '@/context/WabaContext';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import NotificationManager from '@/components/NotificationManager';
-import { Menu } from 'lucide-react';
+import { LuMenu as Menu } from 'react-icons/lu';
 
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);

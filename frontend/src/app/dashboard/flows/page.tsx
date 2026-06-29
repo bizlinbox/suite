@@ -2,18 +2,18 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import {
-  RefreshCw,
-  Loader2,
-  Edit,
-  Trash2,
-  Play,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Building2,
-  Send,
-  Eye,
-} from 'lucide-react';
+  LuRefreshCw as RefreshCw,
+  LuLoader as Loader2,
+  LuPenLine as Edit,
+  LuTrash2 as Trash2,
+  LuPlay as Play,
+  LuCircleCheck as CheckCircle2,
+  LuCircleX as XCircle,
+  LuFileText as FileText,
+  LuBuilding2 as Building2,
+  LuSend as Send,
+  LuEye as Eye,
+} from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, TableLoading } from '@/components/Table';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';

@@ -2,15 +2,15 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import {
-  RefreshCw,
-  Loader2,
-  Search,
-  Eye,
-  CheckCircle2,
-  XCircle,
-  FileText,
-  Building2,
-} from 'lucide-react';
+  LuRefreshCw as RefreshCw,
+  LuLoader as Loader2,
+  LuSearch as Search,
+  LuEye as Eye,
+  LuCircleCheck as CheckCircle2,
+  LuCircleX as XCircle,
+  LuFileText as FileText,
+  LuBuilding2 as Building2,
+} from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useWaba } from '@/context/WabaContext';
 import { usePermission } from '@/hooks/usePermission';

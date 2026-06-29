@@ -6,19 +6,19 @@ import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import Link from 'next/link';
 import {
-  Play,
-  Pause,
-  Pencil,
-  Trash2,
-  X,
-  ChevronLeft,
-  Users,
-  Send,
-  MailCheck,
-  Eye,
-  AlertCircle,
-  Megaphone,
-} from 'lucide-react';
+  LuPlay as Play,
+  LuPause as Pause,
+  LuPencil as Pencil,
+  LuTrash2 as Trash2,
+  LuX as X,
+  LuChevronLeft as ChevronLeft,
+  LuUsers as Users,
+  LuSend as Send,
+  LuMailCheck as MailCheck,
+  LuEye as Eye,
+  LuCircleAlert as AlertCircle,
+  LuMegaphone as Megaphone,
+} from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Campaign {

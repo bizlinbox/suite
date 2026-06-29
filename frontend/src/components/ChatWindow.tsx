@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { Send, Paperclip, X, FileText, Music, Video, Image as ImageIcon, MapPin, Check, CheckCheck, AlertCircle, User, Lock, Unlock, Mic, Play, Pause, StopCircle, FormInput, Loader2, Trash2, Mail, Sparkles } from 'lucide-react';
+import { LuSend as Send, LuPaperclip as Paperclip, LuX as X, LuFileText as FileText, LuMusic as Music, LuVideo as Video, LuImage as ImageIcon, LuMapPin as MapPin, LuCheck as Check, LuCheckCheck as CheckCheck, LuCircleAlert as AlertCircle, LuUser as User, LuLock as Lock, LuLockOpen as Unlock, LuMic as Mic, LuPlay as Play, LuPause as Pause, LuCircleStop as StopCircle, LuTextCursorInput as FormInput, LuLoader as Loader2, LuTrash2 as Trash2, LuMail as Mail, LuSparkles as Sparkles } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';

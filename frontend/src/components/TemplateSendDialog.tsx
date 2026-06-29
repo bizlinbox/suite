@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { X, Search, Loader2, Send, FileText } from 'lucide-react';
+import { LuX as X, LuSearch as Search, LuLoader as Loader2, LuSend as Send, LuFileText as FileText } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { toastError, toastSuccess } from '@/components/Toaster';
 

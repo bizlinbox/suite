@@ -3,9 +3,20 @@
 import React from 'react';
 import { useFlowStore } from './store';
 import {
-  ChevronLeft, Save, Undo2, Redo2, Trash2, ZoomIn, ZoomOut, Maximize,
-  Grid3X3, Play, Download, Upload, Search,
-} from 'lucide-react';
+  LuChevronLeft as ChevronLeft,
+  LuSave as Save,
+  LuUndo2 as Undo2,
+  LuRedo2 as Redo2,
+  LuTrash2 as Trash2,
+  LuZoomIn as ZoomIn,
+  LuZoomOut as ZoomOut,
+  LuMaximize as Maximize,
+  LuGrid3X3 as Grid3X3,
+  LuPlay as Play,
+  LuDownload as Download,
+  LuUpload as Upload,
+  LuSearch as Search,
+} from 'react-icons/lu';
 import Link from 'next/link';
 
 interface ToolbarProps {

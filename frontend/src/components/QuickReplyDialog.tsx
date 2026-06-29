@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { X, Plus, Trash2, Upload } from 'lucide-react';
+import { LuX as X, LuPlus as Plus, LuTrash2 as Trash2, LuUpload as Upload } from 'react-icons/lu';
 import { api } from '@/lib/api';
 
 export type QuickMessageType = 'text' | 'image' | 'video' | 'document' | 'audio' | 'button' | 'list';

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { X, AlertCircle, CheckCircle, Info } from 'lucide-react';
+import { LuX as X, LuCircleAlert as AlertCircle, LuCircleCheck as CheckCircle, LuInfo as Info } from 'react-icons/lu';
 
 export interface Toast {
   id: string;

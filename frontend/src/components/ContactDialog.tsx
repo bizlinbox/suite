@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { LuX as X } from 'react-icons/lu';
 import ContactForm, { ContactFormData } from './ContactForm';
 
 export type { ContactFormData } from './ContactForm';

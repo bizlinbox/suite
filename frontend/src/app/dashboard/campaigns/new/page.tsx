@@ -7,18 +7,18 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import { useWaba } from '@/context/WabaContext';
 import {
-  ChevronLeft,
-  ChevronRight,
-  Check,
-  Search,
-  Users,
-  FileText,
-  CalendarClock,
-  Megaphone,
-  Building2,
-  RefreshCw,
-  Loader2,
-} from 'lucide-react';
+  LuChevronLeft as ChevronLeft,
+  LuChevronRight as ChevronRight,
+  LuCheck as Check,
+  LuSearch as Search,
+  LuUsers as Users,
+  LuFileText as FileText,
+  LuCalendarClock as CalendarClock,
+  LuMegaphone as Megaphone,
+  LuBuilding2 as Building2,
+  LuRefreshCw as RefreshCw,
+  LuLoader as Loader2,
+} from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Contact {

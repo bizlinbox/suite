@@ -4,9 +4,19 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import {
-  Plus, Edit, Trash2, Loader2, Save, X, Sparkles, Send,
-  MessageSquare, Check, AlertCircle, Brain,
-} from 'lucide-react';
+  LuPlus as Plus,
+  LuPenLine as Edit,
+  LuTrash2 as Trash2,
+  LuLoader as Loader2,
+  LuSave as Save,
+  LuX as X,
+  LuSparkles as Sparkles,
+  LuSend as Send,
+  LuMessageSquare as MessageSquare,
+  LuCheck as Check,
+  LuCircleAlert as AlertCircle,
+  LuBrain as Brain,
+} from 'react-icons/lu';
 
 interface AIAgent {
   id: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { Menu, Sun, Moon } from 'lucide-react';
+import { LuMenu as Menu, LuSun as Sun, LuMoon as Moon } from 'react-icons/lu';
 import { useTheme } from '@/components/ThemeProvider';
 
 interface NavbarProps {

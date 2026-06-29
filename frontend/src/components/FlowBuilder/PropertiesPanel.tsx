@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useFlowStore } from './store';
-import { X } from 'lucide-react';
+import { LuX as X } from 'react-icons/lu';
 
 export default function PropertiesPanel() {
   const selectedNodeIds = useFlowStore((s) => s.selectedNodeIds);

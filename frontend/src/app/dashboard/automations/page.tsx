@@ -7,13 +7,13 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
 import {
-  Plus,
-  Play,
-  Pause,
-  Pencil,
-  Trash2,
-  Loader2,
-} from 'lucide-react';
+  LuPlus as Plus,
+  LuPlay as Play,
+  LuPause as Pause,
+  LuPencil as Pencil,
+  LuTrash2 as Trash2,
+  LuLoader as Loader2,
+} from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableLoading, TableEmpty } from '@/components/Table';
 
 interface Automation {

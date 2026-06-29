@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, X } from 'lucide-react';
+import { LuTriangleAlert as AlertTriangle, LuX as X } from 'react-icons/lu';
 
 interface ConfirmDialogProps {
   open: boolean;

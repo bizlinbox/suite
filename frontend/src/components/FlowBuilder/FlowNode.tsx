@@ -4,11 +4,31 @@ import React, { useCallback, useMemo } from 'react';
 import { useFlowStore } from './store';
 import { FlowNode as FlowNodeType } from './types';
 import {
-  MessageSquare, Send, Image, FileText, Video, Music,
-  MousePointerClick, List, Clock, GitBranch, Tag, UserCheck,
-  Sparkles, Play, Square, Cloud, Database, Code, Variable,
-  Upload, Globe, Webhook, Zap, Settings,
-} from 'lucide-react';
+  LuMessageSquare as MessageSquare,
+  LuSend as Send,
+  LuImage as Image,
+  LuFileText as FileText,
+  LuVideo as Video,
+  LuMusic as Music,
+  LuMousePointerClick as MousePointerClick,
+  LuList as List,
+  LuClock as Clock,
+  LuGitBranch as GitBranch,
+  LuTag as Tag,
+  LuUserCheck as UserCheck,
+  LuSparkles as Sparkles,
+  LuPlay as Play,
+  LuSquare as Square,
+  LuCloud as Cloud,
+  LuDatabase as Database,
+  LuCode as Code,
+  LuVariable as Variable,
+  LuUpload as Upload,
+  LuGlobe as Globe,
+  LuWebhook as Webhook,
+  LuZap as Zap,
+  LuSettings as Settings,
+} from 'react-icons/lu';
 
 const ICON_MAP: Record<string, React.FC<any>> = {
   trigger_message: MessageSquare,
