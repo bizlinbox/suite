@@ -23,8 +23,8 @@ export async function parseCSV(file: File): Promise<FileParseResult> {
       complete: (results) => {
         if (results.data && results.data.length > 0) {
           const rows = results.data as string[][];
-          const headers = rows[0];
-          const dataRows = rows.slice(1);
+          const headers = rows[0].map((h) => String(h ?? ''));
+          const dataRows = rows.slice(1).map((row) => row.map((cell) => String(cell ?? '')));
           resolve({
             success: true,
             data: {
@@ -69,8 +69,8 @@ export async function parseExcel(file: File): Promise<FileParseResult> {
         const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
         
         if (jsonData && jsonData.length > 0) {
-          const headers = jsonData[0];
-          const dataRows = jsonData.slice(1);
+          const headers = jsonData[0].map((h) => String(h ?? ''));
+          const dataRows = jsonData.slice(1).map((row) => row.map((cell) => String(cell ?? '')));
           resolve({
             success: true,
             data: {
@@ -136,12 +136,12 @@ export function convertToRecipients(
   const recipients: Array<{ phone: string; name?: string; remarks?: string; variables: Record<string, string> }> = [];
 
   for (const row of data.rows) {
-    const phone = row[phoneColumnIndex]?.trim();
+    const phone = String(row[phoneColumnIndex] ?? '').trim();
     if (!phone) continue;
 
     const variables: Record<string, string> = {};
     for (const [colIndex, varName] of Object.entries(variableMapping)) {
-      const value = row[parseInt(colIndex)]?.trim() || '';
+      const value = String(row[parseInt(colIndex)] ?? '').trim();
       variables[varName] = value;
     }
 
@@ -151,12 +151,12 @@ export function convertToRecipients(
     };
 
     if (nameColumnIndex !== null) {
-      const name = row[nameColumnIndex]?.trim();
+      const name = String(row[nameColumnIndex] ?? '').trim();
       if (name) recipient.name = name;
     }
 
     if (remarksColumnIndex !== null) {
-      const remarks = row[remarksColumnIndex]?.trim();
+      const remarks = String(row[remarksColumnIndex] ?? '').trim();
       if (remarks) recipient.remarks = remarks;
     }
 

@@ -78,12 +78,13 @@ export default function ContactImportDialog({ open, onClose, onSuccess }: Contac
       // Auto-map columns by header name
       const mapping: Record<string, number> = {};
       res.data.headers.forEach((header, index) => {
-        const normalized = header.toLowerCase().trim().replace(/\s+/g, '_');
+        const headerStr = String(header ?? '');
+        const normalized = headerStr.toLowerCase().trim().replace(/\s+/g, '_');
         const match = FIELD_OPTIONS.find(
           (f) =>
             f.key === normalized ||
             f.key.replace('_', '') === normalized ||
-            f.label.toLowerCase() === header.toLowerCase().trim()
+            f.label.toLowerCase() === headerStr.toLowerCase().trim()
         );
         if (match && !Object.values(mapping).includes(index)) {
           mapping[match.key] = index;
@@ -142,7 +143,7 @@ export default function ContactImportDialog({ open, onClose, onSuccess }: Contac
       const contact: Record<string, string | string[] | null> = {};
       let hasPhone = false;
       for (const [fieldKey, colIndex] of Object.entries(columnMapping)) {
-        const value = row[colIndex]?.trim() || null;
+        const value = String(row[colIndex as number] ?? '').trim() || null;
         if (fieldKey === 'tags' && value) {
           contact[fieldKey] = value.split(',').map((t) => t.trim()).filter(Boolean);
         } else {

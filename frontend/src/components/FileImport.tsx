@@ -22,7 +22,7 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
 
   const autoMapColumn = (headers: string[], keywords: string[]): number | null => {
     for (let i = 0; i < headers.length; i++) {
-      const header = headers[i].toLowerCase().trim().replace(/\s+/g, '_');
+      const header = String(headers[i] ?? '').toLowerCase().trim().replace(/\s+/g, '_');
       for (const kw of keywords) {
         if (header === kw || header.includes(kw)) {
           return i;
