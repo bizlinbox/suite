@@ -9,7 +9,7 @@ const router = express.Router();
 router.use(authenticate);
 
 const CONTACT_COLUMNS = `id, org_id, name, phone, email, avatar_url,
-    company, job_title, notes, birthday, language, tags,
+    company, job_title, notes, remarks, birthday, language, tags,
     address, city, state, country, zip_code, created_at`;
 
 // GET / - list contacts
@@ -56,7 +56,7 @@ router.post('/', async (req, res, next) => {
   try {
     const {
       name, phone, email, avatar_url,
-      company, job_title, notes, birthday, language, tags,
+      company, job_title, notes, remarks, birthday, language, tags,
       address, city, state, country, zip_code,
     } = req.body;
     if (!phone) {
@@ -66,14 +66,14 @@ router.post('/', async (req, res, next) => {
     const result = await query(
       `INSERT INTO contacts (
          org_id, name, phone, email, avatar_url,
-         company, job_title, notes, birthday, language, tags,
+         company, job_title, notes, remarks, birthday, language, tags,
          address, city, state, country, zip_code
        )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
        RETURNING ${CONTACT_COLUMNS}`,
       [
         req.user.org_id, name, phone, email, avatar_url,
-        company, job_title, notes,
+        company, job_title, notes, remarks,
         birthday || null, language,
         tagArray,
         address, city, state, country, zip_code,
@@ -91,7 +91,7 @@ router.put('/:id', async (req, res, next) => {
   try {
     const {
       name, phone, email, avatar_url,
-      company, job_title, notes, birthday, language, tags,
+      company, job_title, notes, remarks, birthday, language, tags,
       address, city, state, country, zip_code,
     } = req.body;
     const tagArray = tags !== undefined ? parseTags(tags) : undefined;
@@ -104,19 +104,20 @@ router.put('/:id', async (req, res, next) => {
            company      = COALESCE($5, company),
            job_title    = COALESCE($6, job_title),
            notes        = COALESCE($7, notes),
-           birthday     = COALESCE($8, birthday),
-           language     = COALESCE($9, language),
-           tags         = COALESCE($10, tags),
-           address      = COALESCE($11, address),
-           city         = COALESCE($12, city),
-           state        = COALESCE($13, state),
-           country      = COALESCE($14, country),
-           zip_code     = COALESCE($15, zip_code)
-       WHERE id = $16 AND org_id = $17
+           remarks      = COALESCE($8, remarks),
+           birthday     = COALESCE($9, birthday),
+           language     = COALESCE($10, language),
+           tags         = COALESCE($11, tags),
+           address      = COALESCE($12, address),
+           city         = COALESCE($13, city),
+           state        = COALESCE($14, state),
+           country      = COALESCE($15, country),
+           zip_code     = COALESCE($16, zip_code)
+       WHERE id = $17 AND org_id = $18
        RETURNING ${CONTACT_COLUMNS}`,
       [
         name, phone, email, avatar_url,
-        company, job_title, notes,
+        company, job_title, notes, remarks,
         birthday || null, language,
         tagArray,
         address, city, state, country, zip_code,
@@ -152,7 +153,7 @@ router.post('/bulk', async (req, res, next) => {
     for (const item of bulkContacts) {
       const {
         name, phone, email, avatar_url,
-        company, job_title, notes, birthday, language, tags,
+        company, job_title, notes, remarks, birthday, language, tags,
         address, city, state, country, zip_code,
       } = item;
 
@@ -175,10 +176,10 @@ router.post('/bulk', async (req, res, next) => {
         await query(
           `INSERT INTO contacts (
              org_id, name, phone, email, avatar_url,
-             company, job_title, notes, birthday, language, tags,
+             company, job_title, notes, remarks, birthday, language, tags,
              address, city, state, country, zip_code
            )
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
            ON CONFLICT (org_id, phone)
            DO UPDATE SET
              name       = COALESCE(EXCLUDED.name, contacts.name),
@@ -187,6 +188,7 @@ router.post('/bulk', async (req, res, next) => {
              company    = COALESCE(EXCLUDED.company, contacts.company),
              job_title  = COALESCE(EXCLUDED.job_title, contacts.job_title),
              notes      = COALESCE(EXCLUDED.notes, contacts.notes),
+             remarks    = COALESCE(EXCLUDED.remarks, contacts.remarks),
              birthday   = COALESCE(EXCLUDED.birthday, contacts.birthday),
              language   = COALESCE(EXCLUDED.language, contacts.language),
              tags       = COALESCE(EXCLUDED.tags, contacts.tags),
@@ -197,7 +199,7 @@ router.post('/bulk', async (req, res, next) => {
              zip_code   = COALESCE(EXCLUDED.zip_code, contacts.zip_code)`,
           [
             req.user.org_id, name || null, trimmedPhone, email || null, avatar_url || null,
-            company || null, job_title || null, notes || null,
+            company || null, job_title || null, notes || null, remarks || null,
             birthday || null, language || null,
             tagArray,
             address || null, city || null, state || null, country || null, zip_code || null,

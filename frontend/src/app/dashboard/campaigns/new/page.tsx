@@ -33,6 +33,8 @@ interface Contact {
 
 interface Recipient {
   phone: string;
+  name?: string;
+  remarks?: string;
   variables: Record<string, string>;
 }
 

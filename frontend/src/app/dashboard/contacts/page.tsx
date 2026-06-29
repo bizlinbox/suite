@@ -17,6 +17,7 @@ interface Contact {
   company?: string;
   jobTitle?: string;
   notes?: string;
+  remarks?: string;
   birthday?: string;
   language?: string;
   tags?: string[];
@@ -77,6 +78,7 @@ export default function ContactsPage() {
         company: form.company || null,
         job_title: form.jobTitle || null,
         notes: form.notes || null,
+        remarks: form.remarks || null,
         birthday: form.birthday || null,
         language: form.language || null,
         tags: form.tags || null,
@@ -108,6 +110,7 @@ export default function ContactsPage() {
         company: editingContact.company || '',
         jobTitle: editingContact.jobTitle || '',
         notes: editingContact.notes || '',
+        remarks: editingContact.remarks || '',
         birthday: editingContact.birthday || '',
         language: editingContact.language || '',
         tags: (editingContact.tags || []).join(', '),

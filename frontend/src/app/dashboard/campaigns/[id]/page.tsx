@@ -43,6 +43,8 @@ interface Campaign {
 interface CampaignRecipient {
   id: string;
   phone: string;
+  name?: string;
+  remarks?: string;
   status: 'pending' | 'queued' | 'sent' | 'delivered' | 'read' | 'failed';
   sentAt: string | null;
   error: string | null;
@@ -427,6 +429,8 @@ export default function CampaignDetailPage() {
             <TableHeader>
               <tr>
                 <TableHead>Phone</TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Remarks</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Sent At</TableHead>
                 <TableHead>Error</TableHead>
@@ -436,6 +440,8 @@ export default function CampaignDetailPage() {
               {recipients.map((r) => (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium text-gray-900 dark:text-gray-100">{r.phone}</TableCell>
+                  <TableCell className="text-gray-700 dark:text-gray-300">{r.name || '-'}</TableCell>
+                  <TableCell className="text-gray-700 dark:text-gray-300">{r.remarks || '-'}</TableCell>
                   <TableCell>
                     <span
                       className={`inline-flex items-center rounded-xl px-2.5 py-0.5 text-xs font-medium ${recipientStatusBadgeStyles[r.status]}`}

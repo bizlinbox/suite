@@ -14,6 +14,7 @@ interface ContactProfile {
   company?: string;
   jobTitle?: string;
   notes?: string;
+  remarks?: string;
   birthday?: string;
   language?: string;
   tags?: string[];
@@ -42,6 +43,7 @@ export default function ContactProfilePopup({ contactId, open, onClose, defaultE
     company: '',
     jobTitle: '',
     notes: '',
+    remarks: '',
     birthday: '',
     language: '',
     tags: '',
@@ -84,6 +86,7 @@ export default function ContactProfilePopup({ contactId, open, onClose, defaultE
       company: contact.company || '',
       jobTitle: contact.jobTitle || '',
       notes: contact.notes || '',
+      remarks: contact.remarks || '',
       birthday: contact.birthday || '',
       language: contact.language || '',
       tags: (contact.tags || []).join(', '),
@@ -115,6 +118,7 @@ export default function ContactProfilePopup({ contactId, open, onClose, defaultE
         company: form.company || null,
         job_title: form.jobTitle || null,
         notes: form.notes || null,
+        remarks: form.remarks || null,
         birthday: form.birthday || null,
         language: form.language || null,
         tags: form.tags || null,
@@ -237,6 +241,19 @@ export default function ContactProfilePopup({ contactId, open, onClose, defaultE
                   </div>
                   <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
                     {contact.notes}
+                  </p>
+                </div>
+              )}
+
+              {/* Remarks */}
+              {contact.remarks && (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <FileText size={16} />
+                    <span>Remarks</span>
+                  </div>
+                  <p className="rounded-lg bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                    {contact.remarks}
                   </p>
                 </div>
               )}

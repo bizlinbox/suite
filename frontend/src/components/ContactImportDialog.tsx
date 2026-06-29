@@ -25,6 +25,7 @@ const FIELD_OPTIONS = [
   { key: 'company', label: 'Company' },
   { key: 'job_title', label: 'Job Title' },
   { key: 'notes', label: 'Notes' },
+  { key: 'remarks', label: 'Remarks' },
   { key: 'birthday', label: 'Birthday' },
   { key: 'language', label: 'Language' },
   { key: 'tags', label: 'Tags' },

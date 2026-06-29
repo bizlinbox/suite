@@ -129,22 +129,39 @@ export async function parseFile(file: File): Promise<FileParseResult> {
 export function convertToRecipients(
   data: ParsedData,
   phoneColumnIndex: number,
+  nameColumnIndex: number | null,
+  remarksColumnIndex: number | null,
   variableMapping: Record<number, string>
-): Array<{ phone: string; variables: Record<string, string> }> {
-  const recipients: Array<{ phone: string; variables: Record<string, string> }> = [];
-  
+): Array<{ phone: string; name?: string; remarks?: string; variables: Record<string, string> }> {
+  const recipients: Array<{ phone: string; name?: string; remarks?: string; variables: Record<string, string> }> = [];
+
   for (const row of data.rows) {
     const phone = row[phoneColumnIndex]?.trim();
     if (!phone) continue;
-    
+
     const variables: Record<string, string> = {};
     for (const [colIndex, varName] of Object.entries(variableMapping)) {
       const value = row[parseInt(colIndex)]?.trim() || '';
       variables[varName] = value;
     }
-    
-    recipients.push({ phone, variables });
+
+    const recipient: { phone: string; name?: string; remarks?: string; variables: Record<string, string> } = {
+      phone,
+      variables,
+    };
+
+    if (nameColumnIndex !== null) {
+      const name = row[nameColumnIndex]?.trim();
+      if (name) recipient.name = name;
+    }
+
+    if (remarksColumnIndex !== null) {
+      const remarks = row[remarksColumnIndex]?.trim();
+      if (remarks) recipient.remarks = remarks;
+    }
+
+    recipients.push(recipient);
   }
-  
+
   return recipients;
 }

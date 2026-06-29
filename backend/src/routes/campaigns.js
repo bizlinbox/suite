@@ -234,9 +234,9 @@ router.post('/', async (req, res, next) => {
     // Insert recipients
     for (const r of recipients) {
       await query(
-        `INSERT INTO campaign_recipients (campaign_id, contact_id, phone, status)
-         VALUES ($1, $2, $3, 'pending')`,
-        [campaignId, r.contact_id || null, r.phone]
+        `INSERT INTO campaign_recipients (campaign_id, contact_id, phone, name, remarks, status)
+         VALUES ($1, $2, $3, $4, $5, 'pending')`,
+        [campaignId, r.contact_id || null, r.phone, r.name || null, r.remarks || null]
       );
     }
 
@@ -485,7 +485,7 @@ router.get('/:id/recipients', async (req, res, next) => {
     const total = parseInt(countResult.rows[0].count, 10);
 
     const result = await query(
-      `SELECT id, campaign_id, contact_id, phone, status, external_id, error_message, sent_at, created_at
+      `SELECT id, campaign_id, contact_id, phone, name, remarks, status, external_id, error_message, sent_at, created_at
        FROM campaign_recipients
        WHERE campaign_id = $1
        ORDER BY created_at ASC

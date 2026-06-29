@@ -8,6 +8,7 @@ export interface ContactFormData {
   company?: string;
   jobTitle?: string;
   notes?: string;
+  remarks?: string;
   birthday?: string;
   language?: string;
   tags?: string;
@@ -177,6 +178,15 @@ export default function ContactForm({ value, onChange }: ContactFormProps) {
             rows={3}
             className="input resize-none"
             placeholder="Any additional notes..."
+          />
+        </Field>
+        <Field label="Remarks">
+          <textarea
+            value={value.remarks || ''}
+            onChange={handleChange('remarks')}
+            rows={3}
+            className="input resize-none"
+            placeholder="Any remarks..."
           />
         </Field>
       </Section>

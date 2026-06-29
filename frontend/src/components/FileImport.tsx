@@ -5,7 +5,7 @@ import { LuUpload as Upload, LuFileText as FileText, LuX as X, LuLoader as Loade
 import { parseFile, ParsedData, convertToRecipients } from '@/lib/fileParser';
 
 interface FileImportProps {
-  onRecipientsImported: (recipients: Array<{ phone: string; variables: Record<string, string> }>) => void;
+  onRecipientsImported: (recipients: Array<{ phone: string; name?: string; remarks?: string; variables: Record<string, string> }>) => void;
   templateVariables?: string[];
 }
 
@@ -15,23 +15,65 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phoneColumnIndex, setPhoneColumnIndex] = useState<number>(0);
+  const [nameColumnIndex, setNameColumnIndex] = useState<number | null>(null);
+  const [remarksColumnIndex, setRemarksColumnIndex] = useState<number | null>(null);
   const [variableMapping, setVariableMapping] = useState<Record<number, string>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const autoMapColumn = (headers: string[], keywords: string[]): number | null => {
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i].toLowerCase().trim().replace(/\s+/g, '_');
+      for (const kw of keywords) {
+        if (header === kw || header.includes(kw)) {
+          return i;
+        }
+      }
+    }
+    return null;
+  };
 
   const handleFileSelect = async (selectedFile: File) => {
     setFile(selectedFile);
     setLoading(true);
     setError(null);
     setParsedData(null);
+    setPhoneColumnIndex(0);
+    setNameColumnIndex(null);
+    setRemarksColumnIndex(null);
+    setVariableMapping({});
 
     const result = await parseFile(selectedFile);
 
     if (result.success && result.data) {
       setParsedData(result.data);
+
+      // Auto-map columns by header name
+      const headers = result.data.headers;
+      const phoneIdx = autoMapColumn(headers, ['phone', 'mobile', 'cell', 'telephone', 'whatsapp']);
+      const nameIdx = autoMapColumn(headers, ['name', 'fullname', 'full_name', 'contact_name']);
+      const remarksIdx = autoMapColumn(headers, ['remarks', 'notes', 'comment', 'comments', 'description']);
+
+      if (phoneIdx !== null) setPhoneColumnIndex(phoneIdx);
+      if (nameIdx !== null) setNameColumnIndex(nameIdx);
+      if (remarksIdx !== null) setRemarksColumnIndex(remarksIdx);
+
       // Initialize variable mapping
       const mapping: Record<number, string> = {};
       templateVariables.forEach((varName, index) => {
-        mapping[index + 1] = varName; // +1 to skip phone column
+        // Try to find a column that matches the variable name
+        const matchedCol = autoMapColumn(headers, [varName.toLowerCase()]);
+        if (matchedCol !== null) {
+          mapping[matchedCol] = varName;
+        } else {
+          // Fallback to sequential assignment skipping mapped columns
+          let colIdx = index;
+          while ((colIdx === phoneIdx || colIdx === nameIdx || colIdx === remarksIdx || mapping[colIdx]) && colIdx < headers.length) {
+            colIdx++;
+          }
+          if (colIdx < headers.length) {
+            mapping[colIdx] = varName;
+          }
+        }
       });
       setVariableMapping(mapping);
     } else {
@@ -50,7 +92,7 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
+
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       handleFileSelect(droppedFile);
@@ -69,6 +111,9 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
     setParsedData(null);
     setError(null);
     setVariableMapping({});
+    setPhoneColumnIndex(0);
+    setNameColumnIndex(null);
+    setRemarksColumnIndex(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -78,7 +123,13 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
     if (!parsedData) return;
 
     try {
-      const recipients = convertToRecipients(parsedData, phoneColumnIndex, variableMapping);
+      const recipients = convertToRecipients(
+        parsedData,
+        phoneColumnIndex,
+        nameColumnIndex,
+        remarksColumnIndex,
+        variableMapping
+      );
       onRecipientsImported(recipients);
       handleRemoveFile();
     } catch (err) {
@@ -91,6 +142,24 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
       ...prev,
       [colIndex]: varName,
     }));
+  };
+
+  const getColumnLabel = (index: number): string => {
+    if (index === phoneColumnIndex) return ' (Phone)';
+    if (index === nameColumnIndex) return ' (Name)';
+    if (index === remarksColumnIndex) return ' (Remarks)';
+    const varName = variableMapping[index];
+    if (varName) return ` (${varName})`;
+    return '';
+  };
+
+  const isColumnMapped = (index: number): boolean => {
+    return (
+      index === phoneColumnIndex ||
+      index === nameColumnIndex ||
+      index === remarksColumnIndex ||
+      variableMapping[index] !== undefined
+    );
   };
 
   if (loading) {
@@ -164,22 +233,68 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
         </button>
       </div>
 
-      {/* Column Mapping */}
-      <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Phone Number Column
-        </label>
-        <select
-          value={phoneColumnIndex}
-          onChange={(e) => setPhoneColumnIndex(parseInt(e.target.value))}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
-        >
-          {parsedData.headers.map((header, index) => (
-            <option key={index} value={index}>
-              Column {index + 1}: {header}
-            </option>
-          ))}
-        </select>
+      {/* Field Mapping */}
+      <div className="space-y-3">
+        <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          Map Fields
+        </h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Phone */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+              Phone <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={phoneColumnIndex}
+              onChange={(e) => setPhoneColumnIndex(parseInt(e.target.value))}
+              className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              {parsedData.headers.map((header, index) => (
+                <option key={index} value={index}>
+                  Column {index + 1}: {header}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Name */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+              Name
+            </label>
+            <select
+              value={nameColumnIndex ?? ''}
+              onChange={(e) => setNameColumnIndex(e.target.value === '' ? null : parseInt(e.target.value))}
+              className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="">-- None --</option>
+              {parsedData.headers.map((header, index) => (
+                <option key={index} value={index}>
+                  Column {index + 1}: {header}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Remarks */}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">
+              Remarks
+            </label>
+            <select
+              value={remarksColumnIndex ?? ''}
+              onChange={(e) => setRemarksColumnIndex(e.target.value === '' ? null : parseInt(e.target.value))}
+              className="w-full rounded-lg border border-gray-300 px-2.5 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100"
+            >
+              <option value="">-- None --</option>
+              {parsedData.headers.map((header, index) => (
+                <option key={index} value={index}>
+                  Column {index + 1}: {header}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
       {templateVariables.length > 0 && (
@@ -226,11 +341,13 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
                   className={`px-3 py-2 text-left text-xs font-medium uppercase tracking-wider ${
                     index === phoneColumnIndex
                       ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-400'
-                      : 'text-gray-500 dark:text-gray-400'
+                      : isColumnMapped(index)
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                        : 'text-gray-500 dark:text-gray-400'
                   }`}
                 >
                   {header}
-                  {index === phoneColumnIndex && ' (Phone)'}
+                  {getColumnLabel(index)}
                 </th>
               ))}
             </tr>
@@ -244,7 +361,9 @@ export default function FileImport({ onRecipientsImported, templateVariables = [
                     className={`whitespace-nowrap px-3 py-2 text-sm ${
                       cellIndex === phoneColumnIndex
                         ? 'font-medium text-gray-900 dark:text-gray-100'
-                        : 'text-gray-500 dark:text-gray-400'
+                        : isColumnMapped(cellIndex)
+                          ? 'text-blue-600 dark:text-blue-400'
+                          : 'text-gray-500 dark:text-gray-400'
                     }`}
                   >
                     {cell}
