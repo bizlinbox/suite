@@ -229,7 +229,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   const handleAssignAgent = useCallback(async (agentId: string) => {
     if (!selectedId) return;
     try {
-      await api.patch(`/conversations/${selectedId}/assign`, { agentId });
+      await api.patch(`/conversations/${selectedId}/assign`, { agent_id: agentId });
       setConversations((prev) =>
         prev.map((c) => (c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId], assignedAgentId: agentId } : c))
       );
