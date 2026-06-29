@@ -89,12 +89,8 @@ export default function Inbox({ selectedId }: InboxProps) {
     const handleNewMessage = (message: Message) => {
       // Play notification sound for incoming contact messages
       if (message.senderType === 'contact' && audioRef.current) {
-        const isViewingConversation = message.conversationId === selectedId;
-        const isVisible = document.visibilityState === 'visible';
-        if (!isViewingConversation || !isVisible) {
-          audioRef.current.currentTime = 0;
-          audioRef.current.play().catch(() => {});
-        }
+        audioRef.current.currentTime = 0;
+        audioRef.current.play().catch(() => {});
       }
 
       setConversations((prev) => {

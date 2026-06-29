@@ -4,6 +4,7 @@ const { authenticate, resolveWabaAccount } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const camelize = require('../utils/camelize');
 const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
+const { emitToOrg } = require('../services/socket');
 
 const router = express.Router();
 
@@ -185,7 +186,12 @@ router.patch('/:id/assign', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    res.json({ conversation: camelize(result.rows[0]) });
+    const conversation = camelize(result.rows[0]);
+    emitToOrg(req.user.org_id, 'conversation_updated', {
+      ...conversation,
+      id: conversation.id,
+    });
+    res.json({ conversation });
   } catch (err) {
     logger.error('Assign conversation error', err);
     next(err);
@@ -212,7 +218,9 @@ router.patch('/:id/status', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    res.json({ conversation: camelize(result.rows[0]) });
+    const conversation = camelize(result.rows[0]);
+    emitToOrg(req.user.org_id, 'conversation_updated', conversation);
+    res.json({ conversation });
   } catch (err) {
     logger.error('Update conversation status error', err);
     next(err);
@@ -254,7 +262,9 @@ router.patch('/:id/private', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
-    res.json({ conversation: camelize(result.rows[0]) });
+    const conversation = camelize(result.rows[0]);
+    emitToOrg(req.user.org_id, 'conversation_updated', conversation);
+    res.json({ conversation });
   } catch (err) {
     logger.error('Toggle conversation private error', err);
     next(err);
@@ -296,7 +306,9 @@ router.post('/:id/close', async (req, res, next) => {
       logger.warn('Google Chat notification skipped for conversation close', { error: notifErr.message });
     }
 
-    res.json({ conversation: camelize(conversation) });
+    const conv = camelize(conversation);
+    emitToOrg(req.user.org_id, 'conversation_updated', conv);
+    res.json({ conversation: conv });
   } catch (err) {
     logger.error('Close conversation error', err);
     next(err);
