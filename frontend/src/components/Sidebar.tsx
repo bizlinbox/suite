@@ -59,6 +59,7 @@ const topNavItems: NavItem[] = [
   { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
+  { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, permission: 'settings.read' as string | null },
   { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
   { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
 ];
@@ -69,15 +70,14 @@ const settingsGroup: NavGroup = {
   permission: null,
   items: [
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
-    { label: 'WABA Accounts', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
-    { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, permission: 'settings.read' as string | null },
+    { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
     { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
   ],
 };
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/api-logs'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/ai-agents', '/dashboard/api-logs'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }
