@@ -52,7 +52,6 @@ interface NavGroup {
 const topNavItems: NavItem[] = [
   { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare, permission: 'conversations.read' as string | null },
   { label: 'Contacts', href: '/dashboard/contacts', icon: Users, permission: 'contacts.read' as string | null },
-  { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
   { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, permission: 'campaigns.read' as string | null },
   { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' as string | null },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' as string | null },
@@ -70,6 +69,7 @@ const settingsGroup: NavGroup = {
   permission: null,
   items: [
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
+    { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
     { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
     { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
   ],
