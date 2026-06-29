@@ -274,14 +274,15 @@ export default function CampaignsPage() {
             {loading && <TableLoading colSpan={7} />}
             {!loading && filtered.length === 0 && <TableEmpty colSpan={7}>No campaigns found</TableEmpty>}
             {filtered.map((c) => (
-              <TableRow key={c.id}>
+              <TableRow
+                key={c.id}
+                className="cursor-pointer"
+                onClick={() => router.push(`/dashboard/campaigns/${c.id}`)}
+              >
                 <TableCell>
-                  <Link
-                    href={`/dashboard/campaigns/${c.id}`}
-                    className="font-medium text-gray-900 dark:text-gray-100 hover:text-primary-700 dark:hover:text-primary-400"
-                  >
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {c.name}
-                  </Link>
+                  </span>
                 </TableCell>
                 <TableCell>
                   <span className={typeBadgeClass[c.messageType]}>
@@ -313,7 +314,7 @@ export default function CampaignsPage() {
                 <TableCell>
                   {formatDate(c.createdAt)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   {can('campaigns.manage') && (
                     <div className="flex items-center justify-end gap-1">
                       {c.status === 'draft' && (
