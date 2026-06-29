@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { X, Phone, Mail, Building2, MapPin, Calendar, Tag, FileText, Edit } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
-import ContactDialog, { ContactFormData } from './ContactDialog';
+import ContactForm, { ContactFormData } from './ContactForm';
 
 interface ContactProfile {
   id: string;
@@ -28,13 +28,36 @@ interface ContactProfilePopupProps {
   contactId: string;
   open: boolean;
   onClose: () => void;
+  defaultEditMode?: boolean;
 }
 
-export default function ContactProfilePopup({ contactId, open, onClose }: ContactProfilePopupProps) {
+export default function ContactProfilePopup({ contactId, open, onClose, defaultEditMode = false }: ContactProfilePopupProps) {
   const [contact, setContact] = useState<ContactProfile | null>(null);
   const [loading, setLoading] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(defaultEditMode);
+  const [form, setForm] = useState<ContactFormData>({
+    name: '',
+    phone: '',
+    email: '',
+    company: '',
+    jobTitle: '',
+    notes: '',
+    birthday: '',
+    language: '',
+    tags: '',
+    address: '',
+    city: '',
+    state: '',
+    country: '',
+    zipCode: '',
+  });
   const { can } = usePermission();
+
+  useEffect(() => {
+    if (open) {
+      setIsEditing(defaultEditMode);
+    }
+  }, [open, defaultEditMode]);
 
   useEffect(() => {
     if (!open || !contactId) return;
@@ -51,6 +74,27 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
       });
   }, [open, contactId]);
 
+  useEffect(() => {
+    if (!contact) return;
+    setForm({
+      id: contact.id,
+      name: contact.name,
+      phone: contact.phone,
+      email: contact.email || '',
+      company: contact.company || '',
+      jobTitle: contact.jobTitle || '',
+      notes: contact.notes || '',
+      birthday: contact.birthday || '',
+      language: contact.language || '',
+      tags: (contact.tags || []).join(', '),
+      address: contact.address || '',
+      city: contact.city || '',
+      state: contact.state || '',
+      country: contact.country || '',
+      zipCode: contact.zipCode || '',
+    });
+  }, [contact]);
+
   // Close on ESC key
   useEffect(() => {
     if (!open) return;
@@ -61,7 +105,7 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
     return () => document.removeEventListener('keydown', handleEsc);
   }, [open, onClose]);
 
-  const handleSubmit = async (form: ContactFormData) => {
+  const handleSubmit = async () => {
     if (!contact) return;
     try {
       const payload = {
@@ -82,24 +126,33 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
       };
       const res = await api.put(`/contacts/${contactId}`, payload);
       setContact(res.data.contact);
-      setEditOpen(false);
+      setIsEditing(false);
     } catch {
       // ignore
     }
   };
 
+  const handleChange = (field: keyof ContactFormData, value: string) => {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  };
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="flex max-h-[90vh] w-full max-w-md flex-col rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 backdrop-blur-sm sm:items-center sm:p-4"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="flex max-h-[85vh] w-full max-w-md flex-col rounded-t-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-900 sm:max-h-[90vh] sm:rounded-2xl">
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Contact Profile</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            {isEditing ? 'Edit Contact' : 'Contact Profile'}
+          </h2>
           <div className="flex items-center gap-2">
-            {contact && can('contacts.manage') && (
+            {contact && !isEditing && can('contacts.manage') && (
               <button
-                onClick={() => setEditOpen(true)}
+                onClick={() => setIsEditing(true)}
                 className="rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800"
                 title="Edit contact"
               >
@@ -127,7 +180,11 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
             <p className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">Contact not found</p>
           )}
 
-          {!loading && contact && (
+          {!loading && contact && isEditing && (
+            <ContactForm value={form} onChange={handleChange} />
+          )}
+
+          {!loading && contact && !isEditing && (
             <div className="flex flex-col gap-5">
               {/* Avatar + Name */}
               <div className="flex flex-col items-center gap-3 pt-2">
@@ -186,32 +243,19 @@ export default function ContactProfilePopup({ contactId, open, onClose }: Contac
             </div>
           )}
         </div>
-      </div>
 
-      {contact && (
-        <ContactDialog
-          open={editOpen}
-          contact={{
-            id: contact.id,
-            name: contact.name,
-            phone: contact.phone,
-            email: contact.email || '',
-            company: contact.company || '',
-            jobTitle: contact.jobTitle || '',
-            notes: contact.notes || '',
-            birthday: contact.birthday || '',
-            language: contact.language || '',
-            tags: (contact.tags || []).join(', '),
-            address: contact.address || '',
-            city: contact.city || '',
-            state: contact.state || '',
-            country: contact.country || '',
-            zipCode: contact.zipCode || '',
-          }}
-          onClose={() => setEditOpen(false)}
-          onSubmit={handleSubmit}
-        />
-      )}
+        {/* Footer for edit mode */}
+        {contact && isEditing && (
+          <div className="flex shrink-0 justify-end gap-2 px-6 py-4">
+            <button onClick={() => setIsEditing(false)} className="btn-secondary">
+              Cancel
+            </button>
+            <button onClick={handleSubmit} className="btn-primary">
+              Update
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

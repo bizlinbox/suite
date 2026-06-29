@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Edit, Trash2, Plus, Loader2, Search } from 'lucide-react';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
-import ContactDialog, { ContactFormData } from '@/components/ContactDialog';
+import ContactDialog from '@/components/ContactDialog';
+import { ContactFormData } from '@/components/ContactForm';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
 interface Contact {

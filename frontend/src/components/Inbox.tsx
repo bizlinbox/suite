@@ -37,6 +37,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profileContactId, setProfileContactId] = useState<string>('');
+  const [profileEditMode, setProfileEditMode] = useState(false);
   const { socket } = useSocket();
   const { selectedWabaId } = useWaba();
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -370,7 +371,7 @@ export default function Inbox({ selectedId }: InboxProps) {
             onDelete={handleDeleteRequest}
             onBulkDelete={handleBulkDeleteRequest}
             deletingId={deletingId}
-            onOpenProfile={(contactId) => { setProfileContactId(contactId); setProfileOpen(true); }}
+            onOpenProfile={(contactId) => { setProfileContactId(contactId); setProfileEditMode(false); setProfileOpen(true); }}
             loading={convLoading}
             hasMore={conversations.length < convTotal}
             onLoadMore={handleLoadMoreConversations}
@@ -392,7 +393,7 @@ export default function Inbox({ selectedId }: InboxProps) {
               onAssignAgent={handleAssignAgent}
               onTogglePrivacy={handleTogglePrivacy}
               onBack={handleBack}
-              onOpenProfile={() => { setProfileContactId(selectedConversation.contactId); setProfileOpen(true); }}
+              onOpenProfile={() => { setProfileContactId(selectedConversation.contactId); setProfileEditMode(true); setProfileOpen(true); }}
             />
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center">
@@ -437,6 +438,7 @@ export default function Inbox({ selectedId }: InboxProps) {
         contactId={profileContactId}
         open={profileOpen}
         onClose={() => setProfileOpen(false)}
+        defaultEditMode={profileEditMode}
       />
     </div>
   );

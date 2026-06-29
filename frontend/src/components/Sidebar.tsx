@@ -27,6 +27,7 @@ import {
   Store,
   Settings2,
   Sparkles,
+  BookOpen,
 } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -59,6 +60,7 @@ const topNavItems: NavItem[] = [
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
   { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
+  { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
 ];
 
 const manageGroup: NavGroup = {

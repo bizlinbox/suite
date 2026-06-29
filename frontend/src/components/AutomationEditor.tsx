@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import FlowBuilder from './FlowBuilder';
 import { FlowNode, FlowEdge } from './FlowBuilder/types';
 import { AlertCircle } from 'lucide-react';
+import { useWaba } from '@/context/WabaContext';
 
 interface Step {
   id: string;
@@ -85,6 +86,7 @@ function flowToSteps(nodes: FlowNode[], edges: FlowEdge[]): Step[] {
 
 export default function AutomationEditor({ automationId, initialName, initialSteps }: AutomationEditorProps) {
   const router = useRouter();
+  const { selectedWabaId } = useWaba();
   const [name, setName] = useState(initialName || '');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -105,7 +107,11 @@ export default function AutomationEditor({ automationId, initialName, initialSte
       setSaving(true);
       setError(null);
       try {
-        const payload = { name: name.trim(), steps };
+        const payload = { 
+          name: name.trim(), 
+          waba_account_id: selectedWabaId,
+          steps 
+        };
         if (automationId) {
           await api.put(`/automations/${automationId}`, payload);
         } else {
@@ -118,7 +124,7 @@ export default function AutomationEditor({ automationId, initialName, initialSte
         setSaving(false);
       }
     },
-    [name, automationId, router]
+    [name, automationId, router, selectedWabaId]
   );
 
   return (

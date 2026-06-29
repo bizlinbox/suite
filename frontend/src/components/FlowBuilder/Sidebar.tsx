@@ -37,27 +37,16 @@ function getIcon(type: string) {
     tag_contact: 'Tag',
     assign_agent: 'UserCheck',
     ai_agent: 'Sparkles',
-    start: 'Play',
-    end: 'Square',
-    http_request: 'Cloud',
-    database: 'Database',
-    function: 'Code',
-    variable: 'Variable',
-    user_input: 'MessageSquare',
-    file_upload: 'Upload',
-    webhook: 'Webhook',
   };
   const name = map[type] || 'Zap';
   return ICON_MAP[name] || Zap;
 }
 
 const NODE_CATEGORIES: { label: string; types: string[] }[] = [
-  { label: 'Flow', types: ['start', 'end'] },
   { label: 'Triggers', types: ['trigger_message', 'trigger_conversation_opened', 'trigger_webhook'] },
   { label: 'Messages', types: ['send_text', 'send_template', 'send_media_image', 'send_media_video', 'send_media_document', 'send_media_audio', 'send_interactive_buttons', 'send_interactive_list'] },
   { label: 'Logic', types: ['condition', 'delay'] },
   { label: 'Actions', types: ['tag_contact', 'assign_agent', 'ai_agent'] },
-  { label: 'Advanced', types: ['http_request', 'database', 'function', 'variable', 'webhook'] },
 ];
 
 export const DEFAULT_NODE_TYPES: NodeTypeDef[] = [
@@ -81,9 +70,6 @@ export const DEFAULT_NODE_TYPES: NodeTypeDef[] = [
   { type: 'tag_contact', label: 'Tag Contact', category: 'Actions', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { tags: '' }, fields: [{ key: 'tags', label: 'Tags (comma sep)', type: 'text' }] },
   { type: 'assign_agent', label: 'Assign Agent', category: 'Actions', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { agentId: '' }, fields: [{ key: 'agentId', label: 'Agent ID', type: 'text' }] },
   { type: 'ai_agent', label: 'AI Agent', category: 'Actions', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { agentId: '' }, fields: [{ key: 'agentId', label: 'AI Agent ID', type: 'text' }] },
-  // Advanced
-  { type: 'http_request', label: 'HTTP Request', category: 'Advanced', color: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-200', defaultSize: { width: 200, height: 110 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { url: '', method: 'GET', body: '' }, fields: [{ key: 'url', label: 'URL', type: 'text' }, { key: 'method', label: 'Method', type: 'select', options: ['GET', 'POST', 'PUT', 'DELETE'] }] },
-  { type: 'webhook', label: 'Webhook', category: 'Advanced', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { event: '' }, fields: [{ key: 'event', label: 'Event', type: 'text' }] },
 ];
 
 export default function Sidebar() {
