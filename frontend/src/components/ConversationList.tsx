@@ -180,22 +180,6 @@ export default function ConversationList({
                     : 'hover:bg-gray-50 dark:hover:bg-gray-800/60'
                 }`}
               >
-                {selectMode && (
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleSelect(conversation.id);
-                    }}
-                    className="mt-1 flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-                  >
-                    {selectedIds.includes(conversation.id) ? (
-                      <CheckSquare size={18} className="text-primary-600 dark:text-primary-400" />
-                    ) : (
-                      <Square size={18} />
-                    )}
-                  </button>
-                )}
                 <div
                   onClick={() => {
                     if (selectMode) {
@@ -206,7 +190,22 @@ export default function ConversationList({
                   }}
                   className="flex flex-1 cursor-pointer items-start gap-3"
                 >
-                  {!selectMode && (
+                  {selectMode ? (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleSelect(conversation.id);
+                      }}
+                      className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                    >
+                      {selectedIds.includes(conversation.id) ? (
+                        <CheckSquare size={18} className="text-primary-600 dark:text-primary-400" />
+                      ) : (
+                        <Square size={18} />
+                      )}
+                    </button>
+                  ) : (
                     <button
                       type="button"
                       onClick={(e) => {
