@@ -1390,14 +1390,22 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                                 <FormInput size={14} className="text-green-600 dark:text-green-400" />
                                 <span className="text-xs font-medium text-green-600 dark:text-green-400">Form completed</span>
                               </div>
-                              <div className="space-y-1">
-                                {formatFlowResponse(msg.content).map((entry) => (
-                                  <div key={entry.label} className="flex gap-2 text-[13px]">
-                                    <span className={`font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
-                                    <span className={isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}>{entry.value}</span>
-                                  </div>
-                                ))}
-                              </div>
+                              {(() => {
+                                const entries = formatFlowResponse(msg.content);
+                                if (entries.length > 0) {
+                                  return (
+                                    <div className="space-y-1">
+                                      {entries.map((entry) => (
+                                        <div key={entry.label} className="flex gap-2 text-[13px]">
+                                          <span className={`font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
+                                          <span className={isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}>{entry.value}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  );
+                                }
+                                return <p className={`text-[13px] ${isUser ? 'text-white/90' : 'text-gray-700 dark:text-gray-300'}`}>{msg.content}</p>;
+                              })()}
                             </div>
                           ) : (
                             <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
@@ -1723,7 +1731,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       {/* Location Dialog */}
       {locationDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) { setLocationDialogOpen(false); setLocationError(''); } }}>
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Location</h3>
               <button onClick={() => { setLocationDialogOpen(false); setLocationError(''); }} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">
@@ -1799,7 +1807,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       {/* Flow Dialog */}
       {flowDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) setFlowDialogOpen(false); }}>
-          <div className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+          <div className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
             <div className="mb-5 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Flow</h3>
               <button onClick={() => setFlowDialogOpen(false)} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800">

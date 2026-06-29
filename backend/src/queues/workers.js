@@ -4,6 +4,7 @@ const whatsappService = require('../services/whatsapp');
 const { query } = require('../db');
 const logger = require('../utils/logger');
 const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
+const { messageQueue, campaignQueue } = require('../queues');
 
 const connection = {
   url: config.redisUrl,

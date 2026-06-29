@@ -584,35 +584,37 @@ export default function NewCampaignPage() {
               />
             </div>
 
-            <div>
-              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Message Type
-              </label>
-              <div className="flex gap-4">
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <input
-                    type="radio"
-                    name="messageType"
-                    value="utility"
-                    checked={messageType === 'utility'}
-                    onChange={() => setMessageType('utility')}
-                    className="text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-900 dark:text-gray-100">Utility</span>
+            {!selectedTemplateId && (
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Message Type
                 </label>
-                <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800">
-                  <input
-                    type="radio"
-                    name="messageType"
-                    value="marketing"
-                    checked={messageType === 'marketing'}
-                    onChange={() => setMessageType('marketing')}
-                    className="text-primary-600 focus:ring-primary-500"
-                  />
-                  <span className="text-sm text-gray-900 dark:text-gray-100">Marketing</span>
-                </label>
+                <div className="flex gap-4">
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <input
+                      type="radio"
+                      name="messageType"
+                      value="utility"
+                      checked={messageType === 'utility'}
+                      onChange={() => setMessageType('utility')}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Utility</span>
+                  </label>
+                  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-800">
+                    <input
+                      type="radio"
+                      name="messageType"
+                      value="marketing"
+                      checked={messageType === 'marketing'}
+                      onChange={() => setMessageType('marketing')}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span className="text-sm text-gray-900 dark:text-gray-100">Marketing</span>
+                  </label>
+                </div>
               </div>
-            </div>
+            )}
 
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">

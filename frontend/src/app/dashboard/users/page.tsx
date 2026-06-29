@@ -308,7 +308,7 @@ export default function UsersPage() {
       {/* User Dialog */}
       {dialogOpen && !invitation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm" onClick={() => setDialogOpen(false)}>
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
             <h2 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">{editing ? 'Edit User' : 'Add User'}</h2>
 
             <div className="flex flex-col gap-4">
@@ -403,7 +403,7 @@ export default function UsersPage() {
       {/* Invitation Result Dialog */}
       {invitation && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-800 dark:bg-gray-900">
             <h2 className="mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100">Invitation Generated</h2>
             <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
               Share this one-time link with <span className="font-medium text-gray-900 dark:text-gray-100">{invitation.email}</span>. It expires in 7 days.
