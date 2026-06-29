@@ -189,6 +189,19 @@ try {
         }
 
         const templateVars = campaign.template_variables || [];
+        const hasTemplate = !!campaign.template_name;
+
+        // Look up template language if this is a Meta template campaign
+        let templateLanguage = 'en';
+        if (hasTemplate) {
+          const langResult = await query(
+            'SELECT language FROM message_templates WHERE template_name = $1 AND waba_account_id = $2 AND org_id = $3 LIMIT 1',
+            [campaign.template_name, wabaAccountId, orgId]
+          );
+          if (langResult.rows.length > 0) {
+            templateLanguage = langResult.rows[0].language;
+          }
+        }
 
         for (const recipient of recipientsResult.rows) {
           // Mark as queued
@@ -197,24 +210,32 @@ try {
             [recipient.id]
           );
 
-          // Build personalized content
-          const variables = {};
-          if (Array.isArray(templateVars)) {
-            for (const v of templateVars) variables[v] = '';
-          }
-          const personalizedContent = substituteVariables(campaign.content, variables);
-
-          // Enqueue individual send
-          await messageQueue.add('send-whatsapp-message', {
+          const jobPayload = {
             phoneNumberId,
             accessToken,
             to: recipient.phone,
-            content: personalizedContent,
-            messageType: 'text',
             campaignRecipientId: recipient.id,
             campaignId,
             isCampaignMessage: true,
-          });
+          };
+
+          if (hasTemplate) {
+            // Send as actual Meta template message
+            jobPayload.messageType = 'template';
+            jobPayload.templateName = campaign.template_name;
+            jobPayload.templateLanguage = templateLanguage;
+            jobPayload.templateVariables = Array.isArray(templateVars) ? templateVars : [];
+          } else {
+            // Build personalized text content
+            const variables = {};
+            if (Array.isArray(templateVars)) {
+              for (const v of templateVars) variables[v] = '';
+            }
+            jobPayload.content = substituteVariables(campaign.content, variables);
+            jobPayload.messageType = 'text';
+          }
+
+          await messageQueue.add('send-whatsapp-message', jobPayload);
         }
 
         // Update sent_count (queued count)
