@@ -63,8 +63,8 @@ const topNavItems: NavItem[] = [
   { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
 ];
 
-const manageGroup: NavGroup = {
-  label: 'Manage',
+const settingsGroup: NavGroup = {
+  label: 'Settings',
   icon: Settings2,
   permission: null,
   items: [
@@ -180,7 +180,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const [manageOpen, setManageOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const filteredTopItems = topNavItems.filter((item) => {
     if (!item.permission) return true;
@@ -188,13 +188,13 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
     return perms.includes(item.permission);
   });
 
-  const filteredManageItems = manageGroup.items.filter((item) => {
+  const filteredSettingsItems = settingsGroup.items.filter((item) => {
     if (!item.permission) return true;
     const perms = user?.permissions || [];
     return perms.includes(item.permission);
   });
 
-  const isManageActive = filteredManageItems.some((item) => isActiveNav(pathname, item.href));
+  const isSettingsActive = filteredSettingsItems.some((item) => isActiveNav(pathname, item.href));
 
   const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
 
@@ -266,12 +266,12 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
           );
         })}
 
-        {/* Manage submenu */}
-        {filteredManageItems.length > 0 && (
+        {/* Settings submenu */}
+        {filteredSettingsItems.length > 0 && (
           <div className="mt-1">
             {isCollapsed ? (
               <div className="space-y-0.5">
-                {filteredManageItems.map((item) => {
+                {filteredSettingsItems.map((item) => {
                   const active = isActiveNav(pathname, item.href);
                   const Icon = item.icon;
                   return (
@@ -300,9 +300,9 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
             ) : (
               <>
                 <button
-                  onClick={() => setManageOpen((prev) => !prev)}
+                  onClick={() => setSettingsOpen((prev) => !prev)}
                   className={`flex w-full items-center rounded-lg transition-colors ${
-                    isManageActive
+                    isSettingsActive
                       ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                   } gap-3 px-3 py-2.5 text-sm font-medium`}
@@ -310,18 +310,18 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                   <Settings2
                     size={18}
                     className={`shrink-0 transition-colors ${
-                      isManageActive ? 'text-primary-700 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500'
+                      isSettingsActive ? 'text-primary-700 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500'
                     }`}
                   />
-                  <span className="flex-1 text-left">Manage</span>
+                  <span className="flex-1 text-left">Settings</span>
                   <ChevronDown
                     size={16}
-                    className={`shrink-0 text-gray-500 transition-transform dark:text-gray-500 ${manageOpen ? 'rotate-180' : ''}`}
+                    className={`shrink-0 text-gray-500 transition-transform dark:text-gray-500 ${settingsOpen ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {manageOpen && (
+                {settingsOpen && (
                   <div className="space-y-0.5 pl-3">
-                    {filteredManageItems.map((item) => {
+                    {filteredSettingsItems.map((item) => {
                       const active = isActiveNav(pathname, item.href);
                       const Icon = item.icon;
                       return (
@@ -354,11 +354,6 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
         )}
       </nav>
 
-      {/* Theme Toggle */}
-      <div className={`py-2 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <ThemeToggle collapsed={isCollapsed} />
-      </div>
-
       {/* User / Logout */}
       <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
         <div className={`rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
@@ -372,8 +367,10 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                 <div className="truncate text-[10px] text-gray-500 dark:text-gray-400">{user?.email}</div>
               </div>
             )}
+            {!isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
           </div>
           <div className={`mt-2 flex items-center ${isCollapsed ? 'justify-center gap-1' : 'gap-2'}`}>
+            {isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
             <Link
               href="/dashboard/profile"
               className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
@@ -386,7 +383,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
             </Link>
             <button
               onClick={() => logout()}
-              className={`flex items-center rounded-md text-[11px] font-medium text-red-300 transition-colors hover:bg-red-900/20 ${
+              className={`flex items-center rounded-md text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/40 dark:hover:text-red-300 ${
                 isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
               }`}
               title="Log out"

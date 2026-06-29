@@ -53,8 +53,6 @@ export async function showLocalNotification(payload: NotificationPayload): Promi
 
   const options: NotificationOptions = {
     body: body || 'New message',
-    icon: icon || '/icons/icon-192x192.svg',
-    badge: '/icons/icon-192x192.svg',
     tag: tag || 'bizlinbox-message',
     requireInteraction: requireInteraction ?? false,
     data: { conversationId, url } as any,

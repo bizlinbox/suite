@@ -13,10 +13,6 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'BizlInbox',
   },
-  icons: {
-    icon: '/icons/icon-192x192.svg',
-    apple: '/icons/icon-192x192.svg',
-  },
 };
 
 export const viewport: Viewport = {

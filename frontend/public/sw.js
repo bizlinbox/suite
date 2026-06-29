@@ -19,8 +19,6 @@ const PRECACHE_URLS = [
   '/dashboard/settings',
   '/dashboard/settings/notifications',
   '/offline.html',
-  '/icons/icon-192x192.svg',
-  '/icons/icon-512x512.svg',
 ];
 
 // Install: precache core shell + offline fallback
@@ -237,8 +235,6 @@ self.addEventListener('push', (event) => {
   const title = payload.title || 'BizlInbox';
   const options = {
     body: payload.body || 'New message received',
-    icon: payload.icon || '/icons/icon-192x192.svg',
-    badge: payload.badge || '/icons/icon-192x192.svg',
     tag: payload.tag || 'bizlinbox-message',
     requireInteraction: payload.requireInteraction ?? false,
     data: payload.data || {},

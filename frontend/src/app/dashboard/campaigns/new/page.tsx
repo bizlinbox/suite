@@ -18,8 +18,10 @@ import {
   LuBuilding2 as Building2,
   LuRefreshCw as RefreshCw,
   LuLoader as Loader2,
+  LuUpload as Upload,
 } from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
+import FileImport from '@/components/FileImport';
 
 interface Contact {
   id: string;
@@ -92,12 +94,13 @@ export default function NewCampaignPage() {
   const [templateVars, setTemplateVars] = useState<Record<string, string>>({});
 
   // Step 3: Recipients
-  const [recipientTab, setRecipientTab] = useState<'contacts' | 'manual'>('contacts');
+  const [recipientTab, setRecipientTab] = useState<'contacts' | 'manual' | 'import'>('contacts');
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [contactSearch, setContactSearch] = useState('');
   const [selectedContactIds, setSelectedContactIds] = useState<Set<string>>(new Set());
   const [manualInput, setManualInput] = useState('');
   const [parsedManualRecipients, setParsedManualRecipients] = useState<Recipient[]>([]);
+  const [importedRecipients, setImportedRecipients] = useState<Recipient[]>([]);
 
   // Step 4: Schedule
   const [scheduleMode, setScheduleMode] = useState<'immediate' | 'scheduled'>('immediate');
@@ -261,6 +264,9 @@ export default function NewCampaignPage() {
     if (recipientTab === 'manual') {
       return parsedManualRecipients;
     }
+    if (recipientTab === 'import') {
+      return importedRecipients;
+    }
     const selected: Recipient[] = [];
     for (const contact of contacts) {
       if (selectedContactIds.has(contact.id)) {
@@ -272,7 +278,7 @@ export default function NewCampaignPage() {
       }
     }
     return selected;
-  }, [recipientTab, parsedManualRecipients, contacts, selectedContactIds, templateVariableList]);
+  }, [recipientTab, parsedManualRecipients, contacts, selectedContactIds, templateVariableList, importedRecipients]);
 
   const recipientCount = selectedRecipients.length;
 
@@ -758,6 +764,17 @@ export default function NewCampaignPage() {
               >
                 Manual Entry
               </button>
+              <button
+                onClick={() => setRecipientTab('import')}
+                className={`rounded-md px-4 py-2 text-sm font-medium ${
+                  recipientTab === 'import'
+                    ? 'border-b-2 border-primary-900 text-primary-900 dark:border-primary-400 dark:text-primary-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                <Upload size={14} className="inline mr-1 -mt-0.5" />
+                File Import
+              </button>
             </div>
 
             {recipientTab === 'contacts' && (
@@ -836,6 +853,27 @@ export default function NewCampaignPage() {
                   <Users size={16} className="inline mr-1 -mt-0.5" />
                   {parsedManualRecipients.length} valid recipients
                 </div>
+              </div>
+            )}
+
+            {recipientTab === 'import' && (
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Import from File
+                </label>
+                <p className="mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  Upload a CSV, XLS, or XLSX file with recipient data. The first row should contain headers.
+                </p>
+                <FileImport
+                  onRecipientsImported={setImportedRecipients}
+                  templateVariables={templateVariableList}
+                />
+                {importedRecipients.length > 0 && (
+                  <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                    <Users size={16} className="inline mr-1 -mt-0.5" />
+                    {importedRecipients.length} recipients imported
+                  </div>
+                )}
               </div>
             )}
 
