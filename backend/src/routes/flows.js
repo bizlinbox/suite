@@ -441,4 +441,21 @@ router.get('/submissions/all', async (req, res, next) => {
   }
 });
 
+// DELETE /submissions/:id - delete a flow submission
+router.delete('/submissions/:id', async (req, res, next) => {
+  try {
+    const result = await query(
+      'DELETE FROM flow_submissions WHERE id = $1 AND org_id = $2 RETURNING id',
+      [req.params.id, req.user.org_id]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Submission not found' });
+    }
+    res.json({ success: true });
+  } catch (err) {
+    logger.error('Delete flow submission error', err);
+    next(err);
+  }
+});
+
 module.exports = router;

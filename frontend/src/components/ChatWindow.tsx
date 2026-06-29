@@ -169,6 +169,30 @@ function getMediaUrl(mediaUrl?: string): string {
   return `${api.defaults.baseURL?.replace('/api/v1', '') || ''}/uploads/${mediaUrl}`;
 }
 
+function formatFlowResponse(content: string): Record<string, string>[] {
+  try {
+    const data = JSON.parse(content);
+    if (typeof data !== 'object' || data === null) return [];
+    const entries: Record<string, string>[] = [];
+    for (const [key, value] of Object.entries(data)) {
+      if (key === 'flow_token') continue;
+      let display = '';
+      if (Array.isArray(value)) {
+        display = value.map((v) => (typeof v === 'string' ? v.replace(/_/g, ' ') : String(v))).join(', ');
+      } else if (typeof value === 'string') {
+        display = value.replace(/_/g, ' ');
+      } else {
+        display = String(value);
+      }
+      const label = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      entries.push({ label, value: display });
+    }
+    return entries;
+  } catch {
+    return [];
+  }
+}
+
 function formatAudioTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00';
   const mins = Math.floor(seconds / 60);
@@ -1161,7 +1185,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   return (
     <div className="flex h-full w-full flex-col dark:bg-gray-950">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80 md:px-5">
+      <div className="relative z-10 flex items-center gap-3 border-b border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80 md:px-5">
         {onBack && (
           <button
             onClick={onBack}
@@ -1356,17 +1380,28 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                               <span className={`text-xs ${isUser ? 'text-gray-700 dark:text-[#e9edef]/80' : 'text-gray-600 dark:text-gray-400'}`}>Location</span>
                             </div>
                           )}
-                          {msg.messageType === 'nfm_reply' && (
-                            <div className={`flex items-center gap-2 rounded-xl p-2.5 ${isUser ? 'bg-green-900/20' : 'bg-green-50 dark:bg-green-900/20'}`}>
-                              <FormInput size={18} className="text-green-600 dark:text-green-400" />
-                              <span className="text-xs font-medium text-green-600 dark:text-green-400">Form completed</span>
-                            </div>
-                          )}
                         </div>
                       )}
                       {msg.content && (
                         <div className="flex items-end gap-2">
-                          <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
+                          {msg.messageType === 'nfm_reply' ? (
+                            <div className="flex-1">
+                              <div className={`mb-2 flex items-center gap-1.5 rounded-lg px-2 py-1 ${isUser ? 'bg-green-900/30' : 'bg-green-50 dark:bg-green-900/20'}`}>
+                                <FormInput size={14} className="text-green-600 dark:text-green-400" />
+                                <span className="text-xs font-medium text-green-600 dark:text-green-400">Form completed</span>
+                              </div>
+                              <div className="space-y-1">
+                                {formatFlowResponse(msg.content).map((entry) => (
+                                  <div key={entry.label} className="flex gap-2 text-[13px]">
+                                    <span className={`font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
+                                    <span className={isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}>{entry.value}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
+                          )}
                           <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-white/70 dark:text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatMessageDate(msg.createdAt)}
                             {isUser && <span className="ml-0.5 inline-block"><MessageStatusIcon status={msg.status} errorMessage={msg.errorMessage} /></span>}

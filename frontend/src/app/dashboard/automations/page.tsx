@@ -65,7 +65,7 @@ export default function AutomationsPage() {
     );
     try {
       await api.post(`/automations/${id}/toggle`);
-      fetchAutomations();
+      // Optimistic update is sufficient; socket event confirms sync for all clients
     } catch {
       setAutomations((current) =>
         current.map((a) => (a.id === id ? { ...a, isActive: prev.isActive } : a))

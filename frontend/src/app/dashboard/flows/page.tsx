@@ -53,6 +53,24 @@ const statusBadgeClass: Record<string, string> = {
   THROTTLED: 'badge-red',
 };
 
+function formatFlowResponseEntries(data: Record<string, unknown>): { label: string; value: string }[] {
+  const entries: { label: string; value: string }[] = [];
+  for (const [key, value] of Object.entries(data)) {
+    if (key === 'flow_token') continue;
+    let display = '';
+    if (Array.isArray(value)) {
+      display = value.map((v) => (typeof v === 'string' ? v.replace(/_/g, ' ') : String(v))).join(', ');
+    } else if (typeof value === 'string') {
+      display = value.replace(/_/g, ' ');
+    } else {
+      display = String(value);
+    }
+    const label = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    entries.push({ label, value: display });
+  }
+  return entries;
+}
+
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
@@ -205,6 +223,20 @@ export default function FlowsPage() {
     try {
       await api.delete(`/flows/${id}`);
       fetchFlows();
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleDeleteSubmission = async (id: string) => {
+    if (!confirm('Delete this submission?')) return;
+    try {
+      await api.delete(`/flows/submissions/${id}`);
+      setSubmissions((prev) => prev.filter((s) => s.id !== id));
+      if (submissionDetail?.id === id) {
+        setSubmissionDetailOpen(false);
+        setSubmissionDetail(null);
+      }
     } catch {
       // ignore
     }
@@ -460,6 +492,13 @@ export default function FlowsPage() {
                     >
                       <Eye size={15} />
                     </button>
+                    <button
+                      onClick={() => handleDeleteSubmission(s.id)}
+                      className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      title="Delete submission"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -481,9 +520,18 @@ export default function FlowsPage() {
               <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 Submission from {submissionDetail.contactName}
               </h2>
-              <button onClick={() => setSubmissionDetailOpen(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
-                <XCircle size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => submissionDetail && handleDeleteSubmission(submissionDetail.id)}
+                  className="rounded-lg p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  title="Delete submission"
+                >
+                  <Trash2 size={18} />
+                </button>
+                <button onClick={() => setSubmissionDetailOpen(false)} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100">
+                  <XCircle size={20} />
+                </button>
+              </div>
             </div>
             <div className="mb-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -496,9 +544,20 @@ export default function FlowsPage() {
                 Completed: <span className="font-medium text-gray-700 dark:text-gray-300">{formatDate(submissionDetail.completedAt || submissionDetail.createdAt)}</span>
               </p>
             </div>
-            <pre className="overflow-x-auto rounded-lg bg-gray-50 p-4 text-xs dark:bg-gray-800">
-              {JSON.stringify(submissionDetail.responseJson || {}, null, 2)}
-            </pre>
+            <div className="overflow-x-auto rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800">
+              <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">Response</h3>
+              <div className="space-y-2">
+                {formatFlowResponseEntries(submissionDetail.responseJson || {}).map((entry) => (
+                  <div key={entry.label} className="flex gap-2 text-sm">
+                    <span className="font-medium text-gray-500 dark:text-gray-400">{entry.label}:</span>
+                    <span className="text-gray-900 dark:text-gray-100">{entry.value}</span>
+                  </div>
+                ))}
+                {formatFlowResponseEntries(submissionDetail.responseJson || {}).length === 0 && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500">No response data</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
