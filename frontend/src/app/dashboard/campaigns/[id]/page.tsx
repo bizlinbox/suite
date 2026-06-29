@@ -17,7 +17,6 @@ import {
   LuMailCheck as MailCheck,
   LuEye as Eye,
   LuCircleAlert as AlertCircle,
-  LuMegaphone as Megaphone,
 } from 'react-icons/lu';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
@@ -402,23 +401,6 @@ export default function CampaignDetailPage() {
         </div>
       </div>
 
-      {/* Message Content */}
-      <div className="mb-6 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm p-4">
-        <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Message Content</h2>
-        <div className="rounded-lg bg-gray-50 dark:bg-gray-950 p-4">
-          <p className="whitespace-pre-wrap text-sm text-gray-900 dark:text-gray-100">{campaign.content}</p>
-        </div>
-        {campaign.templateName && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-            <Megaphone size={14} />
-            Template: {campaign.templateName}
-            {campaign.templateVariables.length > 0 && (
-              <span className="ml-1">({campaign.templateVariables.join(', ')})</span>
-            )}
-          </div>
-        )}
-      </div>
-
       {/* Recipients Table */}
       <div className="rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-800">
@@ -457,7 +439,7 @@ export default function CampaignDetailPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {recipients.length === 0 && <TableEmpty colSpan={4}>No recipients found</TableEmpty>}
+              {recipients.length === 0 && <TableEmpty colSpan={6}>No recipients found</TableEmpty>}
             </TableBody>
           </Table>
         </div>

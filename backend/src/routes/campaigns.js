@@ -344,7 +344,7 @@ router.put('/:id', async (req, res, next) => {
 });
 
 // DELETE /:id
-router.delete('/:id', async (req, res, next) => {
+router.delete('/:id', requirePermission('campaigns.manage'), async (req, res, next) => {
   try {
     const existing = await query(
       'SELECT status, waba_account_id FROM campaigns WHERE id = $1 AND org_id = $2',
@@ -354,8 +354,8 @@ router.delete('/:id', async (req, res, next) => {
       return res.status(404).json({ error: 'Campaign not found' });
     }
     const { status: currentStatus } = existing.rows[0];
-    if (!['draft', 'cancelled'].includes(currentStatus)) {
-      return res.status(400).json({ error: 'Cannot delete campaign unless it is draft or cancelled' });
+    if (!['draft', 'scheduled', 'completed', 'cancelled'].includes(currentStatus)) {
+      return res.status(400).json({ error: 'Cannot delete campaign unless it is draft, scheduled, completed, or cancelled' });
     }
 
     await query('DELETE FROM campaigns WHERE id = $1 AND org_id = $2', [req.params.id, req.user.org_id]);
