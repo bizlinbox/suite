@@ -1,14 +1,14 @@
-FROM node:20-alpine
+FROM node:20-slim
 
-RUN apk add --no-cache dumb-init
+RUN apt-get update && apt-get install -y dumb-init && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
 ENV PORT=4000
 
 WORKDIR /app
 
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs nodejs
 
 COPY package*.json ./
 RUN npm install --omit=dev && npm cache clean --force

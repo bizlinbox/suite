@@ -367,7 +367,7 @@ router.delete('/:id', async (req, res, next) => {
 });
 
 // POST /:id/start - start a draft campaign immediately
-router.post('/:id/start', async (req, res, next) => {
+router.post('/:id/start', requirePermission('campaigns.manage'), async (req, res, next) => {
   try {
     const existing = await query(
       'SELECT status, waba_account_id FROM campaigns WHERE id = $1 AND org_id = $2',
@@ -400,7 +400,7 @@ router.post('/:id/start', async (req, res, next) => {
 });
 
 // POST /:id/pause
-router.post('/:id/pause', async (req, res, next) => {
+router.post('/:id/pause', requirePermission('campaigns.manage'), async (req, res, next) => {
   try {
     const result = await query(
       "UPDATE campaigns SET status = 'paused' WHERE id = $1 AND org_id = $2 AND status = 'running' RETURNING id",
@@ -417,7 +417,7 @@ router.post('/:id/pause', async (req, res, next) => {
 });
 
 // POST /:id/resume
-router.post('/:id/resume', async (req, res, next) => {
+router.post('/:id/resume', requirePermission('campaigns.manage'), async (req, res, next) => {
   try {
     const existing = await query(
       'SELECT status, waba_account_id FROM campaigns WHERE id = $1 AND org_id = $2',
@@ -450,7 +450,7 @@ router.post('/:id/resume', async (req, res, next) => {
 });
 
 // POST /:id/cancel
-router.post('/:id/cancel', async (req, res, next) => {
+router.post('/:id/cancel', requirePermission('campaigns.manage'), async (req, res, next) => {
   try {
     const result = await query(
       "UPDATE campaigns SET status = 'cancelled', completed_at = NOW() WHERE id = $1 AND org_id = $2 AND status IN ('running', 'paused', 'scheduled', 'draft') RETURNING id",

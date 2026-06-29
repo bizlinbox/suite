@@ -6,7 +6,7 @@
 # ============================================================
 
 # ---- Stage 1: Build Frontend ----
-FROM node:20-alpine AS frontend-builder
+FROM node:20-slim AS frontend-builder
 
 WORKDIR /app/frontend
 
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/app/frontend/.next/cache \
     npm run build
 
 # ---- Stage 2: Build Backend ----
-FROM node:20-alpine AS backend-builder
+FROM node:20-slim AS backend-builder
 
 WORKDIR /app/backend
 
@@ -32,13 +32,13 @@ RUN --mount=type=cache,target=/root/.npm \
 COPY backend/src ./src
 
 # ---- Stage 3: Production Runner ----
-FROM node:20-alpine AS runner
+FROM node:20-slim AS runner
 
 WORKDIR /app
 
 # Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
+RUN groupadd -g 1001 nodejs && \
+    useradd -u 1001 -g nodejs nodejs
 
 # Backend setup
 WORKDIR /app/backend

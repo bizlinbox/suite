@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const { query } = require('../db');
-const { authenticate, resolveWabaAccount } = require('../middleware/auth');
+const { authenticate, requirePermission, resolveWabaAccount } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const camelize = require('../utils/camelize');
 const {
@@ -284,7 +284,7 @@ router.post('/sync', async (req, res, next) => {
 });
 
 // POST /:id/send - send flow to a conversation
-router.post('/:id/send', async (req, res, next) => {
+router.post('/:id/send', requirePermission('conversations.manage'), async (req, res, next) => {
   try {
     const { conversation_id, header, body, footer, flow_token, screen, data } = req.body;
     if (!conversation_id) {

@@ -138,7 +138,7 @@ router.delete('/:id', requirePermission('settings.manage'), async (req, res, nex
 });
 
 // POST /:id/test - test the AI agent
-router.post('/:id/test', async (req, res, next) => {
+router.post('/:id/test', requirePermission('settings.manage'), async (req, res, next) => {
   try {
     const agentResult = await query(
       'SELECT * FROM ai_agents WHERE id = $1 AND org_id = $2 AND is_active = true',
@@ -202,7 +202,7 @@ router.post('/:id/test', async (req, res, next) => {
 });
 
 // POST /generate - generate a reply for a conversation (manual trigger)
-router.post('/generate', async (req, res, next) => {
+router.post('/generate', requirePermission('settings.manage'), async (req, res, next) => {
   try {
     const { conversation_id, agent_id, context } = req.body;
     if (!conversation_id || !agent_id) {

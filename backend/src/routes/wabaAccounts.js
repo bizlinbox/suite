@@ -237,7 +237,7 @@ router.delete('/:id/agents/:agentId', requirePermission('settings.manage'), asyn
 });
 
 // POST /test - test connection with provided credentials (before saving)
-router.post('/test', async (req, res, next) => {
+router.post('/test', requirePermission('settings.manage'), async (req, res, next) => {
   try {
     const { business_account_id, access_token } = req.body;
     if (!business_account_id || !access_token) {
