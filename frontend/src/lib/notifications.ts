@@ -11,7 +11,7 @@ export interface NotificationPayload {
 const STORAGE_KEY = 'bizlinbox:notifications';
 
 export function isNotificationsSupported(): boolean {
-  return typeof window !== 'undefined' && 'Notification' in window && 'serviceWorker' in navigator;
+  return typeof window !== 'undefined' && 'Notification' in window;
 }
 
 export function getNotificationPermission(): NotificationPermission {
@@ -40,28 +40,20 @@ export function setNotificationsEnabled(enabled: boolean): void {
 }
 
 /**
- * Show a local notification.
- * If the app is in the background, sends to the service worker.
- * If in the foreground, uses the Notification API directly.
+ * Show a local notification using the standard Notification API.
  */
 export async function showLocalNotification(payload: NotificationPayload): Promise<void> {
   if (!isNotificationsSupported()) return;
   if (getNotificationPermission() !== 'granted') return;
   if (!areNotificationsEnabled()) return;
 
-  const { title, body, icon, tag, conversationId, url, requireInteraction } = payload;
+  const { title, body, tag, requireInteraction } = payload;
 
-  const options: NotificationOptions = {
+  new Notification(title, {
     body: body || 'New message',
     tag: tag || 'bizlinbox-message',
     requireInteraction: requireInteraction ?? false,
-    data: { conversationId, url } as any,
-  };
-
-  // Use the service worker to show the notification so it persists
-  // and handles clicks even if the page is closed later
-  const registration = await navigator.serviceWorker.ready;
-  await registration.showNotification(title, options);
+  });
 }
 
 /**
@@ -69,7 +61,7 @@ export async function showLocalNotification(payload: NotificationPayload): Promi
  */
 export async function dismissNotifications(tag?: string): Promise<void> {
   if (!isNotificationsSupported()) return;
-  const registration = await navigator.serviceWorker.ready;
-  const notifications = await registration.getNotifications({ tag });
-  notifications.forEach((n) => n.close());
+  const notifications = await (navigator as any).getNotifications?.({ tag });
+  if (!notifications) return;
+  notifications.forEach((n: Notification) => n.close());
 }

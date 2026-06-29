@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
 import { usePermission } from '@/hooks/usePermission';
+import { useSocket } from '@/hooks/useSocket';
 import {
   LuPlus as Plus,
   LuPlay as Play,
@@ -34,6 +35,7 @@ export default function AutomationsPage() {
   const [automations, setAutomations] = useState<Automation[]>([]);
   const [loading, setLoading] = useState(true);
   const { can, isAdmin } = usePermission();
+  const { socket } = useSocket();
 
   const fetchAutomations = useCallback(async () => {
     try {
@@ -56,13 +58,36 @@ export default function AutomationsPage() {
   }, [authLoading, user, router, fetchAutomations]);
 
   const handleToggle = async (id: string) => {
+    const prev = automations.find((a) => a.id === id);
+    if (!prev) return;
+    setAutomations((current) =>
+      current.map((a) => (a.id === id ? { ...a, isActive: !a.isActive } : a))
+    );
     try {
       await api.post(`/automations/${id}/toggle`);
       fetchAutomations();
     } catch {
-      // ignore
+      setAutomations((current) =>
+        current.map((a) => (a.id === id ? { ...a, isActive: prev.isActive } : a))
+      );
     }
   };
+
+  useEffect(() => {
+    if (!socket) return;
+    const handleAutomationUpdated = (updated: Record<string, unknown>) => {
+      const id = updated.id as string;
+      const isActive = updated.isActive as boolean | undefined;
+      if (!id || typeof isActive !== 'boolean') return;
+      setAutomations((prev) =>
+        prev.map((a) => (a.id === id ? { ...a, isActive } : a))
+      );
+    };
+    socket.on('automation_updated', handleAutomationUpdated);
+    return () => {
+      socket.off('automation_updated', handleAutomationUpdated);
+    };
+  }, [socket]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this automation?')) return;

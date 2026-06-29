@@ -83,6 +83,8 @@ export default function Inbox({ selectedId }: InboxProps) {
     audioRef.current = new Audio('/sounds/ting_iphone.mp3');
   }, []);
 
+  const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
+
   useEffect(() => {
     if (!socket) return;
 
@@ -145,19 +147,23 @@ export default function Inbox({ selectedId }: InboxProps) {
       setConversations((prev) => {
         const exists = prev.find((c) => c.id === convId);
         if (exists) {
-          return prev.map((c) =>
-            c.id === convId
-              ? {
-                  ...c,
-                  ...(updated.lastMessageAt ? { lastMessageAt: String(updated.lastMessageAt) } : {}),
-                  ...(updated.lastMessagePreview ? { lastMessagePreview: String(updated.lastMessagePreview) } : {}),
-                  ...(typeof updated.unreadCount === 'number' ? { unreadCount: updated.unreadCount } : {}),
-                  ...(updated.assignedAgentName ? { assignedAgentName: String(updated.assignedAgentName) } : {}),
-                  ...(updated.assignedAgentId ? { assignedAgentId: String(updated.assignedAgentId) } : {}),
-                  ...(typeof updated.isPrivate === 'boolean' ? { isPrivate: updated.isPrivate } : {}),
-                }
-              : c
-          );
+          return prev.map((c) => {
+            if (c.id !== convId) return c;
+            const next: Conversation = {
+              ...c,
+              ...(updated.lastMessageAt ? { lastMessageAt: String(updated.lastMessageAt) } : {}),
+              ...(updated.lastMessagePreview ? { lastMessagePreview: String(updated.lastMessagePreview) } : {}),
+              ...(typeof updated.unreadCount === 'number' ? { unreadCount: updated.unreadCount } : {}),
+              ...(updated.assignedAgentName !== undefined ? { assignedAgentName: updated.assignedAgentName ? String(updated.assignedAgentName) : undefined } : {}),
+              ...(updated.assignedAgentId !== undefined ? { assignedAgentId: updated.assignedAgentId ? String(updated.assignedAgentId) : undefined } : {}),
+              ...(typeof updated.isPrivate === 'boolean' ? { isPrivate: updated.isPrivate } : {}),
+            };
+            // Derive agent name from agentsMap if id is present but name is not
+            if (next.assignedAgentId && !next.assignedAgentName && agentsMap[next.assignedAgentId]) {
+              next.assignedAgentName = agentsMap[next.assignedAgentId];
+            }
+            return next;
+          });
         }
         // New conversation — fetch and prepend
         api.get(`/conversations/${convId}`)
@@ -175,7 +181,7 @@ export default function Inbox({ selectedId }: InboxProps) {
                     lastMessagePreview: (updated.lastMessagePreview as string) || '',
                     lastMessageAt: (updated.lastMessageAt as string) || conv.lastMessageAt || conv.createdAt,
                     unreadCount: 1,
-                    assignedAgentName: conv.assignedAgentName,
+                    assignedAgentName: conv.assignedAgentName || agentsMap[conv.assignedAgentId],
                     isPrivate: conv.isPrivate,
                     assignedAgentId: conv.assignedAgentId,
                   },
@@ -197,7 +203,7 @@ export default function Inbox({ selectedId }: InboxProps) {
       socket.off('new_message', handleNewMessage);
       socket.off('conversation_updated', handleConversationUpdated);
     };
-  }, [socket, selectedId]);
+  }, [socket, selectedId, agentsMap]);
 
   const handleSelect = useCallback((id: string) => {
     setConversations((prev) =>
@@ -209,8 +215,6 @@ export default function Inbox({ selectedId }: InboxProps) {
   const handleBack = useCallback(() => {
     router.push('/dashboard/inbox');
   }, [router]);
-
-  const [agentsMap, setAgentsMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     api.get('/agents').then((res) => {

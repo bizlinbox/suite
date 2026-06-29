@@ -3,6 +3,7 @@ const { query, pool } = require('../db');
 const { authenticate, resolveWabaAccount } = require('../middleware/auth');
 const logger = require('../utils/logger');
 const camelize = require('../utils/camelize');
+const { emitToOrg } = require('../services/socket');
 
 const router = express.Router();
 
@@ -288,7 +289,9 @@ router.post('/:id/toggle', async (req, res, next) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Automation not found' });
     }
-    res.json({ automation: camelize(result.rows[0]) });
+    const automation = camelize(result.rows[0]);
+    emitToOrg(req.user.org_id, 'automation_updated', automation);
+    res.json({ automation });
   } catch (err) {
     logger.error('Toggle automation error', err);
     next(err);

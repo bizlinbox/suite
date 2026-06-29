@@ -187,9 +187,15 @@ router.patch('/:id/assign', async (req, res, next) => {
       return res.status(404).json({ error: 'Conversation not found' });
     }
     const conversation = camelize(result.rows[0]);
+    let assignedAgentName = null;
+    if (agent_id) {
+      const agentResult = await query('SELECT name FROM users WHERE id = $1', [agent_id]);
+      assignedAgentName = agentResult.rows[0]?.name || null;
+    }
     emitToOrg(req.user.org_id, 'conversation_updated', {
       ...conversation,
       id: conversation.id,
+      assignedAgentName,
     });
     res.json({ conversation });
   } catch (err) {

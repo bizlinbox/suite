@@ -21,6 +21,7 @@ export default function FlowBuilder({ title, initialNodes, initialEdges, onSave,
   const edges = useFlowStore((s) => s.edges);
   const setNodeTypes = useFlowStore((s) => s.setNodeTypes);
   const importFlow = useFlowStore((s) => s.importFlow);
+  const reset = useFlowStore((s) => s.reset);
   const addNode = useFlowStore((s) => s.addNode);
   const deleteSelected = useFlowStore((s) => s.deleteSelected);
   const undo = useFlowStore((s) => s.undo);
@@ -29,10 +30,12 @@ export default function FlowBuilder({ title, initialNodes, initialEdges, onSave,
   const pushHistory = useFlowStore((s) => s.pushHistory);
 
   useEffect(() => {
+    reset();
     setNodeTypes(DEFAULT_NODE_TYPES);
     if (initialNodes && initialEdges) {
       importFlow(initialNodes, initialEdges);
     }
+    return () => reset();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -61,7 +61,7 @@ export default function NotificationsSettingsPage() {
               Notifications Not Supported
             </h3>
             <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
-              Your browser does not support push notifications. Try using a modern browser or installing the app as a PWA.
+              Your browser does not support push notifications. Try using a modern browser.
             </p>
           </div>
         </div>
