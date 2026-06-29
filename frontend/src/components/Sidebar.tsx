@@ -60,7 +60,6 @@ const topNavItems: NavItem[] = [
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
   { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, permission: 'settings.read' as string | null },
   { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
-  { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
 ];
 
 const settingsGroup: NavGroup = {
@@ -72,12 +71,13 @@ const settingsGroup: NavGroup = {
     { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
     { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
     { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
+    { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
   ],
 };
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/ai-agents', '/dashboard/api-logs'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/ai-agents', '/dashboard/api-logs', '/dashboard/help'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }
