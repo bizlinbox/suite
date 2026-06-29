@@ -56,6 +56,7 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
     metadata: {},
   });
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -142,6 +143,7 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
     if (!file) return;
 
     setUploading(true);
+    setUploadProgress(0);
     setUploadError('');
 
     try {
@@ -150,6 +152,12 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
 
       const res = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          }
+        },
       });
 
       setMetaField('mediaUrl', res.data.url);
@@ -160,6 +168,7 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
       setUploadError('Upload failed. Please try again.');
     } finally {
       setUploading(false);
+      setUploadProgress(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -254,10 +263,20 @@ export default function QuickReplyDialog({ open, data, onClose, onSubmit }: Quic
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploading}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 disabled:opacity-50"
+                  className="flex w-full flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-gray-300 px-4 py-4 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 disabled:opacity-50"
                 >
-                  <Upload size={18} />
-                  {uploading ? 'Uploading...' : `Upload ${messageTypeLabels[form.messageType]}`}
+                  <div className="flex items-center gap-2">
+                    <Upload size={18} />
+                    {uploading ? `Uploading ${uploadProgress}%` : `Upload ${messageTypeLabels[form.messageType]}`}
+                  </div>
+                  {uploading && (
+                    <div className="mt-1 h-1 w-full max-w-[200px] overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-full rounded-full bg-primary-600 transition-all duration-150"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  )}
                 </button>
               )}
 

@@ -323,6 +323,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [slashQuery, setSlashQuery] = useState('');
   const [attachOpen, setAttachOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingMediaId, setPendingMediaId] = useState<string | null>(null);
   const [pendingMessageType, setPendingMessageType] = useState<string>('text');
@@ -830,16 +831,29 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type });
 
     let uploadUrl: string;
+    setUploading(true);
+    setUploadProgress(0);
     try {
       const formData = new FormData();
       formData.append('file', file);
       const res = await api.post('/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          }
+        },
       });
       uploadUrl = res.data.url;
     } catch (err: any) {
       toastError(err.response?.data?.error || 'Failed to upload voice message');
+      setUploading(false);
+      setUploadProgress(0);
       return;
+    } finally {
+      setUploading(false);
+      setUploadProgress(0);
     }
 
     const tempMessage: Message = {
@@ -926,6 +940,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     setPendingFile(file);
     setPendingFilename(file.name);
     setUploading(true);
+    setUploadProgress(0);
     setAttachOpen(false);
 
     try {
@@ -934,6 +949,12 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
 
       const res = await api.post('/media', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploadProgress(percent);
+          }
+        },
       });
       setPendingMediaId(res.data.id);
     } catch (err: any) {
@@ -943,6 +964,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     } finally {
       setPendingMimeType('');
       setUploading(false);
+      setUploadProgress(0);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
@@ -1405,19 +1427,29 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       <div className="border-t border-gray-100/80 bg-white px-4 py-3 dark:border-gray-800/60 dark:bg-gray-900">
         {/* Attachment preview */}
         {pendingFile && (
-          <div className="mb-2 flex items-center gap-2 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
-            {getFileIcon(pendingMessageType)}
-            <span className="flex-1 truncate text-xs font-medium text-gray-700 dark:text-gray-300">{pendingFile.name}</span>
+          <div className="mb-2 rounded-lg bg-gray-50 px-3 py-2 dark:bg-gray-800/60">
+            <div className="flex items-center gap-2">
+              {getFileIcon(pendingMessageType)}
+              <span className="flex-1 truncate text-xs font-medium text-gray-700 dark:text-gray-300">{pendingFile.name}</span>
+              {uploading && (
+                <span className="text-xs text-gray-400">{uploadProgress}%</span>
+              )}
+              <button
+                onClick={handleCancelAttachment}
+                className="rounded-md p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700"
+                aria-label="Remove attachment"
+              >
+                <X size={14} />
+              </button>
+            </div>
             {uploading && (
-              <span className="text-xs text-gray-400">Uploading...</span>
+              <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                <div
+                  className="h-full rounded-full bg-primary-600 transition-all duration-150"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
             )}
-            <button
-              onClick={handleCancelAttachment}
-              className="rounded-md p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 dark:hover:bg-gray-700"
-              aria-label="Remove attachment"
-            >
-              <X size={14} />
-            </button>
           </div>
         )}
 
