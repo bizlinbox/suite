@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { LuPenLine as Edit, LuTrash2 as Trash2, LuPlus as Plus, LuLoader as Loader2, LuSearch as Search } from 'react-icons/lu';
+import { LuPenLine as Edit, LuTrash2 as Trash2, LuPlus as Plus, LuLoader as Loader2, LuSearch as Search, LuUpload as Upload } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { usePermission } from '@/hooks/usePermission';
 import ContactDialog from '@/components/ContactDialog';
+import ContactImportDialog from '@/components/ContactImportDialog';
 import { ContactFormData } from '@/components/ContactForm';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '@/components/Table';
 
@@ -30,6 +31,7 @@ export default function ContactsPage() {
   const { can, loading: authLoading } = usePermission();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
   const [search, setSearch] = useState('');
 
@@ -140,10 +142,16 @@ export default function ContactsPage() {
           <p>Manage your contacts and their details</p>
         </div>
         {can('contacts.manage') && (
-          <button onClick={handleCreate} className="btn-primary">
-            <Plus size={16} />
-            Add Contact
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setImportOpen(true)} className="btn-secondary">
+              <Upload size={16} />
+              Import
+            </button>
+            <button onClick={handleCreate} className="btn-primary">
+              <Plus size={16} />
+              Add Contact
+            </button>
+          </div>
         )}
       </div>
 
@@ -242,6 +250,11 @@ export default function ContactsPage() {
         contact={dialogInitialData}
         onClose={() => setDialogOpen(false)}
         onSubmit={handleSubmit}
+      />
+      <ContactImportDialog
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onSuccess={fetchContacts}
       />
     </div>
   );

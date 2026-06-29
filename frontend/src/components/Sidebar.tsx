@@ -197,11 +197,11 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
 
   const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
 
-  const drawerContent = (isCollapsed: boolean) => (
+  const drawerContent = (isCollapsed: boolean, onItemClick?: () => void) => (
     <div className="flex h-full flex-col">
       {/* Header */}
       <div className={`flex items-center py-3.5 ${isCollapsed ? 'justify-between px-1.5' : 'justify-between px-4'}`}>
-        <Link href="/dashboard" className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-2.5'}`}>
+        <Link href="/dashboard" onClick={onItemClick} className={`flex items-center ${isCollapsed ? 'gap-0' : 'gap-2.5'}`}>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary-700 text-white">
             <MessageSquare size={18} />
           </div>
@@ -235,6 +235,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
             <Link
               key={item.href}
               href={item.href}
+              onClick={onItemClick}
               title={isCollapsed ? item.label : undefined}
               className={`group flex items-center rounded-lg transition-colors ${
                 active
@@ -267,6 +268,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                     <Link
                       key={item.href}
                       href={item.href}
+                      onClick={onItemClick}
                       title={item.label}
                       className={`group flex items-center rounded-lg transition-colors ${
                         active
@@ -317,6 +319,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                         <Link
                           key={item.href}
                           href={item.href}
+                          onClick={onItemClick}
                           className={`group flex items-center rounded-lg transition-colors ${
                             active
                               ? 'bg-blue-800 text-white'
@@ -362,6 +365,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
             {isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
             <Link
               href="/dashboard/profile"
+              onClick={onItemClick}
               className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
                 isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
               }`}
@@ -396,14 +400,16 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
         />
       )}
 
-      {/* Mobile drawer (always full width) */}
+      {/* Mobile bottom sheet */}
       <div
-        className={`fixed left-0 top-0 z-50 h-full bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-gray-900 md:hidden ${
-          mobileOpen ? 'translate-x-0' : '-translate-x-full'
+        className={`fixed bottom-0 left-0 right-0 z-50 flex h-[85dvh] flex-col rounded-t-2xl bg-white shadow-2xl transition-transform duration-300 ease-out dark:bg-gray-900 md:hidden ${
+          mobileOpen ? 'translate-y-0' : 'translate-y-full'
         }`}
-        style={{ width: DRAWER_WIDTH }}
       >
-        <div className="h-full w-full">{drawerContent(false)}</div>
+        <div className="flex shrink-0 items-center justify-center pt-3 pb-1">
+          <div className="h-1 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+        </div>
+        <div className="min-h-0 flex-1">{drawerContent(false, onMobileClose)}</div>
       </div>
 
       {/* Desktop drawer */}

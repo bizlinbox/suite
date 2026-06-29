@@ -9,6 +9,7 @@ const config = require('../config');
 const camelize = require('../utils/camelize');
 const { logApiCall } = require('../services/apiLog');
 const { sendNotification: sendGoogleChatNotification } = require('../utils/googleChat');
+const { runAutomations } = require('../services/automationEngine');
 
 const router = express.Router();
 
@@ -434,6 +435,8 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
         [orgId, contactId, timestamp, wabaAccountId || null]
       );
       conversationId = newConv.rows[0].id;
+      // Trigger conversation_opened automations
+      runAutomations(orgId, 'conversation_opened', { conversation_id: conversationId, contact_id: contactId });
     } else {
       conversationId = convResult.rows[0].id;
       await query(
@@ -546,8 +549,8 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       last_message_preview: message.content || '',
     }));
 
-    // Automation execution hook (placeholder for future engine)
-    // await triggerWorkflows(orgId, 'message_received', { message, conversation_id: conversationId, contact_id: contactId });
+    // Automation execution hook
+    runAutomations(orgId, 'message_received', { message, conversation_id: conversationId, contact_id: contactId });
   } catch (err) {
     logger.error('Failed to process incoming message', {
       orgId,
@@ -643,71 +646,6 @@ async function handleStatusUpdate(status, orgId) {
     logger.error('Failed to update campaign recipient status', { externalId, error: err.message });
   }
 }
-
-// Automation execution hook (placeholder for future engine)
-// async function triggerWorkflows(orgId, triggerType, context) {
-//   try {
-//     const wfResult = await query(
-//       `SELECT id, conditions, actions FROM workflows
-//        WHERE org_id = $1 AND trigger_type = $2 AND is_active = true`,
-//       [orgId, triggerType]
-//     );
-//
-//     for (const wf of wfResult.rows) {
-//       const conditions = wf.conditions || {};
-//       const actions = wf.actions || [];
-//
-//       // Simple condition check (keyword contains)
-//       let matches = true;
-//       if (conditions.keyword && context.message?.content) {
-//         matches = context.message.content.toLowerCase().includes(conditions.keyword.toLowerCase());
-//       }
-//
-//       if (!matches) continue;
-//
-//       for (const action of actions) {
-//         if (action.type === 'send_message' && action.content) {
-//           const convResult = await query(
-//             'SELECT id FROM conversations WHERE id = $1',
-//             [context.conversation_id]
-//           );
-//           if (convResult.rows.length > 0) {
-//             await query(
-//               `INSERT INTO messages (conversation_id, sender_type, content, message_type, status)
-//                VALUES ($1, 'system', $2, 'text', 'sent')`,
-//               [context.conversation_id, action.content]
-//             );
-//             emitToConversation(orgId, context.conversation_id, 'new_message', camelize({
-//               conversation_id: context.conversation_id,
-//               sender_type: 'system',
-//               content: action.content,
-//             }));
-//           }
-//         } else if (action.type === 'assign_agent' && action.agent_id) {
-//           await query(
-//             'UPDATE conversations SET assigned_agent_id = $1 WHERE id = $2',
-//             [action.agent_id, context.conversation_id]
-//           );
-//           emitToOrg(orgId, 'conversation_updated', camelize({
-//             conversation_id: context.conversation_id,
-//             assigned_agent_id: action.agent_id,
-//           }));
-//         } else if (action.type === 'close_conversation') {
-//           await query(
-//             "UPDATE conversations SET status = 'closed' WHERE id = $1",
-//             [context.conversation_id]
-//           );
-//           emitToOrg(orgId, 'conversation_updated', camelize({
-//             conversation_id: context.conversation_id,
-//             status: 'closed',
-//           }));
-//         }
-//       }
-//     }
-//   } catch (err) {
-//     logger.error('Workflow trigger error', err);
-//   }
-// }
 
 /**
  * Legacy endpoints (kept for backward compatibility during migration)

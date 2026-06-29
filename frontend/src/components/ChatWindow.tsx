@@ -334,6 +334,11 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [locationError, setLocationError] = useState('');
   const [reactingTo, setReactingTo] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(initialIsPrivate || false);
+
+  useEffect(() => {
+    setIsPrivate(initialIsPrivate || false);
+  }, [initialIsPrivate]);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -986,12 +991,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const handleTogglePrivacy = async () => {
     if (!conversationId) return;
     const next = !isPrivate;
+    setIsPrivate(next);
+    onTogglePrivacy?.(next);
     try {
       await api.patch(`/conversations/${conversationId}/private`, { is_private: next });
-      setIsPrivate(next);
-      onTogglePrivacy?.(next);
     } catch {
-      // ignore
+      setIsPrivate(!next);
+      onTogglePrivacy?.(!next);
+      toastError('Failed to update privacy');
     }
   };
 
@@ -1177,32 +1184,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
           {contactName}
         </button>
         <div className="flex flex-shrink-0 items-center gap-1.5">
-          <div className="relative" ref={quickRef}>
-            <button
-              onClick={() => setQuickOpen((prev) => !prev)}
-              className="btn-secondary px-2.5 py-1.5 text-xs"
-            >
-              <span className="hidden md:inline">Quick</span>
-              <span className="md:hidden">Quick</span>
-            </button>
-            {quickOpen && (
-              <ul className="absolute right-0 top-full z-50 mt-1.5 max-h-64 w-52 overflow-y-auto overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
-                {quickReplies.map((c) => (
-                  <li
-                    key={c.id}
-                    onClick={() => handleSelectQuickReply(c)}
-                    className="cursor-pointer px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-800"
-                  >
-                    {c.shortcut}
-                  </li>
-                ))}
-                {quickReplies.length === 0 && (
-                  <li className="px-3 py-2 text-sm text-gray-400">No quick replies</li>
-                )}
-              </ul>
-            )}
-          </div>
-
           <div className="relative" ref={agentsRef}>
             <button
               onClick={() => setAgentsOpen((prev) => !prev)}
@@ -1213,6 +1194,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
             </button>
             {agentsOpen && (
               <ul className="absolute right-0 top-full z-50 mt-1.5 max-h-64 w-52 overflow-y-auto overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
+                {assignedAgentId && (
+                  <li
+                    onClick={() => handleSelectAgent('')}
+                    className="cursor-pointer px-3 py-2 text-sm text-red-600 transition-colors hover:bg-gray-50 dark:text-red-400 dark:hover:bg-gray-800"
+                  >
+                    Unassign
+                  </li>
+                )}
                 {agents.map((a) => (
                   <li
                     key={a.id}

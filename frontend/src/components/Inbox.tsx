@@ -226,14 +226,27 @@ export default function Inbox({ selectedId }: InboxProps) {
     });
   }, []);
 
+  const lastAssignRef = useRef<{ agentId?: string; agentName?: string }>({});
+
   const handleAssignAgent = useCallback(async (agentId: string) => {
     if (!selectedId) return;
+    setConversations((prev) => {
+      const conv = prev.find((c) => c.id === selectedId);
+      lastAssignRef.current = { agentId: conv?.assignedAgentId, agentName: conv?.assignedAgentName };
+      return prev.map((c) =>
+        c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId] || undefined, assignedAgentId: agentId || undefined } : c
+      );
+    });
     try {
       await api.patch(`/conversations/${selectedId}/assign`, { agent_id: agentId });
-      setConversations((prev) =>
-        prev.map((c) => (c.id === selectedId ? { ...c, assignedAgentName: agentsMap[agentId], assignedAgentId: agentId } : c))
-      );
     } catch (err: any) {
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.id === selectedId
+            ? { ...c, assignedAgentName: lastAssignRef.current.agentName, assignedAgentId: lastAssignRef.current.agentId }
+            : c
+        )
+      );
       toastError(err?.response?.data?.error || 'Something went wrong');
     }
   }, [selectedId, agentsMap]);

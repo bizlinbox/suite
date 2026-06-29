@@ -56,9 +56,12 @@ router.get('/', async (req, res, next) => {
 
     const result = await query(
       `SELECT a.id, a.org_id, a.waba_account_id, a.name, a.is_active, a.created_at, a.updated_at,
-              COUNT(an.id)::int AS step_count
+              COUNT(an.id)::int AS step_count,
+              COUNT(ae.id)::int AS execution_count,
+              COUNT(ae.id) FILTER (WHERE ae.status = 'failed')::int AS failed_count
        FROM automations a
        LEFT JOIN automation_nodes an ON an.automation_id = a.id
+       LEFT JOIN automation_executions ae ON ae.automation_id = a.id AND ae.created_at > NOW() - INTERVAL '30 days'
        WHERE ${whereClause}
        GROUP BY a.id
        ORDER BY a.created_at DESC`,
@@ -93,6 +96,15 @@ router.get('/:id', async (req, res, next) => {
       [req.params.id]
     );
 
+    const execResult = await query(
+      `SELECT id, trigger_type, status, context, result, error_message, started_at, completed_at, created_at
+       FROM automation_executions
+       WHERE automation_id = $1
+       ORDER BY created_at DESC
+       LIMIT 50`,
+      [req.params.id]
+    );
+
     res.json({
       automation,
       steps: camelize(nodesResult.rows).map((n) => ({
@@ -101,6 +113,7 @@ router.get('/:id', async (req, res, next) => {
         label: n.label,
         config: n.config || {},
       })),
+      executions: camelize(execResult.rows),
     });
   } catch (err) {
     logger.error('Get automation error', err);
@@ -278,6 +291,99 @@ router.post('/:id/toggle', async (req, res, next) => {
     res.json({ automation: camelize(result.rows[0]) });
   } catch (err) {
     logger.error('Toggle automation error', err);
+    next(err);
+  }
+});
+
+// GET /:id/executions - execution log for an automation
+router.get('/:id/executions', async (req, res, next) => {
+  try {
+    const automationId = req.params.id;
+    const orgId = req.user.org_id;
+
+    const checkResult = await query(
+      'SELECT id FROM automations WHERE id = $1 AND org_id = $2',
+      [automationId, orgId]
+    );
+    if (checkResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Automation not found' });
+    }
+
+    const { status, limit = '50', offset = '0' } = req.query;
+    const conditions = ['automation_id = $1'];
+    const params = [automationId];
+    let paramIdx = 2;
+
+    if (status) {
+      conditions.push(`status = $${paramIdx++}`);
+      params.push(status);
+    }
+
+    const whereClause = conditions.join(' AND ');
+    params.push(parseInt(limit, 10) || 50);
+    params.push(parseInt(offset, 10) || 0);
+
+    const result = await query(
+      `SELECT id, trigger_type, status, context, result, error_message, started_at, completed_at, created_at
+       FROM automation_executions
+       WHERE ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT $${paramIdx++} OFFSET $${paramIdx++}`,
+      params
+    );
+
+    const countResult = await query(
+      `SELECT COUNT(*)::int AS total FROM automation_executions WHERE ${whereClause}`,
+      params.slice(0, paramIdx - 3)
+    );
+
+    res.json({
+      executions: camelize(result.rows),
+      total: countResult.rows[0].total,
+    });
+  } catch (err) {
+    logger.error('List automation executions error', err);
+    next(err);
+  }
+});
+
+// POST /:id/execute - manually trigger an automation (for testing)
+const { executeAutomation } = require('../services/automationEngine');
+router.post('/:id/execute', async (req, res, next) => {
+  try {
+    const automationId = req.params.id;
+    const orgId = req.user.org_id;
+
+    const autoResult = await query(
+      `SELECT id, waba_account_id, name, is_active
+       FROM automations WHERE id = $1 AND org_id = $2`,
+      [automationId, orgId]
+    );
+    if (autoResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Automation not found' });
+    }
+
+    const auto = autoResult.rows[0];
+    const nodesResult = await query(
+      `SELECT id, type, label, config
+       FROM automation_nodes
+       WHERE automation_id = $1
+       ORDER BY created_at`,
+      [automationId]
+    );
+    const steps = camelize(nodesResult.rows);
+
+    if (steps.length === 0) {
+      return res.status(400).json({ error: 'Automation has no steps' });
+    }
+
+    // Run asynchronously so we don't block the response
+    const context = req.body.context || {};
+    executeAutomation(auto.id, orgId, auto.waba_account_id, 'manual', steps, context);
+
+    res.json({ success: true, message: 'Automation execution started' });
+  } catch (err) {
+    logger.error('Execute automation error', err);
     next(err);
   }
 });

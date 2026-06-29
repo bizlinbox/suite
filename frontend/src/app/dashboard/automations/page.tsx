@@ -21,6 +21,8 @@ interface Automation {
   name: string;
   isActive: boolean;
   stepCount: number;
+  executionCount: number;
+  failedCount: number;
   wabaAccountId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -105,14 +107,15 @@ export default function AutomationsPage() {
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Steps</TableHead>
+              <TableHead>Runs (30d)</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </tr>
           </TableHeader>
           <TableBody>
-            {loading && <TableLoading colSpan={5} />}
+            {loading && <TableLoading colSpan={6} />}
             {!loading && automations.length === 0 && (
-              <TableEmpty colSpan={5}>No automations yet. Create one to get started.</TableEmpty>
+              <TableEmpty colSpan={6}>No automations yet. Create one to get started.</TableEmpty>
             )}
             {automations.map((a) => (
               <TableRow key={a.id}>
@@ -130,6 +133,14 @@ export default function AutomationsPage() {
                   </span>
                 </TableCell>
                 <TableCell>{a.stepCount} steps</TableCell>
+                <TableCell>
+                  <span className={a.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
+                    {a.executionCount.toLocaleString()}
+                    {a.failedCount > 0 && (
+                      <span className="ml-1 text-xs">({a.failedCount} failed)</span>
+                    )}
+                  </span>
+                </TableCell>
                 <TableCell className="text-gray-500 dark:text-gray-400">
                   {new Date(a.createdAt).toLocaleDateString()}
                 </TableCell>

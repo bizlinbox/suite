@@ -136,7 +136,7 @@ export default function ProfilePage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Account Info */}
-        <div className="panel">
+        <div className="panel p-6">
           <div className="mb-5 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-50 dark:bg-primary-900/20">
               <User size={16} className="text-primary-600 dark:text-primary-400" />
@@ -195,7 +195,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Security */}
-        <div className="panel">
+        <div className="panel p-6">
           <div className="mb-5 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 dark:bg-amber-900/20">
               <Shield size={16} className="text-amber-600 dark:text-amber-400" />
