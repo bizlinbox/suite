@@ -224,32 +224,15 @@ export default function ConversationList({
                   )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      {!selectMode ? (
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onOpenProfile?.(conversation.contactId);
-                          }}
-                          className={`truncate text-left text-sm font-medium ${
-                            conversation.id === selectedId
-                              ? 'text-primary-800 dark:text-primary-300'
-                              : 'text-gray-900 dark:text-gray-100'
-                          }`}
-                        >
-                          {conversation.contactName}
-                        </button>
-                      ) : (
-                        <span
-                          className={`truncate text-sm font-medium ${
-                            conversation.id === selectedId
-                              ? 'text-primary-800 dark:text-primary-300'
-                              : 'text-gray-900 dark:text-gray-100'
-                          }`}
-                        >
-                          {conversation.contactName}
-                        </span>
-                      )}
+                      <span
+                        className={`truncate text-sm font-medium ${
+                          conversation.id === selectedId
+                            ? 'text-primary-800 dark:text-primary-300'
+                            : 'text-gray-900 dark:text-gray-100'
+                        }`}
+                      >
+                        {conversation.contactName}
+                      </span>
                       <div className="flex items-center gap-1.5">
                         {conversation.isPrivate && (
                           <span className="rounded bg-gray-200 px-1 py-0.5 text-[9px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-400">
