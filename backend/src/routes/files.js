@@ -9,35 +9,39 @@ const logger = require('../utils/logger');
 const router = express.Router();
 
 function scanFiles(dir, baseDir, files = [], orgId = null) {
-  if (!fs.existsSync(dir)) return files;
+  try {
+    if (!fs.existsSync(dir)) return files;
 
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
 
-    if (entry.isDirectory()) {
-      if (entry.name === 'temp') continue;
+      if (entry.isDirectory()) {
+        if (entry.name === 'temp') continue;
 
-      // For whatsapp_media, only scan the org-specific subdirectory
-      if (relativePath.startsWith('whatsapp_media')) {
-        const parts = relativePath.split('/');
-        if (parts.length >= 2) {
-          const dirOrgId = parts[1];
-          if (String(orgId) !== String(dirOrgId)) continue;
+        // For whatsapp_media, only scan the org-specific subdirectory
+        if (relativePath.startsWith('whatsapp_media')) {
+          const parts = relativePath.split('/');
+          if (parts.length >= 2) {
+            const dirOrgId = parts[1];
+            if (String(orgId) !== String(dirOrgId)) continue;
+          }
         }
-      }
 
-      scanFiles(fullPath, baseDir, files, orgId);
-    } else {
-      const stat = fs.statSync(fullPath);
-      files.push({
-        path: relativePath,
-        name: entry.name,
-        size: stat.size,
-        createdAt: stat.mtime.toISOString(),
-      });
+        scanFiles(fullPath, baseDir, files, orgId);
+      } else {
+        const stat = fs.statSync(fullPath);
+        files.push({
+          path: relativePath,
+          name: entry.name,
+          size: stat.size,
+          createdAt: stat.mtime.toISOString(),
+        });
+      }
     }
+  } catch (err) {
+    logger.warn('Scan files error for directory', { dir, error: err.message });
   }
   return files;
 }
@@ -76,6 +80,13 @@ function normalizeMediaUrl(mediaUrl) {
   if (config.publicUrl && normalized.startsWith(config.publicUrl)) {
     normalized = normalized.slice(config.publicUrl.length);
   }
+  // Strip protocol + host to get pathname (e.g. http://localhost:4000/uploads/...)
+  try {
+    const url = new URL(normalized);
+    normalized = url.pathname;
+  } catch {
+    // not a full URL, keep as-is
+  }
   // Strip leading /uploads/ or uploads/
   if (normalized.startsWith('/uploads/')) {
     normalized = normalized.slice('/uploads/'.length);
@@ -96,7 +107,11 @@ router.get('/', authenticate, async (req, res, next) => {
     const offset = parseInt(req.query.offset, 10) || 0;
 
     const uploadDir = path.resolve(config.uploadDir);
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
     let diskFiles = scanFiles(uploadDir, uploadDir, [], req.user.org_id);
+    logger.debug('Files scan result', { orgId: req.user.org_id, uploadDir, count: diskFiles.length });
 
     // Query messages for local media references to enrich metadata
     const msgResult = await query(
@@ -117,6 +132,7 @@ router.get('/', authenticate, async (req, res, next) => {
         createdAt: row.created_at,
       });
     }
+    logger.debug('Files message media map', { orgId: req.user.org_id, msgCount: msgResult.rows.length, mapSize: messageMediaMap.size });
 
     const enrichedFiles = diskFiles.map((file) => {
       const msgInfo = messageMediaMap.get(file.path);
