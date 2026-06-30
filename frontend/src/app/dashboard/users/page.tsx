@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { LuPenLine as Edit, LuTrash2 as Trash2, LuCopy as Copy, LuCheck as Check, LuChevronDown as ChevronDown, LuLoader as Loader2 } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useAuth } from '@/hooks/useAuth';
@@ -32,10 +32,32 @@ interface WabaAccount {
   isActive: boolean;
 }
 
+interface Role {
+  id: string;
+  name: string;
+  permissions: string[];
+  isSystem: boolean;
+}
+
+const ROLE_BADGE_MAP: Record<string, string> = {
+  admin: 'badge-purple',
+  agent: 'badge-gray',
+};
+
+const FALLBACK_BADGES = ['badge-blue', 'badge-green', 'badge-amber', 'badge-red'];
+
+function roleBadgeClass(roleName: string): string {
+  if (ROLE_BADGE_MAP[roleName]) return ROLE_BADGE_MAP[roleName];
+  let hash = 0;
+  for (let i = 0; i < roleName.length; i++) hash = roleName.charCodeAt(i) + ((hash << 5) - hash);
+  return FALLBACK_BADGES[Math.abs(hash) % FALLBACK_BADGES.length];
+}
+
 export default function UsersPage() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState({ name: '', email: '', password: '', role: 'agent' });
   const [mode, setMode] = useState<'password' | 'invite'>('password');
@@ -50,6 +72,11 @@ export default function UsersPage() {
 
   const { can, isAdmin } = usePermission();
 
+  const defaultRole = () => {
+    const nonAdmin = roles.find((r) => r.name !== 'admin');
+    return nonAdmin?.name || 'agent';
+  };
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) {
@@ -57,6 +84,7 @@ export default function UsersPage() {
       return;
     }
     fetchMembers();
+    fetchRoles();
     fetchWabaAccounts();
   }, [authLoading, user, router]);
 
@@ -79,6 +107,16 @@ export default function UsersPage() {
       setMembers(res.data.agents || []);
     } catch {
       // ignore
+    }
+  };
+
+  const fetchRoles = async () => {
+    try {
+      const res = await api.get('/roles');
+      const fetched = res.data.roles || [];
+      setRoles(fetched);
+    } catch {
+      setRoles([]);
     }
   };
 
@@ -133,7 +171,7 @@ export default function UsersPage() {
         fetchMembers();
         setDialogOpen(false);
         setEditing(null);
-        setForm({ name: '', email: '', password: '', role: 'agent' });
+        setForm({ name: '', email: '', password: '', role: defaultRole() });
       } else {
         const res = await api.post('/agents', payload);
         if (res.data.invitation) {
@@ -141,7 +179,7 @@ export default function UsersPage() {
         } else {
           fetchMembers();
           setDialogOpen(false);
-          setForm({ name: '', email: '', password: '', role: 'agent' });
+          setForm({ name: '', email: '', password: '', role: defaultRole() });
         }
       }
     } catch {
@@ -169,7 +207,7 @@ export default function UsersPage() {
 
   const handleAdd = () => {
     setEditing(null);
-    setForm({ name: '', email: '', password: '', role: 'agent' });
+    setForm({ name: '', email: '', password: '', role: defaultRole() });
     setMode('password');
     setInvitation(null);
     setDialogOpen(true);
@@ -187,7 +225,7 @@ export default function UsersPage() {
   const handleCloseInvitation = () => {
     setInvitation(null);
     setDialogOpen(false);
-    setForm({ name: '', email: '', password: '', role: 'agent' });
+    setForm({ name: '', email: '', password: '', role: defaultRole() });
     fetchMembers();
   };
 
@@ -230,7 +268,7 @@ export default function UsersPage() {
                 <TableCell className="font-medium text-gray-900 dark:text-gray-100">{m.name}</TableCell>
                 <TableCell>{m.email}</TableCell>
                 <TableCell>
-                  <span className={m.role === 'admin' ? 'badge-purple' : 'badge-gray'}>
+                  <span className={roleBadgeClass(m.role)}>
                     {m.role}
                   </span>
                 </TableCell>
@@ -376,8 +414,11 @@ export default function UsersPage() {
                   onChange={(e) => setForm({ ...form, role: e.target.value })}
                   className="input"
                 >
-                  <option value="agent">User</option>
-                  <option value="admin">Admin</option>
+                  {roles.map((r) => (
+                    <option key={r.id} value={r.name}>
+                      {r.name.charAt(0).toUpperCase() + r.name.slice(1)}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

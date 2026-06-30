@@ -115,6 +115,15 @@ router.post('/', requireAdmin, async (req, res, next) => {
       return res.status(400).json({ error: 'Name and email are required' });
     }
 
+    // Validate role exists in organization
+    const roleCheck = await query(
+      'SELECT id FROM roles WHERE name = $1 AND org_id = $2',
+      [role, req.user.org_id]
+    );
+    if (roleCheck.rows.length === 0) {
+      return res.status(400).json({ error: 'Invalid role' });
+    }
+
     // Check if email already exists in org
     const existing = await query(
       'SELECT id FROM users WHERE email = $1 AND org_id = $2',
@@ -165,6 +174,18 @@ router.post('/', requireAdmin, async (req, res, next) => {
 router.put('/:id', requireAdmin, async (req, res, next) => {
   try {
     const { name, email, role, status } = req.body;
+
+    // Validate role if provided
+    if (role) {
+      const roleCheck = await query(
+        'SELECT id FROM roles WHERE name = $1 AND org_id = $2',
+        [role, req.user.org_id]
+      );
+      if (roleCheck.rows.length === 0) {
+        return res.status(400).json({ error: 'Invalid role' });
+      }
+    }
+
     const result = await query(
       `UPDATE users
        SET name = COALESCE($1, name),
