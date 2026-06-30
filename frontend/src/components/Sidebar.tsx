@@ -28,6 +28,7 @@ import {
   LuBookOpen as BookOpen,
   LuBell as Bell,
   LuBellOff as BellOff,
+  LuTag as Tag,
 } from 'react-icons/lu';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -66,6 +67,7 @@ const settingsGroup: NavGroup = {
   permission: null,
   items: [
     { label: 'General', href: '/dashboard/settings/general', icon: Building2, permission: 'settings.read' as string | null },
+    { label: 'Labels', href: '/dashboard/settings/labels', icon: Tag, permission: 'settings.read' as string | null },
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
     { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
     { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },

@@ -2,20 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { usePermission } from '@/hooks/usePermission';
-
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { can } = usePermission();
-  const canManageSettings = can('settings.manage');
-
   const tabs = [
     { label: 'General', href: '/dashboard/settings/general' },
-    { label: 'Labels', href: '/dashboard/settings/labels' },
     { label: 'Notifications', href: '/dashboard/settings/notifications' },
     { label: 'Files', href: '/dashboard/settings/files' },
     { label: 'Integrations', href: '/dashboard/settings/integrations' },
-    ...(canManageSettings ? [{ label: 'WABA', href: '/dashboard/waba-accounts' }] : []),
   ];
 
   return (
