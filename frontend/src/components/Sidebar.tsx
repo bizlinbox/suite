@@ -160,8 +160,8 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   return (
     <button
       onClick={toggleTheme}
-      className={`flex w-full items-center rounded-lg border border-gray-200 bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
-        collapsed ? 'justify-center px-2 py-2' : 'gap-2.5 px-3 py-2'
+      className={`flex items-center rounded-lg border border-gray-200 bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
+        collapsed ? 'h-8 w-8 justify-center p-0' : 'h-8 w-8 justify-center p-0'
       }`}
       aria-label="Toggle theme"
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
