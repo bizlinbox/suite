@@ -375,8 +375,8 @@ export default function Inbox({ selectedId }: InboxProps) {
   return (
     <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden md:h-[calc(100vh-48px)]">
       <div className="panel flex h-full overflow-hidden rounded-2xl">
-        {/* Conversation list - always visible on desktop, toggle on mobile */}
-        <div className={`w-full flex-shrink-0 md:block md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
+        {/* Conversation list - always visible on sm+, toggle on mobile */}
+        <div className={`w-full flex-shrink-0 sm:block sm:w-80 ${selectedId ? 'max-sm:hidden' : 'block'}`}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
@@ -394,8 +394,8 @@ export default function Inbox({ selectedId }: InboxProps) {
           />
         </div>
 
-        {/* Chat area - always visible on desktop, toggle on mobile */}
-        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 md:flex ${selectedId ? 'flex' : 'hidden'}`}>
+        {/* Chat area - always visible on sm+, toggle on mobile */}
+        <div className={`flex-1 border-l border-gray-200 dark:border-gray-800 sm:flex ${selectedId ? 'flex' : 'max-sm:hidden'}`}>
           {selectedConversation ? (
             <ChatWindow
               conversationId={selectedConversation.id}
