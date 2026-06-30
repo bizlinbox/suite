@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, FormEvent } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { api } from '@/lib/api';
 import { toastError, toastSuccess } from '@/components/Toaster';
@@ -155,7 +155,7 @@ export default function GeneralSettingsPage() {
     setPlatformLogo(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!org) return;
 
@@ -264,12 +264,13 @@ export default function GeneralSettingsPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="org-name" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Organization Name
               </label>
               <div className="relative">
                 <Building2 size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <input
+                  id="org-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -280,12 +281,13 @@ export default function GeneralSettingsPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="org-timezone" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Timezone
               </label>
               <div className="relative">
                 <Globe size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                 <select
+                  id="org-timezone"
                   value={timezone}
                   onChange={(e) => setTimezone(e.target.value)}
                   className="input appearance-none pl-9"
@@ -312,10 +314,11 @@ export default function GeneralSettingsPage() {
 
           <div className="space-y-4">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="platform-name" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Platform Name
               </label>
               <input
+                id="platform-name"
                 type="text"
                 value={platformName}
                 onChange={(e) => setPlatformName(e.target.value)}
@@ -325,9 +328,9 @@ export default function GeneralSettingsPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Platform Logo
-              </label>
+              </span>
               <div className="flex items-center gap-4">
                 {platformLogo ? (
                   <div className="relative">
@@ -436,9 +439,9 @@ export default function GeneralSettingsPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
                 Organization ID
-              </label>
+              </span>
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                 <Fingerprint size={14} className="shrink-0 text-gray-400" />
                 <span className="truncate font-mono">{org.id}</span>
@@ -446,9 +449,9 @@ export default function GeneralSettingsPage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
+              <span className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
                 Created At
-              </label>
+              </span>
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300">
                 <Calendar size={14} className="shrink-0 text-gray-400" />
                 <span>

@@ -53,14 +53,14 @@ interface NavGroup {
 }
 
 const topNavItems: NavItem[] = [
-  { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare, permission: 'conversations.read' as string | null },
-  { label: 'Contacts', href: '/dashboard/contacts', icon: Users, permission: 'contacts.read' as string | null },
-  { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, permission: 'campaigns.read' as string | null },
-  { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' as string | null },
-  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' as string | null },
-  { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
-  { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
-  { label: 'WhatsApp Forms', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
+  { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare, permission: 'conversations.read' },
+  { label: 'Contacts', href: '/dashboard/contacts', icon: Users, permission: 'contacts.read' },
+  { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone, permission: 'campaigns.read' },
+  { label: 'Automations', href: '/dashboard/automations', icon: GitBranch, permission: 'automations.read' },
+  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' },
+  { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' },
+  { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' },
+  { label: 'WhatsApp Forms', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' },
 ];
 
 const settingsGroup: NavGroup = {
@@ -68,15 +68,15 @@ const settingsGroup: NavGroup = {
   icon: Settings2,
   permission: null,
   items: [
-    { label: 'General', href: '/dashboard/settings/general', icon: Building2, permission: 'settings.read' as string | null },
-    { label: 'Labels', href: '/dashboard/settings/labels', icon: Tag, permission: 'settings.read' as string | null },
-    { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell, permission: 'settings.read' as string | null },
-    { label: 'Files', href: '/dashboard/settings/files', icon: Folder, permission: 'settings.read' as string | null },
-    { label: 'Integrations', href: '/dashboard/settings/integrations', icon: Webhook, permission: 'settings.manage' as string | null },
-    { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
-    { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
-    { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
-    { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' as string | null },
+    { label: 'General', href: '/dashboard/settings/general', icon: Building2, permission: 'settings.read' },
+    { label: 'Labels', href: '/dashboard/settings/labels', icon: Tag, permission: 'settings.read' },
+    { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell, permission: 'settings.read' },
+    { label: 'Files', href: '/dashboard/settings/files', icon: Folder, permission: 'settings.read' },
+    { label: 'Integrations', href: '/dashboard/settings/integrations', icon: Webhook, permission: 'settings.manage' },
+    { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' },
+    { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' },
+    { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' },
+    { label: 'API Logs', href: '/dashboard/api-logs', icon: Server, permission: 'settings.read' },
     { label: 'Help', href: '/dashboard/help', icon: BookOpen, permission: null },
   ],
 };
@@ -95,7 +95,7 @@ interface SidebarProps {
   collapsed?: boolean;
 }
 
-function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
+function WabaSwitcher({ collapsed }: Readonly<{ collapsed: boolean }>) {
   const { user } = useAuth();
   const { selectedWabaId, setSelectedWabaId } = useWaba();
   const [open, setOpen] = useState(false);
@@ -164,15 +164,13 @@ function WabaSwitcher({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+function ThemeToggle({ collapsed }: Readonly<{ collapsed: boolean }>) {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <button
       onClick={toggleTheme}
-      className={`flex items-center rounded-lg border border-gray-200 bg-gray-100 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
-        collapsed ? 'h-8 w-8 justify-center p-0' : 'h-8 w-8 justify-center p-0'
-      }`}
+      className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 bg-gray-100 p-0 text-gray-600 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:border-gray-700 dark:bg-gray-800/60 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100"
       aria-label="Toggle theme"
       title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
     >
@@ -181,12 +179,12 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   );
 }
 
-function NotificationToggle({ collapsed }: { collapsed: boolean }) {
+function NotificationToggle({ collapsed }: Readonly<{ collapsed: boolean }>) {
   const [enabled, setEnabled] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>('default');
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof globalThis.window === 'undefined') return;
     const { areNotificationsEnabled, getNotificationPermission, isNotificationsSupported } = require('@/lib/notifications');
     if (!isNotificationsSupported()) {
       setPermission('denied');
@@ -197,8 +195,8 @@ function NotificationToggle({ collapsed }: { collapsed: boolean }) {
   }, []);
 
   const handleToggle = async () => {
-    if (typeof window === 'undefined') return;
-    const { areNotificationsEnabled, getNotificationPermission, requestNotificationPermission, setNotificationsEnabled } = require('@/lib/notifications');
+    if (typeof globalThis.window === 'undefined') return;
+    const { getNotificationPermission, requestNotificationPermission, setNotificationsEnabled } = require('@/lib/notifications');
 
     if (enabled) {
       setNotificationsEnabled(false);
@@ -218,6 +216,15 @@ function NotificationToggle({ collapsed }: { collapsed: boolean }) {
   const isBlocked = permission === 'denied';
   const active = enabled && permission === 'granted';
 
+  let title: string;
+  if (isBlocked) {
+    title = 'Notifications blocked in browser';
+  } else if (active) {
+    title = 'Notifications on';
+  } else {
+    title = 'Notifications off';
+  }
+
   return (
     <button
       onClick={handleToggle}
@@ -226,16 +233,16 @@ function NotificationToggle({ collapsed }: { collapsed: boolean }) {
         active
           ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30'
           : 'border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:bg-gray-700/60'
-      } ${collapsed ? 'h-8 w-8 justify-center p-0' : 'h-8 w-8 justify-center p-0'} ${isBlocked ? 'cursor-not-allowed opacity-50' : ''}`}
+      } h-8 w-8 justify-center p-0 ${isBlocked ? 'cursor-not-allowed opacity-50' : ''}`}
       aria-label={active ? 'Disable notifications' : 'Enable notifications'}
-      title={isBlocked ? 'Notifications blocked in browser' : active ? 'Notifications on' : 'Notifications off'}
+      title={title}
     >
       {active ? <Bell size={16} className="shrink-0" /> : <BellOff size={16} className="shrink-0" />}
     </button>
   );
 }
 
-export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, collapsed = false }: SidebarProps) {
+export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, collapsed = false }: Readonly<SidebarProps>) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
@@ -256,6 +263,150 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
   const isSettingsActive = filteredSettingsItems.some((item) => isActiveNav(pathname, item.href));
 
   const sidebarWidth = collapsed ? 64 : DRAWER_WIDTH;
+
+  function SettingsNav({
+    items,
+    isCollapsed,
+    onItemClick,
+  }: Readonly<{ items: NavItem[]; isCollapsed: boolean; onItemClick?: () => void }>) {
+    if (items.length === 0) return null;
+
+    return (
+      <div className="mt-1">
+        {isCollapsed ? (
+          <div className="space-y-0.5">
+            {items.map((item) => {
+              const active = isActiveNav(pathname, item.href);
+              const Icon = item.icon;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onItemClick}
+                  title={item.label}
+                  className={`group flex items-center rounded-lg transition-colors ${
+                    active
+                      ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
+                  } justify-center px-2 py-2.5`}
+                >
+                  <Icon
+                    size={18}
+                    className={`shrink-0 transition-colors ${
+                      active
+                        ? 'text-white'
+                        : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
+                    }`}
+                  />
+                </Link>
+              );
+            })}
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={() => setSettingsOpen((prev) => !prev)}
+              className={`flex w-full items-center rounded-lg transition-colors ${
+                isSettingsActive
+                  ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
+              } gap-3 px-3 py-2.5 text-sm font-medium`}
+            >
+              <Settings2
+                size={18}
+                className={`shrink-0 transition-colors ${
+                  isSettingsActive ? 'text-white dark:text-white' : 'text-gray-400 dark:text-gray-500'
+                }`}
+              />
+              <span className="flex-1 text-left">Settings</span>
+              <ChevronDown
+                size={16}
+                className={`shrink-0 text-gray-500 transition-transform dark:text-gray-500 ${settingsOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {settingsOpen && (
+              <div className="space-y-0.5 pl-3">
+                {items.map((item) => {
+                  const active = isActiveNav(pathname, item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={onItemClick}
+                      className={`group flex items-center rounded-lg transition-colors ${
+                        active
+                          ? 'bg-[#002D62] text-white'
+                          : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
+                      } gap-3 px-3 py-2 text-sm font-medium`}
+                    >
+                      <Icon
+                        size={16}
+                        className={`shrink-0 transition-colors ${
+                          active
+                            ? 'text-white'
+                            : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
+                        }`}
+                      />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    );
+  }
+
+  function UserFooter({
+    isCollapsed,
+    onItemClick,
+  }: Readonly<{ isCollapsed: boolean; onItemClick?: () => void }>) {
+    return (
+      <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        <div className={`rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
+            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white" title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'User'}>
+              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-xs font-medium text-gray-900 dark:text-gray-100">{user?.name}</div>
+                <div className="truncate text-[10px] text-gray-500 dark:text-gray-400">{user?.email}</div>
+              </div>
+            )}
+            {!isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
+          </div>
+          <div className={`mt-2 flex items-center ${isCollapsed ? 'justify-center gap-1' : 'gap-2'}`}>
+            {isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
+            <Link
+              href="/dashboard/profile"
+              onClick={onItemClick}
+              className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
+                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
+              }`}
+              title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'Profile'}
+            >
+              <Settings size={12} />
+              {!isCollapsed && 'Profile'}
+            </Link>
+            <button
+              onClick={() => logout()}
+              className={`flex items-center rounded-md text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/40 dark:hover:text-red-300 ${
+                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
+              }`}
+              title="Log out"
+            >
+              <LogOut size={12} />
+              {!isCollapsed && 'Log out'}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const drawerContent = (isCollapsed: boolean, onItemClick?: () => void) => (
     <div className="flex h-full flex-col">
@@ -317,137 +468,10 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
           );
         })}
 
-        {/* Settings submenu */}
-        {filteredSettingsItems.length > 0 && (
-          <div className="mt-1">
-            {isCollapsed ? (
-              <div className="space-y-0.5">
-                {filteredSettingsItems.map((item) => {
-                  const active = isActiveNav(pathname, item.href);
-                  const Icon = item.icon;
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={onItemClick}
-                      title={item.label}
-                      className={`group flex items-center rounded-lg transition-colors ${
-                        active
-                          ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
-                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-                      } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
-                    >
-                      <Icon
-                        size={18}
-                        className={`shrink-0 transition-colors ${
-                          active
-                            ? 'text-white'
-                            : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
-                        }`}
-                      />
-                    </Link>
-                  );
-                })}
-              </div>
-            ) : (
-              <>
-                <button
-                  onClick={() => setSettingsOpen((prev) => !prev)}
-                  className={`flex w-full items-center rounded-lg transition-colors ${
-                    isSettingsActive
-                      ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-                  } gap-3 px-3 py-2.5 text-sm font-medium`}
-                >
-                  <Settings2
-                    size={18}
-                    className={`shrink-0 transition-colors ${
-                      isSettingsActive ? 'text-white dark:text-white' : 'text-gray-400 dark:text-gray-500'
-                    }`}
-                  />
-                  <span className="flex-1 text-left">Settings</span>
-                  <ChevronDown
-                    size={16}
-                    className={`shrink-0 text-gray-500 transition-transform dark:text-gray-500 ${settingsOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                {settingsOpen && (
-                  <div className="space-y-0.5 pl-3">
-                    {filteredSettingsItems.map((item) => {
-                      const active = isActiveNav(pathname, item.href);
-                      const Icon = item.icon;
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          onClick={onItemClick}
-                          className={`group flex items-center rounded-lg transition-colors ${
-                            active
-                              ? 'bg-[#002D62] text-white'
-                              : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-                          } gap-3 px-3 py-2 text-sm font-medium`}
-                        >
-                          <Icon
-                            size={16}
-                            className={`shrink-0 transition-colors ${
-                              active
-                                ? 'text-white'
-                                : 'text-gray-500 group-hover:text-gray-900 dark:text-gray-500 dark:group-hover:text-gray-100'
-                            }`}
-                          />
-                          {item.label}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
-        )}
+        <SettingsNav items={filteredSettingsItems} isCollapsed={isCollapsed} onItemClick={onItemClick} />
       </nav>
 
-      {/* User / Logout */}
-      <div className={`py-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
-        <div className={`rounded-xl border border-gray-200 bg-gray-100 dark:border-gray-700 dark:bg-gray-800/60 ${isCollapsed ? 'px-2 py-2' : 'px-3 py-2.5'}`}>
-          <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2'}`}>
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary-600 text-xs font-semibold text-white" title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'User'}>
-              {user?.name?.charAt(0)?.toUpperCase() || 'U'}
-            </div>
-            {!isCollapsed && (
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-xs font-medium text-gray-900 dark:text-gray-100">{user?.name}</div>
-                <div className="truncate text-[10px] text-gray-500 dark:text-gray-400">{user?.email}</div>
-              </div>
-            )}
-            {!isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
-          </div>
-          <div className={`mt-2 flex items-center ${isCollapsed ? 'justify-center gap-1' : 'gap-2'}`}>
-            {isCollapsed && <ThemeToggle collapsed={isCollapsed} />}
-            <Link
-              href="/dashboard/profile"
-              onClick={onItemClick}
-              className={`flex items-center rounded-md text-[11px] font-medium text-gray-500 transition-colors hover:bg-gray-200 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-700/60 dark:hover:text-gray-100 ${
-                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
-              }`}
-              title={user?.name && user?.email ? `${user.name} (${user.email})` : user?.name || 'Profile'}
-            >
-              <Settings size={12} />
-              {!isCollapsed && 'Profile'}
-            </Link>
-            <button
-              onClick={() => logout()}
-              className={`flex items-center rounded-md text-[11px] font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700 dark:bg-red-950/30 dark:text-red-400 dark:hover:bg-red-900/40 dark:hover:text-red-300 ${
-                isCollapsed ? 'gap-0 px-1.5 py-1.5' : 'flex-1 gap-1.5 px-2 py-1.5'
-              }`}
-              title="Log out"
-            >
-              <LogOut size={12} />
-              {!isCollapsed && 'Log out'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <UserFooter isCollapsed={isCollapsed} onItemClick={onItemClick} />
     </div>
   );
 
@@ -458,6 +482,10 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
         <div
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-sm md:hidden"
           onClick={onMobileClose}
+          onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onMobileClose(); } }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
 
