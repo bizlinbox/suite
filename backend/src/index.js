@@ -12,6 +12,7 @@ const seed = require('./db/seed');
 const { connectWithRetry } = require('./db');
 const logger = require('./utils/logger');
 const { initSocket } = require('./services/socket');
+const { runScheduledAutomations } = require('./services/automationEngine');
 const errorHandler = require('./middleware/errorHandler');
 const { rateLimit } = require('express-rate-limit');
 
@@ -198,6 +199,18 @@ async function start() {
     server.listen(config.port, '0.0.0.0', () => {
       logger.info(`BizlInbox server running on port ${config.port}`);
     });
+
+    // Scheduled automation runner (every minute)
+    let scheduledRunnerRunning = false;
+    setInterval(() => {
+      if (scheduledRunnerRunning) return;
+      scheduledRunnerRunning = true;
+      runScheduledAutomations().finally(() => {
+        scheduledRunnerRunning = false;
+      }).catch((err) => {
+        logger.error('Scheduled automation interval error', err);
+      });
+    }, 60 * 1000);
   } catch (err) {
     logger.error('Failed to start server', err);
     process.exit(1);

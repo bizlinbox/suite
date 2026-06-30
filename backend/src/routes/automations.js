@@ -11,9 +11,8 @@ router.use(authenticate);
 router.use(resolveWabaAccount);
 
 const VALID_STEP_TYPES = new Set([
-  'trigger_message',
-  'trigger_conversation_opened',
-  'trigger_webhook',
+  'trigger_new_chat',
+  'trigger_schedule',
   'send_text',
   'send_template',
   'send_media_image',

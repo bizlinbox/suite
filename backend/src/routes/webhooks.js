@@ -464,8 +464,8 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
         [orgId, contactId, timestamp, wabaAccountId || null]
       );
       conversationId = newConv.rows[0].id;
-      // Trigger conversation_opened automations
-      runAutomations(orgId, 'conversation_opened', { conversation_id: conversationId, contact_id: contactId });
+      // Trigger new_chat automations
+      runAutomations(orgId, 'new_chat', { conversation_id: conversationId, contact_id: contactId });
     } else {
       conversationId = convResult.rows[0].id;
       await query(
@@ -578,8 +578,7 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
       last_message_preview: message.content || '',
     }));
 
-    // Automation execution hook
-    runAutomations(orgId, 'message_received', { message, conversation_id: conversationId, contact_id: contactId });
+    // Note: automations now only trigger on new_chat (new conversation) or schedule events
   } catch (err) {
     logger.error('Failed to process incoming message', {
       orgId,

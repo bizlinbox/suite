@@ -39,9 +39,8 @@ const ICON_MAP: Record<string, React.FC<any>> = {
 function getIcon(type: string) {
   // map type strings to icons
   const map: Record<string, string> = {
-    trigger_message: 'MessageSquare',
-    trigger_conversation_opened: 'MessageSquare',
-    trigger_webhook: 'Webhook',
+    trigger_new_chat: 'MessageSquare',
+    trigger_schedule: 'Clock',
     send_text: 'Send',
     send_template: 'Send',
     send_media_image: 'Image',
@@ -60,7 +59,7 @@ function getIcon(type: string) {
 }
 
 const NODE_CATEGORIES: { label: string; types: string[] }[] = [
-  { label: 'Triggers', types: ['trigger_message', 'trigger_conversation_opened', 'trigger_webhook'] },
+  { label: 'Triggers', types: ['trigger_new_chat', 'trigger_schedule'] },
   { label: 'Messages', types: ['send_text', 'send_template', 'send_media_image', 'send_media_video', 'send_media_document', 'send_media_audio', 'send_interactive_buttons', 'send_interactive_list'] },
   { label: 'Logic', types: ['condition', 'delay'] },
   { label: 'Actions', types: ['tag_contact', 'assign_agent'] },
@@ -68,9 +67,8 @@ const NODE_CATEGORIES: { label: string; types: string[] }[] = [
 
 export const DEFAULT_NODE_TYPES: NodeTypeDef[] = [
   // Triggers
-  { type: 'trigger_message', label: 'Message Received', category: 'Triggers', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 80 }, defaultPorts: [{ id: 'out', type: 'output', label: '' }], defaultData: { keywords: '', match_type: 'contains' }, fields: [{ key: 'keywords', label: 'Keywords', type: 'text', placeholder: 'Comma separated...' }, { key: 'match_type', label: 'Match Type', type: 'select', options: ['contains', 'exact'] }] },
-  { type: 'trigger_conversation_opened', label: 'Conversation Opened', category: 'Triggers', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 80 }, defaultPorts: [{ id: 'out', type: 'output', label: '' }], defaultData: {}, fields: [] },
-  { type: 'trigger_webhook', label: 'Webhook Event', category: 'Triggers', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 80 }, defaultPorts: [{ id: 'out', type: 'output', label: '' }], defaultData: {}, fields: [] },
+  { type: 'trigger_new_chat', label: 'New Chat', category: 'Triggers', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 80 }, defaultPorts: [{ id: 'out', type: 'output', label: '' }], defaultData: { keywords: '', match_type: 'contains' }, fields: [{ key: 'keywords', label: 'Keywords', type: 'text', placeholder: 'Comma separated...' }, { key: 'match_type', label: 'Match Type', type: 'select', options: ['contains', 'exact'] }] },
+  { type: 'trigger_schedule', label: 'On Schedule', category: 'Triggers', color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-200', defaultSize: { width: 200, height: 80 }, defaultPorts: [{ id: 'out', type: 'output', label: '' }], defaultData: { interval_minutes: 60 }, fields: [{ key: 'interval_minutes', label: 'Interval (minutes)', type: 'number' }] },
   // Messages
   { type: 'send_text', label: 'Send Text', category: 'Messages', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', defaultSize: { width: 200, height: 100 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { text: '' }, fields: [{ key: 'text', label: 'Message', type: 'textarea', placeholder: 'Enter message...' }] },
   { type: 'send_template', label: 'Send Template', category: 'Messages', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200', defaultSize: { width: 200, height: 100 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { template_name: '', variables: '' }, fields: [{ key: 'template_name', label: 'Template Name', type: 'text' }, { key: 'variables', label: 'Variables', type: 'text' }] },

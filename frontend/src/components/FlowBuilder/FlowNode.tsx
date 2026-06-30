@@ -30,9 +30,8 @@ import {
 } from 'react-icons/lu';
 
 const ICON_MAP: Record<string, React.FC<any>> = {
-  trigger_message: MessageSquare,
-  trigger_conversation_opened: MessageSquare,
-  trigger_webhook: Webhook,
+  trigger_new_chat: MessageSquare,
+  trigger_schedule: Clock,
   send_text: Send,
   send_template: Send,
   send_media_image: Image,
@@ -62,9 +61,8 @@ const ICON_MAP: Record<string, React.FC<any>> = {
 };
 
 const TYPE_STYLE: Record<string, { color: string; bg: string; border: string }> = {
-  trigger_message: { color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
-  trigger_conversation_opened: { color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
-  trigger_webhook: { color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
+  trigger_new_chat: { color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
+  trigger_schedule: { color: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-50 dark:bg-amber-900/20', border: 'border-amber-200 dark:border-amber-800' },
   send_text: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
   send_template: { color: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-50 dark:bg-blue-900/20', border: 'border-blue-200 dark:border-blue-800' },
   send_media_image: { color: 'text-indigo-700 dark:text-indigo-300', bg: 'bg-indigo-50 dark:bg-indigo-900/20', border: 'border-indigo-200 dark:border-indigo-800' },

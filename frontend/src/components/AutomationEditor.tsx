@@ -25,7 +25,6 @@ import {
   LuGitBranch as GitBranch,
   LuTag as Tag,
   LuUserCheck as UserCheck,
-  LuSparkles as Sparkles,
   LuZap as Zap,
 } from 'react-icons/lu';
 import { useWaba } from '@/context/WabaContext';
@@ -63,9 +62,8 @@ interface ActionItem {
 }
 
 const TRIGGER_OPTIONS = [
-  { value: 'trigger_message', label: 'Message Received', icon: MessageSquare },
-  { value: 'trigger_conversation_opened', label: 'Conversation Opened', icon: Play },
-  { value: 'trigger_webhook', label: 'Webhook Event', icon: Webhook },
+  { value: 'trigger_new_chat', label: 'New Chat', icon: MessageSquare },
+  { value: 'trigger_schedule', label: 'On Schedule', icon: Clock },
 ];
 
 const CONDITION_OPTIONS = [
@@ -87,7 +85,6 @@ const ACTION_OPTIONS = [
   { value: 'delay', label: 'Delay', icon: Clock },
   { value: 'tag_contact', label: 'Tag Contact', icon: Tag },
   { value: 'assign_agent', label: 'Assign Agent', icon: UserCheck },
-  { value: 'ai_agent', label: 'AI Agent', icon: Sparkles },
 ];
 
 const ACTION_FIELDS: Record<string, { key: string; label: string; type: string; placeholder?: string }[]> = {
@@ -121,7 +118,6 @@ const ACTION_FIELDS: Record<string, { key: string; label: string; type: string; 
   delay: [{ key: 'seconds', label: 'Seconds', type: 'number' }],
   tag_contact: [{ key: 'tag', label: 'Tag', type: 'text' }],
   assign_agent: [{ key: 'user_id', label: 'Agent ID', type: 'text' }],
-  ai_agent: [{ key: 'agentId', label: 'AI Agent ID', type: 'text' }],
 };
 
 function generateId() {
@@ -131,7 +127,7 @@ function generateId() {
 function parseSteps(steps: Step[]): { trigger: TriggerConfig; conditions: Condition[]; actions: ActionItem[] } {
   const triggerStep = steps.find((s) => s.type.startsWith('trigger_'));
   const trigger: TriggerConfig = {
-    type: triggerStep?.type || 'trigger_message',
+    type: triggerStep?.type || 'trigger_new_chat',
     keywords: triggerStep?.config?.keywords || '',
     matchType: triggerStep?.config?.match_type || 'contains',
   };
@@ -200,7 +196,7 @@ export default function AutomationEditor({ automationId, initialName, initialSte
   const { selectedWabaId } = useWaba();
   const [name, setName] = useState(initialName || '');
   const [trigger, setTrigger] = useState<TriggerConfig>({
-    type: 'trigger_message',
+    type: 'trigger_new_chat',
     keywords: '',
     matchType: 'contains',
   });
@@ -356,7 +352,7 @@ export default function AutomationEditor({ automationId, initialName, initialSte
                 </select>
               </div>
 
-              {trigger.type === 'trigger_message' && (
+              {trigger.type === 'trigger_new_chat' && (
                 <>
                   <div>
                     <label className="mb-1 block text-xs font-medium text-gray-500 uppercase tracking-wider dark:text-gray-400">

@@ -8,7 +8,7 @@ const { sendWhatsAppMessage } = require('./whatsapp');
  * Each run is logged in automation_executions.
  *
  * @param {string} orgId
- * @param {string} triggerType - e.g. 'message_received', 'conversation_opened'
+ * @param {string} triggerType - e.g. 'new_chat', 'schedule'
  * @param {object} context - { message, conversation_id, contact_id, ... }
  */
 async function runAutomations(orgId, triggerType, context = {}) {
@@ -202,7 +202,58 @@ async function executeStep(step, orgId, wabaAccountId, context) {
   }
 }
 
+/**
+ * Run all active automations with schedule triggers that are due.
+ */
+async function runScheduledAutomations() {
+  try {
+    const result = await query(
+      `SELECT a.id, a.org_id, a.waba_account_id, an.config
+       FROM automations a
+       JOIN automation_nodes an ON an.automation_id = a.id
+       WHERE a.is_active = true AND an.type = 'trigger_schedule'
+       ORDER BY a.id`
+    );
+
+    for (const row of result.rows) {
+      const config = row.config || {};
+      const intervalMinutes = config.interval_minutes || 60;
+
+      const lastExecResult = await query(
+        `SELECT created_at FROM automation_executions
+         WHERE automation_id = $1 AND trigger_type = 'schedule'
+         ORDER BY created_at DESC LIMIT 1`,
+        [row.id]
+      );
+
+      let shouldRun = true;
+      if (lastExecResult.rows.length > 0) {
+        const lastRun = new Date(lastExecResult.rows[0].created_at);
+        const nextRun = new Date(lastRun.getTime() + intervalMinutes * 60 * 1000);
+        if (nextRun > new Date()) {
+          shouldRun = false;
+        }
+      }
+
+      if (shouldRun) {
+        const nodesResult = await query(
+          `SELECT id, type, label, config
+           FROM automation_nodes
+           WHERE automation_id = $1
+           ORDER BY created_at`,
+          [row.id]
+        );
+        const steps = camelize(nodesResult.rows);
+        await executeAutomation(row.id, row.org_id, row.waba_account_id, 'schedule', steps, {});
+      }
+    }
+  } catch (err) {
+    logger.error('Scheduled automation runner error', err);
+  }
+}
+
 module.exports = {
   runAutomations,
   executeAutomation,
+  runScheduledAutomations,
 };
