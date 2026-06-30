@@ -30,6 +30,7 @@ import {
   LuBellOff as BellOff,
   LuTag as Tag,
   LuFolder as Folder,
+  LuWebhook as Webhook,
 } from 'react-icons/lu';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -69,7 +70,9 @@ const settingsGroup: NavGroup = {
   items: [
     { label: 'General', href: '/dashboard/settings/general', icon: Building2, permission: 'settings.read' as string | null },
     { label: 'Labels', href: '/dashboard/settings/labels', icon: Tag, permission: 'settings.read' as string | null },
+    { label: 'Notifications', href: '/dashboard/settings/notifications', icon: Bell, permission: 'settings.read' as string | null },
     { label: 'Files', href: '/dashboard/settings/files', icon: Folder, permission: 'settings.read' as string | null },
+    { label: 'Integrations', href: '/dashboard/settings/integrations', icon: Webhook, permission: 'settings.manage' as string | null },
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
     { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
     { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },

@@ -223,9 +223,14 @@ export default function GeneralSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl">
+    <div className="mx-auto max-w-3xl space-y-5">
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">General</h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Manage your organization details and platform preferences.</p>
+      </div>
+
       {/* Organization Header Card */}
-      <div className="panel mb-6 overflow-hidden">
+      <div className="panel overflow-hidden">
         <div className="relative h-20 bg-gradient-to-r from-primary-600 to-primary-500">
           <div
             className="absolute inset-0 opacity-10"
