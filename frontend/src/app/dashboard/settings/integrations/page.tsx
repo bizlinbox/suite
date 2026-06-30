@@ -198,7 +198,7 @@ export default function IntegrationsPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="max-w-5xl mx-auto space-y-5">
       <div className="panel">
         <div className="mb-5 flex items-start justify-between gap-4">
           <div>
@@ -213,7 +213,7 @@ export default function IntegrationsPage() {
           </button>
         </div>
 
-        <div className="panel overflow-hidden p-0">
+        <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-700">
           <Table>
             <TableHeader>
               <tr>

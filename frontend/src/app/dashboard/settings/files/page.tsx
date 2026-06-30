@@ -105,7 +105,7 @@ export default function FilesPage() {
   const currentPage = useMemo(() => Math.floor(offset / PAGE_SIZE) + 1, [offset]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="max-w-5xl mx-auto space-y-5">
       {/* Storage usage summary */}
       <div className="panel flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

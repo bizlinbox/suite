@@ -70,7 +70,7 @@ export default function NotificationsSettingsPage() {
   }
 
   return (
-    <div className="panel space-y-6">
+    <div className="max-w-5xl mx-auto space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Push Notifications</h2>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -78,7 +78,8 @@ export default function NotificationsSettingsPage() {
         </p>
       </div>
 
-      <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+      <div className="panel space-y-6">
+        <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
         <div className="flex items-center gap-3">
           <div
             className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
@@ -146,6 +147,7 @@ export default function NotificationsSettingsPage() {
           ))}
         </ul>
       </div>
+    </div>
     </div>
   );
 }

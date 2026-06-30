@@ -113,8 +113,12 @@ export default function LabelsPage() {
   }
 
   return (
-    <div>
-      <div className="mb-4 flex justify-end">
+    <div className="max-w-5xl mx-auto space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Labels</h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Organize conversations with color-coded labels.</p>
+        </div>
         <button onClick={openCreate} className="btn-primary">
           <Plus size={16} />
           Add Label
