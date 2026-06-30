@@ -63,6 +63,7 @@ const settingsGroup: NavGroup = {
   icon: Settings2,
   permission: null,
   items: [
+    { label: 'General', href: '/dashboard/settings/general', icon: Building2, permission: 'settings.read' as string | null },
     { label: 'Users', href: '/dashboard/users', icon: Users, permission: 'users.read' as string | null },
     { label: 'Roles', href: '/dashboard/roles', icon: Shield, permission: 'roles.read' as string | null },
     { label: 'WABA', href: '/dashboard/waba-accounts', icon: Plug, permission: 'settings.manage' as string | null },
