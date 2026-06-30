@@ -43,6 +43,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const convLoadingRef = useRef(false);
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const recentlyDeletedRef = useRef<Set<string>>(new Set());
 
   const fetchConversations = useCallback(async (offset = 0, search = '', append = false) => {
     if (convLoadingRef.current && offset > 0) return;
@@ -53,10 +54,15 @@ export default function Inbox({ selectedId }: InboxProps) {
       if (search.trim()) params.q = search.trim();
       const res = await api.get('/conversations', { params });
       const newConvs = res.data.conversations || [];
+      const filteredNewConvs = newConvs.filter((c: Conversation) => !recentlyDeletedRef.current.has(c.id));
       setConvTotal(res.data.total || 0);
       setConversations((prev) => {
-        if (append) return [...prev, ...newConvs];
-        return newConvs;
+        if (append) {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const uniqueNew = filteredNewConvs.filter((c: Conversation) => !existingIds.has(c.id));
+          return [...prev, ...uniqueNew];
+        }
+        return filteredNewConvs;
       });
       setConvOffset(offset);
     } catch (err: any) {
@@ -89,6 +95,8 @@ export default function Inbox({ selectedId }: InboxProps) {
     if (!socket) return;
 
     const handleNewMessage = (message: Message) => {
+      if (recentlyDeletedRef.current.has(message.conversationId)) return;
+
       // Play notification sound for incoming contact messages
       if (message.senderType === 'contact' && audioRef.current) {
         audioRef.current.currentTime = 0;
@@ -142,7 +150,7 @@ export default function Inbox({ selectedId }: InboxProps) {
 
     const handleConversationUpdated = (updated: Record<string, unknown>) => {
       const convId = (updated.id as string) || (updated.conversationId as string);
-      if (!convId) return;
+      if (!convId || recentlyDeletedRef.current.has(convId)) return;
 
       setConversations((prev) => {
         const exists = prev.find((c) => c.id === convId);
@@ -265,22 +273,28 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   const handleConfirmDelete = useCallback(async () => {
     if (!confirmDeleteId) return;
+
+    // Optimistic update: remove immediately and track as recently deleted
+    recentlyDeletedRef.current.add(confirmDeleteId);
+    setConversations((prev) => prev.filter((c) => c.id !== confirmDeleteId));
+    setConvTotal((t) => Math.max(0, t - 1));
+
     setDeletingId(confirmDeleteId);
     try {
       await api.delete(`/conversations/${confirmDeleteId}`);
-      setConversations((prev) => prev.filter((c) => c.id !== confirmDeleteId));
-      setConvTotal((t) => Math.max(0, t - 1));
       toastSuccess('Conversation deleted');
       if (selectedId === confirmDeleteId) {
         router.push('/dashboard/inbox');
       }
     } catch (err: any) {
+      recentlyDeletedRef.current.delete(confirmDeleteId);
+      fetchConversations(convOffset, convSearch);
       toastError(err.response?.data?.error || 'Failed to delete conversation');
     } finally {
       setDeletingId(null);
       setConfirmDeleteId(null);
     }
-  }, [confirmDeleteId, selectedId, router]);
+  }, [confirmDeleteId, selectedId, router, convOffset, convSearch, fetchConversations]);
 
   const handleBulkDeleteRequest = useCallback((ids: string[]) => {
     setBulkDeleteIds(ids);
@@ -288,22 +302,28 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   const handleConfirmBulkDelete = useCallback(async () => {
     if (!bulkDeleteIds || bulkDeleteIds.length === 0) return;
+
+    // Optimistic update: remove immediately and track as recently deleted
+    bulkDeleteIds.forEach((id) => recentlyDeletedRef.current.add(id));
+    setConversations((prev) => prev.filter((c) => !bulkDeleteIds.includes(c.id)));
+    setConvTotal((t) => Math.max(0, t - bulkDeleteIds.length));
+
     setBulkDeleting(true);
     try {
       await api.delete('/conversations/bulk', { data: { ids: bulkDeleteIds } });
-      setConversations((prev) => prev.filter((c) => !bulkDeleteIds.includes(c.id)));
-      setConvTotal((t) => Math.max(0, t - bulkDeleteIds.length));
       toastSuccess(`${bulkDeleteIds.length} conversation(s) deleted`);
       if (bulkDeleteIds.includes(selectedId || '')) {
         router.push('/dashboard/inbox');
       }
     } catch (err: any) {
+      bulkDeleteIds.forEach((id) => recentlyDeletedRef.current.delete(id));
+      fetchConversations(convOffset, convSearch);
       toastError(err.response?.data?.error || 'Failed to delete conversations');
     } finally {
       setBulkDeleting(false);
       setBulkDeleteIds(null);
     }
-  }, [bulkDeleteIds, selectedId, router]);
+  }, [bulkDeleteIds, selectedId, router, convOffset, convSearch, fetchConversations]);
 
   const handleLoadMoreConversations = useCallback(() => {
     if (convLoadingRef.current) return;
@@ -327,6 +347,7 @@ export default function Inbox({ selectedId }: InboxProps) {
   // Fallback: fetch specific conversation if selected but not in loaded list
   useEffect(() => {
     if (!selectedId || selectedConversation || convLoading) return;
+    if (recentlyDeletedRef.current.has(selectedId)) return;
     api.get(`/conversations/${selectedId}`)
       .then((res) => {
         const conv = res.data.conversation;

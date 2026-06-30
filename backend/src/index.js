@@ -102,9 +102,19 @@ app.use((req, res, next) => {
 // Rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 200,
+  max: 1000,
   standardHeaders: true,
   legacyHeaders: false,
+  keyGenerator: (req) => {
+    const token = req.cookies?.accessToken;
+    if (token) {
+      try {
+        const decoded = require('jsonwebtoken').decode(token);
+        if (decoded?.id) return decoded.id;
+      } catch (_) { /* ignore invalid token */ }
+    }
+    return req.ip;
+  },
 });
 
 const authLimiter = rateLimit({
