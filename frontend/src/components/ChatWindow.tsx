@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { LuSend as Send, LuPaperclip as Paperclip, LuX as X, LuFileText as FileText, LuMusic as Music, LuVideo as Video, LuImage as ImageIcon, LuMapPin as MapPin, LuCheck as Check, LuCheckCheck as CheckCheck, LuCircleAlert as AlertCircle, LuUser as User, LuLock as Lock, LuLockOpen as Unlock, LuMic as Mic, LuPlay as Play, LuPause as Pause, LuCircleStop as StopCircle, LuTextCursorInput as FormInput, LuLoader as Loader2, LuTrash2 as Trash2, LuMail as Mail, LuTag as TagIcon } from 'react-icons/lu';
+import { LuSend as Send, LuPaperclip as Paperclip, LuX as X, LuFileText as FileText, LuMusic as Music, LuVideo as Video, LuImage as ImageIcon, LuMapPin as MapPin, LuCheck as Check, LuCheckCheck as CheckCheck, LuCircleAlert as AlertCircle, LuLock as Lock, LuLockOpen as Unlock, LuMic as Mic, LuPlay as Play, LuPause as Pause, LuCircleStop as StopCircle, LuTextCursorInput as FormInput, LuLoader as Loader2, LuTrash2 as Trash2, LuMail as Mail, LuTag as TagIcon } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
@@ -1471,14 +1471,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   </div>
                 )}
                 <div className={`group flex items-end gap-1 ${isUser ? 'justify-end' : 'justify-start'}`}>
-                  {!isUser && isFirstInGroup && (
-                    <div
-                      className="mb-1 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-gray-200 text-[10px] font-semibold text-gray-600 dark:bg-gray-700 dark:text-gray-300"
-                      title={contactName}
-                    >
-                      {contactName.charAt(0).toUpperCase()}
-                    </div>
-                  )}
                   {/* Reaction picker button */}
                   <div data-reaction-container={msg.id} className={`relative opacity-0 transition-opacity group-hover:opacity-100 ${isUser ? 'order-first' : 'order-last'}`}>
                     <button
