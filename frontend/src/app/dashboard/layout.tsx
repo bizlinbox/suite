@@ -85,6 +85,8 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
                 </p>
               </div>
             </div>
+          ) : pathname.startsWith('/dashboard/inbox') ? (
+            <div className="h-full">{children}</div>
           ) : (
             <div className="mx-auto max-w-7xl">{children}</div>
           )}

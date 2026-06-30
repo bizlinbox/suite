@@ -374,9 +374,9 @@ export default function Inbox({ selectedId }: InboxProps) {
 
   return (
     <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden md:h-[calc(100vh-48px)]">
-      <div className="panel flex h-full overflow-hidden rounded-2xl">
+      <div className="flex flex-1 overflow-hidden">
         {/* Conversation list - always visible on md+, toggle on mobile */}
-        <div className={`flex-shrink-0 ${selectedId ? 'hidden md:block md:!w-80' : 'block w-full md:!w-80'}`}>
+        <div className={`flex-shrink-0 bg-white dark:bg-gray-900 ${selectedId ? 'hidden md:block md:w-80' : 'block w-full md:w-80'}`}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
@@ -410,7 +410,7 @@ export default function Inbox({ selectedId }: InboxProps) {
               onOpenProfile={() => { setProfileContactId(selectedConversation.contactId); setProfileEditMode(true); setProfileOpen(true); }}
             />
           ) : (
-            <div className="flex flex-1 flex-col items-center justify-center">
+            <div className="flex flex-1 flex-col items-center justify-center bg-white dark:bg-gray-950">
               <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gray-100 dark:bg-gray-800">
                 <MessageSquare size={20} className="text-gray-400 dark:text-gray-500" />
               </div>
