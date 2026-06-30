@@ -7,7 +7,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const tabs = [
     { label: 'General', href: '/dashboard/settings/general' },
     { label: 'Notifications', href: '/dashboard/settings/notifications' },
-    { label: 'Files', href: '/dashboard/settings/files' },
     { label: 'Integrations', href: '/dashboard/settings/integrations' },
   ];
 
