@@ -22,6 +22,7 @@ export interface Message {
   reactionToMessageId?: string | null;
   status?: 'sent' | 'delivered' | 'read' | 'failed';
   errorMessage?: string;
+  flowJson?: Record<string, unknown> | null;
 }
 
 export interface Agent {
@@ -169,25 +170,87 @@ function getMediaUrl(mediaUrl?: string): string {
   return `${api.defaults.baseURL?.replace('/api/v1', '') || ''}/uploads/${mediaUrl}`;
 }
 
-function formatFlowResponse(content: string): Record<string, string>[] {
+interface FlowFieldDef {
+  name: string;
+  label: string;
+  type?: string;
+}
+
+function extractFlowFieldDefs(flowJson: Record<string, unknown>): Map<string, string> {
+  const map = new Map<string, string>();
+  const screens = flowJson.screens;
+  if (!Array.isArray(screens)) return map;
+
+  function scanChildren(children: unknown[]) {
+    if (!Array.isArray(children)) return;
+    for (const child of children) {
+      if (!child || typeof child !== 'object') continue;
+      const c = child as Record<string, unknown>;
+      if (typeof c.name === 'string' && c.name) {
+        const label = typeof c.label === 'string' ? c.label
+          : typeof c.text === 'string' ? c.text
+          : typeof c.title === 'string' ? c.title
+          : c.name;
+        map.set(c.name, label);
+      }
+      if (Array.isArray(c.children)) scanChildren(c.children);
+      if (Array.isArray(c.options)) {
+        for (const opt of c.options) {
+          if (opt && typeof opt === 'object' && typeof (opt as Record<string, unknown>).name === 'string') {
+            const optName = (opt as Record<string, unknown>).name as string;
+            const optLabel = typeof (opt as Record<string, unknown>).label === 'string'
+              ? (opt as Record<string, unknown>).label as string
+              : optName;
+            map.set(optName, optLabel);
+          }
+        }
+      }
+    }
+  }
+
+  for (const screen of screens) {
+    if (!screen || typeof screen !== 'object') continue;
+    const s = screen as Record<string, unknown>;
+    if (typeof s.title === 'string' && s.title) {
+      map.set(`__screen_${s.id || 'default'}`, s.title);
+    }
+    const layout = s.layout;
+    if (layout && typeof layout === 'object') {
+      const l = layout as Record<string, unknown>;
+      if (Array.isArray(l.children)) scanChildren(l.children);
+    }
+    if (Array.isArray(s.children)) scanChildren(s.children);
+  }
+  return map;
+}
+
+function formatFlowResponse(content: string, flowJson?: Record<string, unknown> | null): { label: string; value: string; mapped: boolean }[] {
   try {
     const data = JSON.parse(content);
     if (typeof data !== 'object' || data === null) return [];
-    // WhatsApp flows sometimes wrap responses in a "values" object
     const target = data.values && typeof data.values === 'object' ? data.values : data;
-    const entries: Record<string, string>[] = [];
+    const fieldMap = flowJson ? extractFlowFieldDefs(flowJson) : new Map<string, string>();
+
+    const entries: { label: string; value: string; mapped: boolean }[] = [];
     for (const [key, value] of Object.entries(target)) {
       if (key === 'flow_token') continue;
       let display = '';
       if (Array.isArray(value)) {
-        display = value.map((v) => (typeof v === 'string' ? v.replace(/_/g, ' ') : String(v))).join(', ');
+        display = value.map((v) => {
+          if (typeof v !== 'string') return String(v);
+          const mappedLabel = fieldMap.get(v);
+          return mappedLabel ? mappedLabel : v.replace(/_/g, ' ');
+        }).join(', ');
       } else if (typeof value === 'string') {
-        display = value.replace(/_/g, ' ');
+        const mappedLabel = fieldMap.get(value);
+        display = mappedLabel ? mappedLabel : value.replace(/_/g, ' ');
       } else {
         display = String(value);
       }
-      const label = key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-      entries.push({ label, value: display });
+      const mappedLabel = fieldMap.get(key);
+      const label = mappedLabel ? mappedLabel
+        : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      entries.push({ label, value: display, mapped: !!mappedLabel });
     }
     return entries;
   } catch {
@@ -1481,21 +1544,27 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                         <div className="flex items-end gap-2">
                           {msg.messageType === 'nfm_reply' ? (
                             <div className="flex-1">
-                              <div className={`mb-2 flex items-center gap-1.5 rounded-lg px-2 py-1 ${isUser ? 'bg-green-900/30' : 'bg-green-50 dark:bg-green-900/20'}`}>
+                              <div className={`mb-2.5 flex items-center gap-1.5 rounded-lg px-2 py-1 ${isUser ? 'bg-green-900/30' : 'bg-green-50 dark:bg-green-900/20'}`}>
                                 <FormInput size={14} className="text-green-600 dark:text-green-400" />
                                 <span className="text-xs font-medium text-green-600 dark:text-green-400">Form completed</span>
                               </div>
                               {(() => {
-                                const entries = formatFlowResponse(msg.content);
+                                const entries = formatFlowResponse(msg.content, msg.flowJson);
                                 if (entries.length > 0) {
                                   return (
-                                    <div className="space-y-1">
-                                      {entries.map((entry) => (
-                                        <div key={entry.label} className="flex gap-2 text-[13px]">
-                                          <span className={`flex-shrink-0 font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
-                                          <span className={`break-words ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>{entry.value}</span>
-                                        </div>
-                                      ))}
+                                    <div className={`rounded-lg border p-3 ${isUser ? 'border-white/10 bg-black/10' : 'border-gray-200 bg-gray-50 dark:border-gray-700/60 dark:bg-gray-800/50'}`}>
+                                      <div className="space-y-2">
+                                        {entries.map((entry) => (
+                                          <div key={entry.label} className="flex flex-col gap-0.5 text-[13px]">
+                                            <span className={`text-[11px] font-semibold uppercase tracking-wide ${isUser ? 'text-white/60' : 'text-gray-500 dark:text-gray-400'}`}>
+                                              {entry.label}
+                                            </span>
+                                            <span className={`break-words leading-snug ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                                              {entry.value}
+                                            </span>
+                                          </div>
+                                        ))}
+                                      </div>
                                     </div>
                                   );
                                 }

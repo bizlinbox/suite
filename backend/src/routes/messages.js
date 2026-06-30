@@ -52,9 +52,18 @@ router.get('/', async (req, res, next) => {
     const offset = parseInt(req.query.offset, 10) || 0;
     const direction = req.query.direction === 'desc' ? 'DESC' : 'ASC';
 
-    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.error_message, m.reaction_to_message_id, m.created_at
+    let msgSql = `SELECT m.id, m.conversation_id, m.sender_type, m.content, m.media_url, m.media_mime_type, m.filename, m.voice, m.message_type, m.status, m.external_id, m.error_message, m.reaction_to_message_id, m.created_at,
+                        flow_data.flow_json AS flow_json
                   FROM messages m
                   JOIN conversations c ON c.id = m.conversation_id
+                  LEFT JOIN LATERAL (
+                    SELECT f.flow_json
+                    FROM flow_submissions fs
+                    JOIN flows f ON f.id = fs.flow_id
+                    WHERE fs.conversation_id = m.conversation_id
+                    ORDER BY fs.completed_at DESC NULLS LAST, fs.created_at DESC
+                    LIMIT 1
+                  ) flow_data ON m.message_type = 'nfm_reply'
                   WHERE m.conversation_id = $1 AND c.org_id = $2`;
     const msgParams = [conversation_id, req.user.org_id];
     if (req.wabaAccountId) {
