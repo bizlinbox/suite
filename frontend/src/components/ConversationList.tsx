@@ -131,8 +131,19 @@ export default function ConversationList({
           </div>
         </div>
 
-        {selectMode ? (
-          <div className="flex items-center justify-between">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange?.(e.target.value)}
+            className="input pl-9"
+          />
+        </div>
+
+        {selectMode && (
+          <div className="mt-2 flex items-center justify-between">
             <button
               onClick={toggleSelectAll}
               className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
@@ -149,17 +160,6 @@ export default function ConversationList({
                 Delete ({selectedIds.length})
               </button>
             )}
-          </div>
-        ) : (
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search conversations..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange?.(e.target.value)}
-              className="input pl-9"
-            />
           </div>
         )}
       </div>

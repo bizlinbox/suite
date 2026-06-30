@@ -55,7 +55,7 @@ const topNavItems: NavItem[] = [
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, permission: 'analytics.read' as string | null },
   { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
-  { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
+  { label: 'WhatsApp Forms', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
 ];
 
 const settingsGroup: NavGroup = {
