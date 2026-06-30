@@ -224,38 +224,57 @@ function extractFlowFieldDefs(flowJson: Record<string, unknown>): Map<string, st
   return map;
 }
 
-function formatFlowResponse(content: string, flowJson?: Record<string, unknown> | null): { label: string; value: string; mapped: boolean }[] {
+function parseFlowContent(content: string): Record<string, unknown> | null {
+  if (!content) return null;
+  // Strip common prefixes that WhatsApp or old code may have added
+  const stripped = content
+    .replace(/^Flow response:\s*/i, '')
+    .replace(/^Response:\s*/i, '')
+    .trim();
   try {
-    const data = JSON.parse(content);
-    if (typeof data !== 'object' || data === null) return [];
-    const target = data.values && typeof data.values === 'object' ? data.values : data;
-    const fieldMap = flowJson ? extractFlowFieldDefs(flowJson) : new Map<string, string>();
-
-    const entries: { label: string; value: string; mapped: boolean }[] = [];
-    for (const [key, value] of Object.entries(target)) {
-      if (key === 'flow_token') continue;
-      let display = '';
-      if (Array.isArray(value)) {
-        display = value.map((v) => {
-          if (typeof v !== 'string') return String(v);
-          const mappedLabel = fieldMap.get(v);
-          return mappedLabel ? mappedLabel : v.replace(/_/g, ' ');
-        }).join(', ');
-      } else if (typeof value === 'string') {
-        const mappedLabel = fieldMap.get(value);
-        display = mappedLabel ? mappedLabel : value.replace(/_/g, ' ');
-      } else {
-        display = String(value);
-      }
-      const mappedLabel = fieldMap.get(key);
-      const label = mappedLabel ? mappedLabel
-        : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-      entries.push({ label, value: display, mapped: !!mappedLabel });
-    }
-    return entries;
+    const data = JSON.parse(stripped);
+    if (typeof data === 'object' && data !== null) return data;
   } catch {
-    return [];
+    // try to extract JSON object from inside the text
+    const match = stripped.match(/\{[\s\S]*\}/);
+    if (match) {
+      try {
+        const data = JSON.parse(match[0]);
+        if (typeof data === 'object' && data !== null) return data;
+      } catch {}
+    }
   }
+  return null;
+}
+
+function formatFlowResponse(content: string, flowJson?: Record<string, unknown> | null): { label: string; value: string; mapped: boolean }[] {
+  const data = parseFlowContent(content);
+  if (!data) return [];
+  const target = data.values && typeof data.values === 'object' && data.values !== null ? data.values : data;
+  const fieldMap = flowJson ? extractFlowFieldDefs(flowJson) : new Map<string, string>();
+
+  const entries: { label: string; value: string; mapped: boolean }[] = [];
+  for (const [key, value] of Object.entries(target)) {
+    if (key === 'flow_token') continue;
+    let display = '';
+    if (Array.isArray(value)) {
+      display = value.map((v) => {
+        if (typeof v !== 'string') return String(v);
+        const mappedLabel = fieldMap.get(v);
+        return mappedLabel ? mappedLabel : v.replace(/_/g, ' ');
+      }).join(', ');
+    } else if (typeof value === 'string') {
+      const mappedLabel = fieldMap.get(value);
+      display = mappedLabel ? mappedLabel : value.replace(/_/g, ' ');
+    } else {
+      display = String(value);
+    }
+    const mappedLabel = fieldMap.get(key);
+    const label = mappedLabel ? mappedLabel
+      : key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    entries.push({ label, value: display, mapped: !!mappedLabel });
+  }
+  return entries;
 }
 
 function formatAudioTime(seconds: number): string {
@@ -1484,7 +1503,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                     )}
                   </div>
 
-                  <div className="flex max-w-[75%] flex-col">
+                  <div className="flex max-w-[75%] min-w-0 flex-col">
                     <div
                       className={`relative px-4 py-2.5 ${
                         isUser
@@ -1552,7 +1571,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                                 const entries = formatFlowResponse(msg.content, msg.flowJson);
                                 if (entries.length > 0) {
                                   return (
-                                    <div className={`rounded-lg border p-3 ${isUser ? 'border-white/10 bg-black/10' : 'border-gray-200 bg-gray-50 dark:border-gray-700/60 dark:bg-gray-800/50'}`}>
+                                    <div className={`min-w-0 rounded-lg border p-3 ${isUser ? 'border-white/10 bg-black/10' : 'border-gray-200 bg-gray-50 dark:border-gray-700/60 dark:bg-gray-800/50'}`}>
                                       <div className="space-y-2">
                                         {entries.map((entry) => (
                                           <div key={entry.label} className="flex flex-col gap-0.5 text-[13px]">
@@ -1568,11 +1587,11 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                                     </div>
                                   );
                                 }
-                                return <p className={`break-words text-[13px] ${isUser ? 'text-white/90' : 'text-gray-700 dark:text-gray-300'}`}>{msg.content}</p>;
+                                return <p className={`break-all text-[13px] ${isUser ? 'text-white/90' : 'text-gray-700 dark:text-gray-300'}`}>{msg.content}</p>;
                               })()}
                             </div>
                           ) : (
-                            <p className="flex-1 break-words text-[14.2px] leading-snug">{msg.content}</p>
+                            <p className="flex-1 break-all text-[14.2px] leading-snug">{msg.content}</p>
                           )}
                           <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-white/70 dark:text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatMessageDate(msg.createdAt)}
