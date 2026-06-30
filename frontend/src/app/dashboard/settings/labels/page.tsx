@@ -204,14 +204,23 @@ export default function LabelsPage() {
                     />
                   ))}
                 </div>
-                <input
-                  type="text"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="input mt-2 w-full"
-                  placeholder="#3B82F6"
-                  pattern="^#[0-9A-Fa-f]{6}$"
-                />
+                <div className="mt-2 flex items-center gap-2">
+                  <input
+                    type="color"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="h-9 w-9 cursor-pointer rounded border-0 bg-transparent p-0"
+                    title="Pick a color"
+                  />
+                  <input
+                    type="text"
+                    value={color}
+                    onChange={(e) => setColor(e.target.value)}
+                    className="input w-full"
+                    placeholder="#3B82F6"
+                    pattern="^#[0-9A-Fa-f]{6}$"
+                  />
+                </div>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button type="button" onClick={() => setDialogOpen(false)} className="btn-secondary">

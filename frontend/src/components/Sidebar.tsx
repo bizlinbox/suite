@@ -26,6 +26,8 @@ import {
   LuServer as Server,
   LuSettings2 as Settings2,
   LuBookOpen as BookOpen,
+  LuBell as Bell,
+  LuBellOff as BellOff,
 } from 'react-icons/lu';
 import { useAuth } from '@/hooks/useAuth';
 import { useWaba } from '@/context/WabaContext';
@@ -172,6 +174,60 @@ function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   );
 }
 
+function NotificationToggle({ collapsed }: { collapsed: boolean }) {
+  const [enabled, setEnabled] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const { areNotificationsEnabled, getNotificationPermission, isNotificationsSupported } = require('@/lib/notifications');
+    if (!isNotificationsSupported()) {
+      setPermission('denied');
+      return;
+    }
+    setEnabled(areNotificationsEnabled());
+    setPermission(getNotificationPermission());
+  }, []);
+
+  const handleToggle = async () => {
+    if (typeof window === 'undefined') return;
+    const { areNotificationsEnabled, getNotificationPermission, requestNotificationPermission, setNotificationsEnabled } = require('@/lib/notifications');
+
+    if (enabled) {
+      setNotificationsEnabled(false);
+      setEnabled(false);
+    } else {
+      const current = getNotificationPermission();
+      if (current !== 'granted') {
+        const result = await requestNotificationPermission();
+        setPermission(result);
+        if (result !== 'granted') return;
+      }
+      setNotificationsEnabled(true);
+      setEnabled(true);
+    }
+  };
+
+  const isBlocked = permission === 'denied';
+  const active = enabled && permission === 'granted';
+
+  return (
+    <button
+      onClick={handleToggle}
+      disabled={isBlocked}
+      className={`flex items-center rounded-lg border text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 ${
+        active
+          ? 'border-green-200 bg-green-50 text-green-600 hover:bg-green-100 dark:border-green-900/30 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/30'
+          : 'border-gray-200 bg-gray-100 hover:bg-gray-200 dark:border-gray-700 dark:bg-gray-800/60 dark:hover:bg-gray-700/60'
+      } ${collapsed ? 'h-8 w-8 justify-center p-0' : 'h-8 w-8 justify-center p-0'} ${isBlocked ? 'cursor-not-allowed opacity-50' : ''}`}
+      aria-label={active ? 'Disable notifications' : 'Enable notifications'}
+      title={isBlocked ? 'Notifications blocked in browser' : active ? 'Notifications on' : 'Notifications off'}
+    >
+      {active ? <Bell size={16} className="shrink-0" /> : <BellOff size={16} className="shrink-0" />}
+    </button>
+  );
+}
+
 export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, collapsed = false }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -207,6 +263,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
           )}
         </Link>
         <div className="flex items-center gap-1">
+          {!isCollapsed && <NotificationToggle collapsed={isCollapsed} />}
           {!isCollapsed && mobileOpen && (
             <button
               onClick={onMobileClose}
