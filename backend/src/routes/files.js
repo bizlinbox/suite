@@ -8,6 +8,27 @@ const logger = require('../utils/logger');
 
 const router = express.Router();
 
+function shouldSkipDirectory(entry, relativePath, orgId) {
+  if (entry.name === 'temp') return true;
+  if (!relativePath.startsWith('whatsapp_media')) return false;
+
+  const parts = relativePath.split('/');
+  if (parts.length < 2) return false;
+
+  const dirOrgId = parts[1];
+  return String(orgId) !== String(dirOrgId);
+}
+
+function addFileEntry(files, fullPath, relativePath, entry) {
+  const stat = fs.statSync(fullPath);
+  files.push({
+    path: relativePath,
+    name: entry.name,
+    size: stat.size,
+    createdAt: stat.mtime.toISOString(),
+  });
+}
+
 function scanFiles(dir, baseDir, files = [], orgId = null) {
   try {
     if (!fs.existsSync(dir)) return files;
@@ -18,26 +39,10 @@ function scanFiles(dir, baseDir, files = [], orgId = null) {
       const relativePath = path.relative(baseDir, fullPath).replace(/\\/g, '/');
 
       if (entry.isDirectory()) {
-        if (entry.name === 'temp') continue;
-
-        // For whatsapp_media, only scan the org-specific subdirectory
-        if (relativePath.startsWith('whatsapp_media')) {
-          const parts = relativePath.split('/');
-          if (parts.length >= 2) {
-            const dirOrgId = parts[1];
-            if (String(orgId) !== String(dirOrgId)) continue;
-          }
-        }
-
+        if (shouldSkipDirectory(entry, relativePath, orgId)) continue;
         scanFiles(fullPath, baseDir, files, orgId);
       } else {
-        const stat = fs.statSync(fullPath);
-        files.push({
-          path: relativePath,
-          name: entry.name,
-          size: stat.size,
-          createdAt: stat.mtime.toISOString(),
-        });
+        addFileEntry(files, fullPath, relativePath, entry);
       }
     }
   } catch (err) {
