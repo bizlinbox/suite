@@ -3,8 +3,6 @@
 import {
   LuMail as Mail,
   LuCircleAlert as AlertCircle,
-  LuCircleCheck as CheckCircle,
-  LuZap as Zap,
 } from 'react-icons/lu';
 
 const troubleshooting = [
@@ -76,35 +74,7 @@ export default function KnowledgeBasePage() {
         </div>
       </div>
 
-      {/* Pro Tips */}
-      <div className="mt-8 panel bg-gradient-to-br from-primary-50 to-primary-100 p-6 dark:from-primary-900/20 dark:to-primary-800/20">
-        <div className="flex items-start gap-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary-200 text-primary-800 dark:bg-primary-800/40 dark:text-primary-300">
-            <Zap size={20} />
-          </div>
-          <div>
-            <h3 className="mb-2 font-semibold text-gray-900 dark:text-gray-100">Pro Tips</h3>
-            <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
-              <li className="flex items-start gap-2">
-                <CheckCircle size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" />
-                <span>Use keyboard shortcuts (Ctrl+K) to quickly access conversations</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" />
-                <span>Set up quick replies for common customer inquiries</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" />
-                <span>Enable automations to reduce response time and improve efficiency</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <CheckCircle size={16} className="mt-0.5 shrink-0 text-primary-600 dark:text-primary-400" />
-                <span>Monitor analytics regularly to identify trends and improve performance</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </div>
+
     </div>
   );
 }
