@@ -52,7 +52,6 @@ export default function ProfilePage() {
     try {
       const payload: Record<string, string> = {};
       if (name !== user?.name) payload.name = name;
-      if (email !== user?.email) payload.email = email;
       if (newPassword) {
         payload.current_password = currentPassword;
         payload.new_password = newPassword;
@@ -115,7 +114,7 @@ export default function ProfilePage() {
             </div>
 
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label className="mb-1.5 block text-sm font-medium text-gray-500 dark:text-gray-400">
                 Email Address
               </label>
               <div className="relative">
@@ -123,9 +122,8 @@ export default function ProfilePage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="input pl-9"
-                  required
+                  readOnly
+                  className="input cursor-not-allowed bg-gray-100 pl-9 text-gray-500 dark:bg-gray-800 dark:text-gray-400"
                 />
               </div>
             </div>
