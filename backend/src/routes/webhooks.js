@@ -374,14 +374,11 @@ async function handleIncomingMessage(orgId, msg, phoneNumberId, accessToken, con
                 };
                 content = `Address received: ${addr.address?.trim() || ''}, ${addr.city?.trim() || ''}, ${addr.state?.trim() || ''} ${addr.zip?.trim() || ''}, ${addr.country?.trim() || ''}`.replace(/,\s*,/g, ',').replace(/,\s*$/, '').trim();
               } else {
-                // Generic flow response — summarize the values
-                const entries = Object.entries(responseData.values)
-                  .map(([k, v]) => `${k}: ${v}`)
-                  .join(', ');
-                content = `Flow completed: ${entries}`;
+                // Generic flow response — store as JSON so frontend can render form fields
+                content = JSON.stringify(responseData);
               }
             } else if (Object.keys(responseData).length > 0) {
-              content = `Flow response: ${JSON.stringify(responseData).slice(0, 500)}`;
+              content = JSON.stringify(responseData);
             }
           } catch (parseErr) {
             logger.warn('Failed to parse nfm_reply response_json', { error: parseErr.message, responseJson: nfm.response_json });

@@ -173,8 +173,10 @@ function formatFlowResponse(content: string): Record<string, string>[] {
   try {
     const data = JSON.parse(content);
     if (typeof data !== 'object' || data === null) return [];
+    // WhatsApp flows sometimes wrap responses in a "values" object
+    const target = data.values && typeof data.values === 'object' ? data.values : data;
     const entries: Record<string, string>[] = [];
-    for (const [key, value] of Object.entries(data)) {
+    for (const [key, value] of Object.entries(target)) {
       if (key === 'flow_token') continue;
       let display = '';
       if (Array.isArray(value)) {
