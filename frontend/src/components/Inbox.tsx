@@ -376,7 +376,7 @@ export default function Inbox({ selectedId }: InboxProps) {
     <div className="flex h-[calc(100vh-80px)] flex-col overflow-hidden md:h-[calc(100vh-48px)]">
       <div className="panel flex h-full overflow-hidden rounded-2xl">
         {/* Conversation list - always visible on md+, toggle on mobile */}
-        <div className={`w-full flex-shrink-0 md:block md:w-80 ${selectedId ? 'hidden' : 'block'}`}>
+        <div className={`flex-shrink-0 ${selectedId ? 'hidden md:block md:!w-80' : 'block w-full md:!w-80'}`}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedId}
