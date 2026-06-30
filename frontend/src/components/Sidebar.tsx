@@ -235,7 +235,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
               title={isCollapsed ? item.label : undefined}
               className={`group flex items-center rounded-lg transition-colors ${
                 active
-                  ? 'bg-blue-800 text-white'
+                  ? 'bg-[#002D62] text-white'
                   : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
               } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
             >
@@ -268,7 +268,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                       title={item.label}
                       className={`group flex items-center rounded-lg transition-colors ${
                         active
-                          ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
                           : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                       } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
                     >
@@ -290,14 +290,14 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                   onClick={() => setSettingsOpen((prev) => !prev)}
                   className={`flex w-full items-center rounded-lg transition-colors ${
                     isSettingsActive
-                      ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                      ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                   } gap-3 px-3 py-2.5 text-sm font-medium`}
                 >
                   <Settings2
                     size={18}
                     className={`shrink-0 transition-colors ${
-                      isSettingsActive ? 'text-primary-700 dark:text-primary-300' : 'text-gray-400 dark:text-gray-500'
+                      isSettingsActive ? 'text-white dark:text-white' : 'text-gray-400 dark:text-gray-500'
                     }`}
                   />
                   <span className="flex-1 text-left">Settings</span>
@@ -318,7 +318,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                           onClick={onItemClick}
                           className={`group flex items-center rounded-lg transition-colors ${
                             active
-                              ? 'bg-blue-800 text-white'
+                              ? 'bg-[#002D62] text-white'
                               : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
                           } gap-3 px-3 py-2 text-sm font-medium`}
                         >
