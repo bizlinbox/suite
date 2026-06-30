@@ -1351,7 +1351,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto px-4 py-3">
+      <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden px-4 py-3">
         {msgTotal > messages.length && msgLoading && (
           <div className="mb-2 flex justify-center">
             <Loader2 size={16} className="animate-spin text-gray-400" />
@@ -1436,7 +1436,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                               <img
                                 src={getMediaUrl(msg.mediaUrl)}
                                 alt="Image"
-                                className="max-h-60 w-auto cursor-pointer object-cover"
+                                className="max-h-60 w-auto max-w-full cursor-pointer object-cover"
                                 onClick={() => setLightboxImage(getMediaUrl(msg.mediaUrl))}
                                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                               />
@@ -1447,7 +1447,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                               <video
                                 src={getMediaUrl(msg.mediaUrl)}
                                 controls
-                                className="max-h-60 w-auto"
+                                className="max-h-60 w-auto max-w-full"
                                 onError={(e) => { (e.target as HTMLVideoElement).style.display = 'none'; }}
                               />
                             </div>
@@ -1492,18 +1492,18 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                                     <div className="space-y-1">
                                       {entries.map((entry) => (
                                         <div key={entry.label} className="flex gap-2 text-[13px]">
-                                          <span className={`font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
-                                          <span className={isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}>{entry.value}</span>
+                                          <span className={`flex-shrink-0 font-medium ${isUser ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{entry.label}:</span>
+                                          <span className={`break-words ${isUser ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>{entry.value}</span>
                                         </div>
                                       ))}
                                     </div>
                                   );
                                 }
-                                return <p className={`text-[13px] ${isUser ? 'text-white/90' : 'text-gray-700 dark:text-gray-300'}`}>{msg.content}</p>;
+                                return <p className={`break-words text-[13px] ${isUser ? 'text-white/90' : 'text-gray-700 dark:text-gray-300'}`}>{msg.content}</p>;
                               })()}
                             </div>
                           ) : (
-                            <p className="flex-1 text-[14.2px] leading-snug">{msg.content}</p>
+                            <p className="flex-1 break-words text-[14.2px] leading-snug">{msg.content}</p>
                           )}
                           <span className={`flex-shrink-0 self-end whitespace-nowrap text-[11px] leading-none opacity-70 ${isUser ? 'text-white/70 dark:text-white/70' : 'text-gray-500 dark:text-gray-400'}`}>
                             {formatMessageDate(msg.createdAt)}
