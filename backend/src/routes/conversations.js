@@ -89,6 +89,28 @@ router.get('/', async (req, res, next) => {
       unreadCount: 0,
       lastMessagePreview: '',
     }));
+
+    // Fetch labels for returned conversations
+    if (conversations.length > 0) {
+      const convIds = conversations.map((c) => c.id);
+      const labelPlaceholders = convIds.map((_, i) => `$${i + 1}`).join(',');
+      const labelResult = await query(
+        `SELECT cl.conversation_id, l.id, l.name, l.color
+         FROM conversation_labels cl
+         JOIN labels l ON l.id = cl.label_id
+         WHERE cl.conversation_id IN (${labelPlaceholders})`,
+        convIds
+      );
+      const labelsByConv = {};
+      for (const row of labelResult.rows) {
+        if (!labelsByConv[row.conversation_id]) labelsByConv[row.conversation_id] = [];
+        labelsByConv[row.conversation_id].push({ id: row.id, name: row.name, color: row.color });
+      }
+      for (const c of conversations) {
+        c.labels = labelsByConv[c.id] || [];
+      }
+    }
+
     res.json({ conversations, total, limit, offset });
   } catch (err) {
     logger.error('List conversations error', err);
@@ -122,6 +144,16 @@ router.get('/:id', async (req, res, next) => {
     if (conversation.isPrivate && !isAdmin(req) && conversation.assignedAgentId !== req.user.id) {
       return res.status(404).json({ error: 'Conversation not found' });
     }
+
+    // Fetch labels
+    const labelResult = await query(
+      `SELECT l.id, l.name, l.color
+       FROM conversation_labels cl
+       JOIN labels l ON l.id = cl.label_id
+       WHERE cl.conversation_id = $1`,
+      [req.params.id]
+    );
+    conversation.labels = labelResult.rows.map((r) => ({ id: r.id, name: r.name, color: r.color }));
 
     res.json({ conversation });
   } catch (err) {
@@ -399,6 +431,124 @@ router.delete('/bulk', async (req, res, next) => {
     res.status(204).send();
   } catch (err) {
     logger.error('Bulk delete conversation error', err);
+    next(err);
+  }
+});
+
+// GET /:id/labels - list labels for conversation
+router.get('/:id/labels', async (req, res, next) => {
+  try {
+    const convResult = await query(
+      `SELECT c.id, c.is_private, c.assigned_agent_id
+       FROM conversations c
+       WHERE c.id = $1 AND c.org_id = $2`,
+      [req.params.id, req.user.org_id]
+    );
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    const conv = convResult.rows[0];
+    if (conv.is_private && !isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    const labelResult = await query(
+      `SELECT l.id, l.name, l.color
+       FROM conversation_labels cl
+       JOIN labels l ON l.id = cl.label_id
+       WHERE cl.conversation_id = $1`,
+      [req.params.id]
+    );
+    res.json({ labels: labelResult.rows });
+  } catch (err) {
+    logger.error('List conversation labels error', err);
+    next(err);
+  }
+});
+
+// POST /:id/labels - add label to conversation
+router.post('/:id/labels', async (req, res, next) => {
+  try {
+    const { label_id } = req.body;
+    if (!label_id) {
+      return res.status(400).json({ error: 'label_id is required' });
+    }
+    // Verify conversation access
+    const convResult = await query(
+      `SELECT c.id, c.is_private, c.assigned_agent_id
+       FROM conversations c
+       WHERE c.id = $1 AND c.org_id = $2`,
+      [req.params.id, req.user.org_id]
+    );
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    const conv = convResult.rows[0];
+    if (conv.is_private && !isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    // Verify label belongs to org
+    const labelCheck = await query(
+      'SELECT id FROM labels WHERE id = $1 AND org_id = $2',
+      [label_id, req.user.org_id]
+    );
+    if (labelCheck.rows.length === 0) {
+      return res.status(404).json({ error: 'Label not found' });
+    }
+    await query(
+      `INSERT INTO conversation_labels (conversation_id, label_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [req.params.id, label_id]
+    );
+    const labelResult = await query(
+      `SELECT l.id, l.name, l.color
+       FROM conversation_labels cl
+       JOIN labels l ON l.id = cl.label_id
+       WHERE cl.conversation_id = $1`,
+      [req.params.id]
+    );
+    const labels = labelResult.rows;
+    emitToOrg(req.user.org_id, 'conversation_updated', { id: req.params.id, labels });
+    res.json({ labels });
+  } catch (err) {
+    logger.error('Add conversation label error', err);
+    next(err);
+  }
+});
+
+// DELETE /:id/labels/:labelId - remove label from conversation
+router.delete('/:id/labels/:labelId', async (req, res, next) => {
+  try {
+    // Verify conversation access
+    const convResult = await query(
+      `SELECT c.id, c.is_private, c.assigned_agent_id
+       FROM conversations c
+       WHERE c.id = $1 AND c.org_id = $2`,
+      [req.params.id, req.user.org_id]
+    );
+    if (convResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Conversation not found' });
+    }
+    const conv = convResult.rows[0];
+    if (conv.is_private && !isAdmin(req) && conv.assigned_agent_id !== req.user.id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    await query(
+      'DELETE FROM conversation_labels WHERE conversation_id = $1 AND label_id = $2',
+      [req.params.id, req.params.labelId]
+    );
+    const labelResult = await query(
+      `SELECT l.id, l.name, l.color
+       FROM conversation_labels cl
+       JOIN labels l ON l.id = cl.label_id
+       WHERE cl.conversation_id = $1`,
+      [req.params.id]
+    );
+    const labels = labelResult.rows;
+    emitToOrg(req.user.org_id, 'conversation_updated', { id: req.params.id, labels });
+    res.json({ labels });
+  } catch (err) {
+    logger.error('Remove conversation label error', err);
     next(err);
   }
 });

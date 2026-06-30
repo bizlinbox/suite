@@ -112,7 +112,7 @@ export default function AutomationsPage() {
       <div className="page-header">
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-gray-100">Automations</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Build and manage message workflows</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Manage automation rules</p>
         </div>
         {can('automations.manage') && (
           <Link
@@ -131,7 +131,7 @@ export default function AutomationsPage() {
             <tr>
               <TableHead>Name</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Steps</TableHead>
+              <TableHead>Actions</TableHead>
               <TableHead>Runs (30d)</TableHead>
               <TableHead>Created</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -157,7 +157,7 @@ export default function AutomationsPage() {
                     {a.isActive ? 'Active' : 'Inactive'}
                   </span>
                 </TableCell>
-                <TableCell>{a.stepCount} steps</TableCell>
+                <TableCell>{a.stepCount} actions</TableCell>
                 <TableCell>
                   <span className={a.failedCount > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}>
                     {a.executionCount.toLocaleString()}

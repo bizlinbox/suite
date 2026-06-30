@@ -14,6 +14,7 @@ export interface Conversation {
   assignedAgentName?: string;
   isPrivate?: boolean;
   assignedAgentId?: string;
+  labels?: { id: string; name: string; color: string }[];
 }
 
 interface ConversationListProps {
@@ -266,6 +267,19 @@ export default function ConversationList({
                       <p className="mt-0.5 text-[10px] font-medium text-primary-600 dark:text-primary-400">
                         Assigned to {conversation.assignedAgentName}
                       </p>
+                    )}
+                    {conversation.labels && conversation.labels.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {conversation.labels.map((l) => (
+                          <span
+                            key={l.id}
+                            className="inline-block rounded-full px-1.5 py-[1px] text-[9px] font-medium"
+                            style={{ backgroundColor: l.color + '20', color: l.color }}
+                          >
+                            {l.name}
+                          </span>
+                        ))}
+                      </div>
                     )}
                   </div>
                 </div>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { LuSend as Send, LuPaperclip as Paperclip, LuX as X, LuFileText as FileText, LuMusic as Music, LuVideo as Video, LuImage as ImageIcon, LuMapPin as MapPin, LuCheck as Check, LuCheckCheck as CheckCheck, LuCircleAlert as AlertCircle, LuUser as User, LuLock as Lock, LuLockOpen as Unlock, LuMic as Mic, LuPlay as Play, LuPause as Pause, LuCircleStop as StopCircle, LuTextCursorInput as FormInput, LuLoader as Loader2, LuTrash2 as Trash2, LuMail as Mail, LuSparkles as Sparkles } from 'react-icons/lu';
+import { LuSend as Send, LuPaperclip as Paperclip, LuX as X, LuFileText as FileText, LuMusic as Music, LuVideo as Video, LuImage as ImageIcon, LuMapPin as MapPin, LuCheck as Check, LuCheckCheck as CheckCheck, LuCircleAlert as AlertCircle, LuUser as User, LuLock as Lock, LuLockOpen as Unlock, LuMic as Mic, LuPlay as Play, LuPause as Pause, LuCircleStop as StopCircle, LuTextCursorInput as FormInput, LuLoader as Loader2, LuTrash2 as Trash2, LuMail as Mail, LuTag as TagIcon } from 'react-icons/lu';
 import { api } from '@/lib/api';
 import { useSocket } from '@/hooks/useSocket';
 import { usePermission } from '@/hooks/usePermission';
@@ -359,6 +359,12 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [reactingTo, setReactingTo] = useState<string | null>(null);
   const [isPrivate, setIsPrivate] = useState(initialIsPrivate || false);
 
+  // Labels state
+  const [conversationLabels, setConversationLabels] = useState<{ id: string; name: string; color: string }[]>([]);
+  const [allLabels, setAllLabels] = useState<{ id: string; name: string; color: string }[]>([]);
+  const [labelsOpen, setLabelsOpen] = useState(false);
+  const labelsRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     setIsPrivate(initialIsPrivate || false);
   }, [initialIsPrivate]);
@@ -406,15 +412,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   const [templateWindowOpen, setTemplateWindowOpen] = useState(true);
   const [lastIncomingMessageAt, setLastIncomingMessageAt] = useState<string | null>(null);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiAgents, setAiAgents] = useState<{ id: string; name: string }[]>([]);
-  const [aiMenuOpen, setAiMenuOpen] = useState(false);
-
-  useEffect(() => {
-    api.get('/ai-agents').then((res) => {
-      setAiAgents((res.data.agents || []).filter((a: any) => a.isActive).map((a: any) => ({ id: a.id, name: a.name })));
-    }).catch(() => {});
-  }, []);
 
   // Load messages with pagination (newest first via direction=desc, reversed for display)
   useEffect(() => {
@@ -543,7 +540,18 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     api.get('/quick-replies').then((res) => {
       setQuickReplies(res.data.quickReplies || []);
     });
+    api.get('/labels').then((res) => {
+      setAllLabels(res.data.labels || []);
+    }).catch(() => {});
   }, []);
+
+  // Fetch conversation labels when conversation changes
+  useEffect(() => {
+    if (!conversationId) return;
+    api.get(`/conversations/${conversationId}/labels`).then((res) => {
+      setConversationLabels(res.data.labels || []);
+    }).catch(() => {});
+  }, [conversationId]);
 
   // Auto-scroll to bottom only when new messages are appended (not when older messages are loaded)
   const lastMessageIdRef = useRef<string | null>(null);
@@ -590,6 +598,9 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       if (agentsRef.current && !agentsRef.current.contains(target)) {
         setAgentsOpen(false);
       }
+      if (labelsRef.current && !labelsRef.current.contains(target)) {
+        setLabelsOpen(false);
+      }
       if (slashRef.current && !slashRef.current.contains(target)) {
         setSlashOpen(false);
         setSlashQuery('');
@@ -612,6 +623,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       if (event.key === 'Escape') {
         setQuickOpen(false);
         setAgentsOpen(false);
+        setLabelsOpen(false);
         setAttachOpen(false);
         setSlashOpen(false);
         setSlashQuery('');
@@ -1026,6 +1038,26 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
     }
   };
 
+  const handleAddLabel = async (labelId: string) => {
+    if (!conversationId) return;
+    try {
+      const res = await api.post(`/conversations/${conversationId}/labels`, { label_id: labelId });
+      setConversationLabels(res.data.labels || []);
+    } catch {
+      toastError('Failed to add label');
+    }
+  };
+
+  const handleRemoveLabel = async (labelId: string) => {
+    if (!conversationId) return;
+    try {
+      const res = await api.delete(`/conversations/${conversationId}/labels/${labelId}`);
+      setConversationLabels(res.data.labels || []);
+    } catch {
+      toastError('Failed to remove label');
+    }
+  };
+
   const sendQuickReply = async (quick: QuickReply) => {
     if (!conversationId) return;
     const mt = quick.messageType || 'text';
@@ -1201,12 +1233,33 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
         >
           {contactName.charAt(0).toUpperCase()}
         </button>
-        <button
-          onClick={() => onOpenProfile?.()}
-          className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-gray-900 hover:text-primary-700 dark:text-gray-100 dark:hover:text-primary-400"
-        >
-          {contactName}
-        </button>
+        <div className="min-w-0 flex-1 truncate text-left">
+          <button
+            onClick={() => onOpenProfile?.()}
+            className="block truncate text-sm font-semibold text-gray-900 hover:text-primary-700 dark:text-gray-100 dark:hover:text-primary-400"
+          >
+            {contactName}
+          </button>
+          {conversationLabels.length > 0 && (
+            <div className="mt-0.5 flex flex-wrap gap-1">
+              {conversationLabels.map((l) => (
+                <span
+                  key={l.id}
+                  className="inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-medium"
+                  style={{ backgroundColor: l.color + '20', color: l.color }}
+                >
+                  {l.name}
+                  <button
+                    onClick={() => handleRemoveLabel(l.id)}
+                    className="ml-0.5 rounded-full p-[1px] hover:bg-black/10"
+                  >
+                    <X size={8} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
         <div className="flex flex-shrink-0 items-center gap-1.5">
           <div className="relative" ref={agentsRef}>
             <button
@@ -1238,6 +1291,46 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                 {agents.length === 0 && (
                   <li className="px-3 py-2 text-sm text-gray-400">No agents</li>
                 )}
+              </ul>
+            )}
+          </div>
+
+          {/* Labels Dropdown */}
+          <div className="relative" ref={labelsRef}>
+            <button
+              onClick={() => setLabelsOpen((prev) => !prev)}
+              className="btn-secondary px-2.5 py-1.5 text-xs"
+              title="Manage labels"
+            >
+              <TagIcon size={14} />
+            </button>
+            {labelsOpen && (
+              <ul className="absolute right-0 top-full z-50 mt-1.5 max-h-64 w-52 overflow-y-auto overflow-hidden rounded-xl border border-gray-200 bg-white py-1 shadow-lg ring-1 ring-black/5 dark:border-gray-800 dark:bg-gray-900 dark:ring-white/5 md:w-60">
+                {allLabels.length === 0 && (
+                  <li className="px-3 py-2 text-sm text-gray-400">No labels defined</li>
+                )}
+                {allLabels.map((l) => {
+                  const isActive = conversationLabels.some((cl) => cl.id === l.id);
+                  return (
+                    <li
+                      key={l.id}
+                      onClick={() => {
+                        if (isActive) handleRemoveLabel(l.id);
+                        else handleAddLabel(l.id);
+                      }}
+                      className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm transition-colors hover:bg-gray-50 dark:hover:bg-gray-800"
+                    >
+                      <span
+                        className="inline-block h-3 w-3 rounded-full"
+                        style={{ backgroundColor: l.color }}
+                      />
+                      <span className={`flex-1 ${isActive ? 'font-medium text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                        {l.name}
+                      </span>
+                      {isActive && <Check size={14} className="text-primary-600 dark:text-primary-400" />}
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </div>
@@ -1656,52 +1749,6 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   >
                     <Mail size={20} />
                   </button>
-
-                  {/* AI Assist button */}
-                  {aiAgents.length > 0 && (
-                    <div className="relative">
-                      <button
-                        onClick={() => setAiMenuOpen((p) => !p)}
-                        disabled={aiLoading}
-                        className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-white text-purple-500 hover:bg-purple-50 hover:text-purple-700 dark:border-gray-700 dark:bg-gray-800 dark:text-purple-400 dark:hover:bg-purple-900/20"
-                        title="AI Assist"
-                      >
-                        {aiLoading ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}
-                      </button>
-                      {aiMenuOpen && (
-                        <>
-                          <div className="fixed inset-0 z-30" onClick={() => setAiMenuOpen(false)} />
-                          <div className="absolute bottom-full right-0 z-40 mb-2 w-56 rounded-2xl border border-gray-200 bg-white p-2 shadow-xl dark:border-gray-700 dark:bg-gray-900">
-                            <div className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">Generate reply with</div>
-                            {aiAgents.map((agent) => (
-                              <button
-                                key={agent.id}
-                                onClick={async () => {
-                                  setAiMenuOpen(false);
-                                  setAiLoading(true);
-                                  try {
-                                    const res = await api.post('/ai-agents/generate', {
-                                      conversation_id: conversationId,
-                                      agent_id: agent.id,
-                                    });
-                                    setInput(res.data.response);
-                                  } catch (err: any) {
-                                    toastError(err.response?.data?.error || 'AI generation failed');
-                                  } finally {
-                                    setAiLoading(false);
-                                  }
-                                }}
-                                className="flex w-full items-center gap-2.5 rounded-xl px-2 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-purple-50 dark:text-gray-300 dark:hover:bg-purple-900/20"
-                              >
-                                <Sparkles size={16} className="text-purple-500" />
-                                <span className="font-medium">{agent.name}</span>
-                              </button>
-                            ))}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
 
                   {!input.trim() && !pendingMediaId ? (
                     <button

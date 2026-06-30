@@ -91,6 +91,35 @@ async function downloadMedia(mediaId, accessToken, orgId) {
 }
 
 /**
+ * Forward raw webhook payload to active integration URLs for an organization.
+ * Fire-and-forget: errors are logged but not thrown.
+ * @param {string|number} orgId
+ * @param {object} payload
+ */
+async function forwardWebhook(orgId, payload) {
+  try {
+    const result = await query(
+      `SELECT config FROM integrations
+       WHERE org_id = $1 AND type = 'webhook_forward' AND is_active = true`,
+      [orgId]
+    );
+    if (result.rows.length === 0) return;
+
+    for (const row of result.rows) {
+      const urls = row.config?.urls || [];
+      for (const url of urls) {
+        if (!url || typeof url !== 'string') continue;
+        axios.post(url, payload, { timeout: 10000 }).catch((err) => {
+          logger.warn('Webhook forward failed', { url, error: err.message });
+        });
+      }
+    }
+  } catch (err) {
+    logger.error('Webhook forward error', { orgId, error: err.message });
+  }
+}
+
+/**
  * GET /api/v1/webhooks - Meta webhook verification
  * Meta sends this when configuring the webhook callback URL.
  * The callback URL includes ?waba_id={id} so we validate per-WABA.
@@ -207,6 +236,9 @@ router.post('/', async (req, res) => {
         for (const error of value.errors || []) {
           logger.error('Webhook error payload', { error, phoneNumberId });
         }
+
+        // Forward raw webhook payload to configured integration URLs (fire-and-forget)
+        forwardWebhook(orgId, body).catch(() => {});
       }
     }
   } catch (err) {

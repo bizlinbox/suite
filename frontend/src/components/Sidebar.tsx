@@ -24,9 +24,7 @@ import {
   LuTextCursorInput as FormInput,
   LuSettings as Settings,
   LuServer as Server,
-  LuStore as Store,
   LuSettings2 as Settings2,
-  LuSparkles as Sparkles,
   LuBookOpen as BookOpen,
 } from 'react-icons/lu';
 import { useAuth } from '@/hooks/useAuth';
@@ -58,8 +56,6 @@ const topNavItems: NavItem[] = [
   { label: 'Quick Replies', href: '/dashboard/quick-replies', icon: MessageSquare, permission: 'settings.read' as string | null },
   { label: 'Templates', href: '/dashboard/templates', icon: FileText, permission: 'settings.read' as string | null },
   { label: 'Flows', href: '/dashboard/flows', icon: FormInput, permission: 'settings.read' as string | null },
-  { label: 'AI Agents', href: '/dashboard/ai-agents', icon: Sparkles, permission: 'settings.read' as string | null },
-  { label: 'Marketplace', href: '/dashboard/marketplace', icon: Store, permission: null },
 ];
 
 const settingsGroup: NavGroup = {
@@ -77,7 +73,7 @@ const settingsGroup: NavGroup = {
 
 function isActiveNav(pathname: string, href: string): boolean {
   if (pathname === href) return true;
-  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/ai-agents', '/dashboard/api-logs', '/dashboard/help'];
+  const nested = ['/dashboard/inbox', '/dashboard/users', '/dashboard/campaigns', '/dashboard/automations', '/dashboard/quick-replies', '/dashboard/waba-accounts', '/dashboard/templates', '/dashboard/flows', '/dashboard/api-logs', '/dashboard/help'];
   if (nested.some((p) => href === p && pathname.startsWith(p))) return true;
   return false;
 }

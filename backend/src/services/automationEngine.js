@@ -51,7 +51,8 @@ function matchesTrigger(triggerStep, triggerType, context) {
   const config = triggerStep.config || {};
   const stepTriggerName = triggerStep.type.replace('trigger_', '');
   const eventName = triggerType.replace(/_/g, '');
-  if (stepTriggerName !== eventName && stepTriggerName !== triggerType) {
+  const normalizedStep = stepTriggerName.replace(/_/g, '');
+  if (normalizedStep !== eventName && stepTriggerName !== triggerType) {
     return false;
   }
   // keyword filter
@@ -95,18 +96,29 @@ async function executeAutomation(automationId, orgId, wabaAccountId, triggerType
   const results = [];
   let currentIndex = 0;
   let errorMessage = null;
+  let conditionsMet = true;
 
   try {
     while (currentIndex < steps.length) {
       const step = steps[currentIndex];
-      const result = await executeStep(step, orgId, wabaAccountId, context);
-      results.push({ stepId: step.id, type: step.type, result });
 
       if (step.type === 'condition') {
-        currentIndex = result.nextIndex !== undefined ? result.nextIndex : currentIndex + 1;
-      } else {
+        const result = await executeStep(step, orgId, wabaAccountId, context);
+        results.push({ stepId: step.id, type: step.type, result });
+        if (!result.matched) conditionsMet = false;
         currentIndex++;
+        continue;
       }
+
+      if (!conditionsMet) {
+        results.push({ stepId: step.id, type: step.type, result: { skipped: true, reason: 'conditions_not_met' } });
+        currentIndex++;
+        continue;
+      }
+
+      const result = await executeStep(step, orgId, wabaAccountId, context);
+      results.push({ stepId: step.id, type: step.type, result });
+      currentIndex++;
     }
 
     await query(

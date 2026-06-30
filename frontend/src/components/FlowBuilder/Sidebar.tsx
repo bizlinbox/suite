@@ -17,7 +17,6 @@ import {
   LuGitBranch as GitBranch,
   LuTag as Tag,
   LuUserCheck as UserCheck,
-  LuSparkles as Sparkles,
   LuPlay as Play,
   LuSquare as Square,
   LuCloud as Cloud,
@@ -33,7 +32,7 @@ import {
 const ICON_MAP: Record<string, React.FC<any>> = {
   MessageSquare, Send, Image, FileText, Video, Music,
   MousePointerClick, List, Clock, GitBranch, Tag, UserCheck,
-  Sparkles, Play, Square, Cloud, Database, Code, Variable,
+  Play, Square, Cloud, Database, Code, Variable,
   Upload, Globe, Webhook, Zap,
 };
 
@@ -55,7 +54,6 @@ function getIcon(type: string) {
     delay: 'Clock',
     tag_contact: 'Tag',
     assign_agent: 'UserCheck',
-    ai_agent: 'Sparkles',
   };
   const name = map[type] || 'Zap';
   return ICON_MAP[name] || Zap;
@@ -65,7 +63,7 @@ const NODE_CATEGORIES: { label: string; types: string[] }[] = [
   { label: 'Triggers', types: ['trigger_message', 'trigger_conversation_opened', 'trigger_webhook'] },
   { label: 'Messages', types: ['send_text', 'send_template', 'send_media_image', 'send_media_video', 'send_media_document', 'send_media_audio', 'send_interactive_buttons', 'send_interactive_list'] },
   { label: 'Logic', types: ['condition', 'delay'] },
-  { label: 'Actions', types: ['tag_contact', 'assign_agent', 'ai_agent'] },
+  { label: 'Actions', types: ['tag_contact', 'assign_agent'] },
 ];
 
 export const DEFAULT_NODE_TYPES: NodeTypeDef[] = [
@@ -88,7 +86,6 @@ export const DEFAULT_NODE_TYPES: NodeTypeDef[] = [
   // Actions
   { type: 'tag_contact', label: 'Tag Contact', category: 'Actions', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { tag: '' }, fields: [{ key: 'tag', label: 'Tag', type: 'text' }] },
   { type: 'assign_agent', label: 'Assign Agent', category: 'Actions', color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { user_id: '' }, fields: [{ key: 'user_id', label: 'Agent ID', type: 'text' }] },
-  { type: 'ai_agent', label: 'AI Agent', category: 'Actions', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', defaultSize: { width: 200, height: 90 }, defaultPorts: [{ id: 'in', type: 'input', label: '' }, { id: 'out', type: 'output', label: '' }], defaultData: { agentId: '' }, fields: [{ key: 'agentId', label: 'AI Agent ID', type: 'text' }] },
 ];
 
 export default function Sidebar() {

@@ -157,6 +157,7 @@ export default function Inbox({ selectedId }: InboxProps) {
               ...(updated.assignedAgentName !== undefined ? { assignedAgentName: updated.assignedAgentName ? String(updated.assignedAgentName) : undefined } : {}),
               ...(updated.assignedAgentId !== undefined ? { assignedAgentId: updated.assignedAgentId ? String(updated.assignedAgentId) : undefined } : {}),
               ...(typeof updated.isPrivate === 'boolean' ? { isPrivate: updated.isPrivate } : {}),
+              ...(updated.labels !== undefined ? { labels: updated.labels as Conversation['labels'] } : {}),
             };
             // Derive agent name from agentsMap if id is present but name is not
             if (next.assignedAgentId && !next.assignedAgentName && agentsMap[next.assignedAgentId]) {
