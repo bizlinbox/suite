@@ -171,29 +171,29 @@ export default function AutomationsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   {can('automations.manage') && (
-                    <>
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       <button
                         onClick={() => handleToggle(a.id)}
-                        className="mr-1 rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="inline-flex items-center justify-center rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title={a.isActive ? 'Pause' : 'Activate'}
                       >
                         {a.isActive ? <Pause size={16} /> : <Play size={16} />}
                       </button>
                       <Link
                         href={`/dashboard/automations/${a.id}`}
-                        className="mr-1 inline-flex rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="inline-flex items-center justify-center rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Edit"
                       >
                         <Pencil size={16} />
                       </Link>
                       <button
                         onClick={() => handleDelete(a.id)}
-                        className="rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="inline-flex items-center justify-center rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Delete"
                       >
                         <Trash2 size={16} />
                       </button>
-                    </>
+                    </div>
                   )}
                 </TableCell>
               </TableRow>

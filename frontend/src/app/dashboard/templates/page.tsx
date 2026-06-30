@@ -354,7 +354,7 @@ export default function TemplatesPage() {
                         <TableCell className="text-right">
                           <button
                             onClick={() => openPreview(t)}
-                            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                            className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                             aria-label="Preview"
                             title="Preview"
                           >
@@ -386,8 +386,8 @@ export default function TemplatesPage() {
 
       {/* Preview Modal */}
       {previewOpen && previewTemplate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="mx-4 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">

@@ -288,7 +288,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                     active
                       ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-                  } justify-center px-2 py-2.5`}
+                  } justify-center px-2 py-3`}
                 >
                   <Icon
                     size={18}
@@ -310,7 +310,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                 isSettingsActive
                   ? 'bg-[#002D62] text-white dark:bg-[#002D62] dark:text-white'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-              } gap-3 px-3 py-2.5 text-sm font-medium`}
+              } gap-3 px-3 py-3 text-sm font-medium`}
             >
               <Settings2
                 size={18}
@@ -338,7 +338,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                         active
                           ? 'bg-[#002D62] text-white'
                           : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-                      } gap-3 px-3 py-2 text-sm font-medium`}
+                      } gap-3 px-3 py-2.5 text-sm font-medium`}
                     >
                       <Icon
                         size={16}
@@ -425,7 +425,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
           {!isCollapsed && mobileOpen && (
             <button
               onClick={onMobileClose}
-              className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-100 md:hidden"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-500 dark:hover:bg-gray-800/60 dark:hover:text-gray-100 md:hidden"
               aria-label="Close sidebar"
             >
               <X size={18} />
@@ -453,7 +453,7 @@ export default function Sidebar({ mobileOpen, onMobileClose, onDesktopToggle, co
                 active
                   ? 'bg-[#002D62] text-white'
                   : 'text-gray-700 hover:bg-gray-100 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:bg-gray-800/60 dark:hover:text-gray-100'
-              } ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5 text-sm font-medium'}`}
+              } ${isCollapsed ? 'justify-center px-2 py-3' : 'gap-3 px-3 py-3 text-sm font-medium'}`}
             >
               <Icon
                 size={18}

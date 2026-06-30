@@ -2,13 +2,14 @@
 
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LuMessageSquare as MessageSquare, LuUsers as Users, LuMegaphone as Megaphone, LuBookOpen as BookOpen } from 'react-icons/lu';
+import { LuMessageSquare as MessageSquare, LuUsers as Users, LuMegaphone as Megaphone, LuFileText as FileText, LuChartColumn as BarChart3 } from 'react-icons/lu';
 
 const bottomNavItems = [
   { label: 'Inbox', href: '/dashboard/inbox', icon: MessageSquare },
   { label: 'Contacts', href: '/dashboard/contacts', icon: Users },
   { label: 'Campaigns', href: '/dashboard/campaigns', icon: Megaphone },
-  { label: 'Help', href: '/dashboard/help', icon: BookOpen },
+  { label: 'Templates', href: '/dashboard/templates', icon: FileText },
+  { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
 ];
 
 function isActive(pathname: string, href: string): boolean {
@@ -24,7 +25,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white/90 backdrop-blur-lg dark:border-gray-800 dark:bg-gray-950/90 md:hidden">
-      <div className="grid grid-cols-4 items-center">
+      <div className="grid grid-cols-5 items-center">
         {bottomNavItems.map((item) => {
           const active = isActive(pathname, item.href);
           const Icon = item.icon;
@@ -32,7 +33,7 @@ export default function MobileBottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 py-2.5 transition-colors ${
+              className={`flex flex-col items-center gap-0.5 py-3 transition-colors ${
                 active
                   ? 'text-primary-700 dark:text-primary-400'
                   : 'text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300'

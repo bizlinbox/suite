@@ -412,17 +412,17 @@ export default function FlowsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">{formatDate(f.updatedAt)}</TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       <button
                         onClick={() => openPreview(f)}
-                        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Preview JSON"
                       >
                         <Eye size={15} />
                       </button>
                       <button
                         onClick={() => openSend(f)}
-                        className="rounded-md p-1.5 text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-primary-600 hover:bg-primary-50 dark:text-primary-400 dark:hover:bg-primary-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Send"
                       >
                         <Send size={15} />
@@ -430,7 +430,7 @@ export default function FlowsPage() {
                       {f.status !== 'PUBLISHED' && (
                         <button
                           onClick={() => handlePublish(f.id)}
-                          className="rounded-md p-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20"
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           title="Publish"
                         >
                           <Play size={15} />
@@ -438,14 +438,14 @@ export default function FlowsPage() {
                       )}
                       <button
                         onClick={() => openEdit(f)}
-                        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Edit"
                       >
                         <Edit size={15} />
                       </button>
                       <button
                         onClick={() => handleDelete(f.id)}
-                        className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Delete"
                       >
                         <Trash2 size={15} />
@@ -485,20 +485,22 @@ export default function FlowsPage() {
                   </TableCell>
                   <TableCell className="text-sm text-gray-500">{formatDate(s.completedAt || s.createdAt)}</TableCell>
                   <TableCell className="text-right">
-                    <button
-                      onClick={() => { setSubmissionDetail(s); setSubmissionDetailOpen(true); }}
-                      className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800"
-                      title="View submission"
-                    >
-                      <Eye size={15} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteSubmission(s.id)}
-                      className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                      title="Delete submission"
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                    <div className="flex flex-wrap items-center justify-end gap-1">
+                      <button
+                        onClick={() => { setSubmissionDetail(s); setSubmissionDetailOpen(true); }}
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                        title="View submission"
+                      >
+                        <Eye size={15} />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSubmission(s.id)}
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
+                        title="Delete submission"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

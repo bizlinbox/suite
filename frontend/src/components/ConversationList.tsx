@@ -106,7 +106,7 @@ export default function ConversationList({
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-100 p-4 dark:border-gray-800">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Inbox</h2>
           <div className="flex items-center gap-1.5">
             {onDelete && (
@@ -143,7 +143,7 @@ export default function ConversationList({
         </div>
 
         {selectMode && (
-          <div className="mt-2 flex items-center justify-between">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
             <button
               onClick={toggleSelectAll}
               className="flex items-center gap-1.5 text-xs font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
@@ -290,7 +290,7 @@ export default function ConversationList({
                       onDelete(conversation.id);
                     }}
                     disabled={deletingId === conversation.id}
-                    className="mt-1 rounded-md p-1.5 text-gray-400 opacity-0 transition-opacity hover:bg-red-50 hover:text-red-500 group-hover:opacity-100 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-50"
+                    className="mt-1 rounded-md p-1.5 text-gray-400 opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 md:opacity-0 md:group-hover:opacity-100 dark:hover:bg-red-900/20 dark:hover:text-red-400 disabled:opacity-50"
                     aria-label="Delete conversation"
                     title="Delete conversation"
                   >

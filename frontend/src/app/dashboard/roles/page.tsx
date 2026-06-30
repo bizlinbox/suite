@@ -183,19 +183,19 @@ export default function RolesPage() {
                   )}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1">
                     {!role.isSystem && can('roles.manage') && (
                       <>
                         <button
                           onClick={() => openEdit(role)}
-                          className="rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800"
+                          className="inline-flex items-center justify-center rounded-md p-1 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           title="Edit"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDelete(role.id)}
-                          className="rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="inline-flex items-center justify-center rounded-md p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           title="Delete"
                         >
                           <Trash2 size={16} />

@@ -68,7 +68,7 @@
 @layer components {
   /* Page header pattern */
   .page-header {
-    @apply mb-6 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between;
+    @apply mb-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between;
   }
 
   .page-header h1 {

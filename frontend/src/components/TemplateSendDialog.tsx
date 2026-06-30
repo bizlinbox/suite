@@ -118,13 +118,13 @@ export default function TemplateSendDialog({ open, conversationId, onClose, onSe
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-      <div className="mx-4 flex max-h-[85vh] w-full max-w-lg flex-col rounded-xl bg-white shadow-xl dark:bg-gray-900">
+      <div className="mx-4 flex max-h-[85vh] w-full max-w-[calc(100vw-2rem)] flex-col rounded-xl bg-white shadow-xl dark:bg-gray-900 sm:max-w-lg">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Send Template</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-300"
           >
             <X size={20} />
           </button>

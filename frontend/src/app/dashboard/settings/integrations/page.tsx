@@ -200,7 +200,7 @@ export default function IntegrationsPage() {
   return (
     <div className="max-w-5xl mx-auto space-y-5">
       <div className="panel">
-        <div className="mb-5 flex items-start justify-between gap-4">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Integrations</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -280,17 +280,17 @@ export default function IntegrationsPage() {
                       </button>
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex flex-wrap items-center justify-end gap-1">
                         <button
                           onClick={() => openEdit(item)}
-                          className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           aria-label="Edit"
                         >
                           <Edit size={15} />
                         </button>
                         <button
                           onClick={() => setDeleteId(item.id)}
-                          className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           aria-label="Delete"
                         >
                           <Trash2 size={15} />
@@ -306,8 +306,8 @@ export default function IntegrationsPage() {
 
       {/* Add/Edit Dialog */}
       {dialogOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50">
-          <div className="mx-4 w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 {editing ? 'Edit Integration' : 'Add Integration'}

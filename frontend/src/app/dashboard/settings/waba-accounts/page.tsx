@@ -311,10 +311,10 @@ export default function WabaAccountsPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       <button
                         onClick={() => toggleExpandWaba(waba.id)}
-                        className={`rounded-md p-1.5 text-xs font-medium transition-colors ${
+                        className={`inline-flex items-center justify-center rounded-md p-1.5 text-xs font-medium transition-colors min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0 ${
                           expandedWabaId === waba.id
                             ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400'
                             : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800'
@@ -326,7 +326,7 @@ export default function WabaAccountsPage() {
                       <button
                         onClick={() => handleSubscribe(waba.id)}
                         disabled={subscribingId === waba.id}
-                        className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 disabled:opacity-50"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 disabled:opacity-50 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         title="Subscribe to Meta webhooks"
                       >
                         {subscribingId === waba.id ? <Loader2 size={15} className="animate-spin" /> : <Radio size={15} />}
@@ -336,10 +336,10 @@ export default function WabaAccountsPage() {
                           {subscribeResult.message}
                         </span>
                       )}
-                      <button onClick={() => handleEditWaba(waba)} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800" aria-label="Edit">
+                      <button onClick={() => handleEditWaba(waba)} className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0" aria-label="Edit">
                         <Edit size={15} />
                       </button>
-                      <button onClick={() => handleDeleteWaba(waba.id)} className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20" aria-label="Delete">
+                      <button onClick={() => handleDeleteWaba(waba.id)} className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0" aria-label="Delete">
                         <Trash2 size={15} />
                       </button>
                     </div>

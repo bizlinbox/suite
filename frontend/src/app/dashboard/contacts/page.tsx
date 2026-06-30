@@ -219,17 +219,17 @@ export default function ContactsPage() {
                 </TableCell>
                 <TableCell className="text-right">
                   {can('contacts.manage') && (
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       <button
                         onClick={() => handleEdit(contact)}
-                        className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         aria-label="Edit"
                       >
                         <Edit size={15} />
                       </button>
                       <button
                         onClick={() => handleDelete(contact.id)}
-                        className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                        className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                         aria-label="Delete"
                       >
                         <Trash2 size={15} />

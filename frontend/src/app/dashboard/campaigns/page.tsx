@@ -213,7 +213,7 @@ export default function CampaignsPage() {
       )}
 
       {/* Type Tabs */}
-      <div className="mb-4 flex gap-2">
+      <div className="mb-4 flex flex-wrap gap-2">
         {(['all', 'utility', 'marketing'] as MessageTypeFilter[]).map((t) => (
           <button
             key={t}
@@ -316,7 +316,7 @@ export default function CampaignsPage() {
                 </TableCell>
                 <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                   {can('campaigns.manage') && (
-                    <div className="flex items-center justify-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-1">
                       {c.status === 'draft' && (
                         <>
                           <button

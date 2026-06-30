@@ -240,7 +240,7 @@ export default function GeneralSettingsPage() {
           />
         </div>
         <div className="relative -mt-8 px-6 pb-6">
-          <div className="flex items-end gap-4">
+          <div className="flex flex-wrap items-end gap-4">
             <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-600 text-xl font-bold text-white shadow-lg ring-4 ring-white dark:ring-gray-900">
               {platformName?.charAt(0)?.toUpperCase() || 'O'}
             </div>
@@ -331,7 +331,7 @@ export default function GeneralSettingsPage() {
               <span className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Platform Logo
               </span>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-wrap items-center gap-4">
                 {platformLogo ? (
                   <div className="relative">
                     <img
@@ -387,7 +387,7 @@ export default function GeneralSettingsPage() {
             <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">Access & Registration</h2>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-gray-200 p-4 dark:border-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-gray-200 p-4 dark:border-gray-800">
             <div className="flex items-center gap-3">
               <div
                 className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${

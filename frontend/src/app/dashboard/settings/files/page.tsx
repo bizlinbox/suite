@@ -203,12 +203,12 @@ export default function FilesPage() {
                       {new Date(file.createdAt).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
                         <a
                           href={file.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                          className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                           title="Download"
                         >
                           <DownloadIcon size={16} />
@@ -216,7 +216,7 @@ export default function FilesPage() {
                         {canManageSettings && (
                           <button
                             onClick={() => setDeleteId(file.id)}
-                            className="rounded-lg p-1.5 text-gray-500 hover:bg-red-100 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/30 dark:hover:text-red-400"
+                            className="inline-flex items-center justify-center rounded-lg p-1.5 text-gray-500 hover:bg-red-100 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-900/30 dark:hover:text-red-400 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                             title="Delete"
                           >
                             <Trash2 size={16} />

@@ -350,10 +350,10 @@ function VoiceMessagePlayer({ mediaUrl, isUser, voice }: { mediaUrl?: string; is
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`flex items-center gap-2 rounded-lg p-2 min-w-[200px] ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
+    <div className={`flex items-center gap-2 rounded-lg p-2 min-w-0 sm:min-w-[200px] ${isUser ? 'bg-black/10' : 'bg-gray-100 dark:bg-gray-900/60'}`}>
       <button
         onClick={togglePlay}
-        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${isUser ? 'bg-primary-700' : 'bg-primary-600'} text-white`}
+        className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full ${isUser ? 'bg-primary-700' : 'bg-primary-600'} text-white`}
       >
         {isPlaying ? <Pause size={14} /> : <Play size={14} />}
       </button>
@@ -381,7 +381,7 @@ function VoiceMessagePlayer({ mediaUrl, isUser, voice }: { mediaUrl?: string; is
       <div className="relative" ref={speedRef}>
         <button
           onClick={(e) => { e.stopPropagation(); setSpeedOpen((prev) => !prev); }}
-          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${isUser ? 'bg-white/30 text-gray-800 dark:bg-white/10 dark:text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} hover:opacity-80`}
+          className={`flex h-8 w-8 items-center justify-center rounded text-[10px] font-semibold ${isUser ? 'bg-white/30 text-gray-800 dark:bg-white/10 dark:text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'} hover:opacity-80`}
           title="Playback speed"
         >
           {speed}x
@@ -1301,11 +1301,11 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
   return (
     <div className="flex h-full w-full flex-col dark:bg-gray-950">
       {/* Header */}
-      <div className="relative z-10 flex items-center gap-3 border-b border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80 md:px-5">
+      <div className="relative z-10 flex flex-wrap items-center gap-3 border-b border-gray-100 bg-white/80 px-4 py-3 backdrop-blur-sm dark:border-gray-800 dark:bg-gray-900/80 sm:flex-nowrap md:px-5">
         {onBack && (
           <button
             onClick={onBack}
-            className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
+            className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 md:hidden"
             aria-label="Back"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
@@ -1433,7 +1433,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
       </div>
 
       {/* Messages */}
-      <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden px-4 py-3">
+      <div ref={messagesContainerRef} className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden overscroll-y-contain px-4 py-3">
         {msgTotal > messages.length && msgLoading && (
           <div className="mb-2 flex justify-center">
             <Loader2 size={16} className="animate-spin text-gray-400" />
@@ -1481,7 +1481,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
                     </button>
                     {reactingTo === msg.id && (
-                      <div className={`absolute bottom-full z-50 mb-1 flex gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900 ${isUser ? 'right-0' : 'left-0'}`}>
+                      <div className={`absolute bottom-full z-50 mb-1 flex max-w-[85vw] flex-wrap gap-1 rounded-full border border-gray-200 bg-white px-2 py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900 ${isUser ? 'right-0' : 'left-0'}`}>
                         {reactionEmojis.map((emoji) => (
                           <button
                             key={emoji}
@@ -1495,7 +1495,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                     )}
                   </div>
 
-                  <div className="flex max-w-[75%] min-w-0 flex-col">
+                  <div className="flex max-w-[85%] sm:max-w-[75%] min-w-0 flex-col">
                     <div
                       className={`relative px-4 py-2.5 ${
                         isUser
@@ -1722,14 +1722,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   <div className="flex-1"></div>
                   <button
                     onClick={cancelRecording}
-                    className="rounded-lg p-1.5 text-red-600 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-red-600 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
                     title="Cancel"
                   >
                     <X size={18} />
                   </button>
                   <button
                     onClick={stopRecording}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-red-600 text-white hover:bg-red-700"
                     title="Stop"
                   >
                     <StopCircle size={18} />
@@ -1739,7 +1739,7 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                 <div className="flex flex-1 items-center gap-2 rounded-xl border border-primary-200 bg-primary-50 px-3 py-2 dark:border-primary-900/40 dark:bg-primary-900/20">
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleVoicePreview(); }}
-                    className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
+                    className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-white"
                   >
                     {voicePreviewPlaying ? <Pause size={14} /> : <Play size={14} />}
                   </button>
@@ -1761,14 +1761,14 @@ export default function ChatWindow({ conversationId, contactId, contactName, isP
                   <audio ref={voicePreviewAudioRef} src={voicePreviewUrl} preload="metadata" className="hidden" />
                   <button
                     onClick={cancelVoicePreview}
-                    className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    className="flex h-10 w-10 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
                     title="Delete"
                   >
                     <Trash2 size={16} />
                   </button>
                   <button
                     onClick={() => voicePreviewBlob && sendVoiceMessage(voicePreviewBlob)}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm hover:bg-secondary-500"
+                    className="flex h-11 w-11 items-center justify-center rounded-full bg-primary-600 text-white shadow-sm hover:bg-secondary-500"
                     title="Send voice message"
                   >
                     <Send size={16} />

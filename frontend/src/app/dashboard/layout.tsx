@@ -62,7 +62,7 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           collapsed={collapsed}
         />
         <main
-          className={`flex-1 overflow-x-hidden p-4 pb-20 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 md:p-6 md:pb-6 ${
+          className={`flex-1 overflow-x-hidden p-4 pb-20 pt-14 transition-[margin,width] duration-300 ease-out sm:p-5 sm:pb-20 sm:pt-16 md:p-6 md:pb-6 md:pt-6 ${
             collapsed ? 'md:ml-16' : 'md:ml-[256px]'
           }`}
         >

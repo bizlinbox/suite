@@ -114,7 +114,7 @@ export default function LabelsPage() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Labels</h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Organize conversations with color-coded labels.</p>
@@ -152,17 +152,17 @@ export default function LabelsPage() {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1">
                     <button
                       onClick={() => openEdit(l)}
-                      className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200"
+                      className="inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                       aria-label="Edit"
                     >
                       <Edit size={15} />
                     </button>
                     <button
                       onClick={() => handleDelete(l.id)}
-                      className="rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                      className="inline-flex items-center justify-center rounded-md p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 min-h-[44px] min-w-[44px] sm:min-h-0 sm:min-w-0"
                       aria-label="Delete"
                     >
                       <Trash2 size={15} />
@@ -177,7 +177,7 @@ export default function LabelsPage() {
       </div>
 
       {dialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-700 dark:bg-gray-900">
             <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
               {editingLabel ? 'Edit Label' : 'Add Label'}

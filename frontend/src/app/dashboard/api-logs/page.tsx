@@ -300,7 +300,7 @@ export default function ApiLogsPage() {
             </div>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
                 <div className="rounded-lg bg-gray-50 p-3 dark:bg-gray-800/50">
                   <span className="text-gray-500 dark:text-gray-400">Direction</span>
                   <p className="mt-1 font-medium text-gray-900 dark:text-gray-100 capitalize">{selectedLog.direction}</p>
