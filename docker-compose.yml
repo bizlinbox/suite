@@ -91,7 +91,7 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-change-me-in-production-32chars!}
       UPLOAD_DIR: /app/uploads
       PORT: 4000
-      CLIENT_URL: https://${DOMAIN}
+      CLIENT_URL: https://${DOMAIN},http://localhost:8080
       PUBLIC_URL: https://${DOMAIN}
       INTERNAL_API_URL: http://localhost:4000
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
