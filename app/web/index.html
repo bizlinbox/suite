@@ -27,7 +27,7 @@
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
   <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/png" href="icons/Icon-192.png"/>
 
   <title>BizlInbox</title>
   <link rel="manifest" href="manifest.json">
@@ -59,15 +59,8 @@
       width: 64px;
       height: 64px;
       margin-bottom: 24px;
-      background: #128C7E;
       border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      font-size: 28px;
-      font-weight: 700;
+      object-fit: contain;
     }
 
     .loading-text {
@@ -110,7 +103,7 @@
 </head>
 <body>
   <div id="flutter-loading">
-    <div class="loading-logo">B</div>
+    <img class="loading-logo" src="icons/Icon-192.png" alt="BizlInbox" />
     <div class="loading-text">Loading BizlInbox...</div>
     <div class="progress-track">
       <div class="progress-fill"></div>
