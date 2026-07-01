@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'local_storage_service.dart';
 
 class ApiService {
@@ -11,15 +12,16 @@ class ApiService {
   /// Paths that should NOT trigger token refresh on 401.
   static const _publicPaths = {
     '/auth/login',
-    '/auth/register',
     '/auth/setup',
     '/auth/setup-required',
     '/auth/public-settings',
-    '/agents/accept-invite',
   };
 
   /// Called when token refresh fails and the user should be logged out.
   void Function()? onAuthFailure;
+
+  /// Called when cookies are updated (e.g. after token refresh) so the socket can reconnect.
+  void Function()? onCookiesChanged;
 
   ApiService(this._localStorage) {
     _initDio();
@@ -48,13 +50,28 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
+          if (!kIsWeb) {
+            final cookies = _localStorage.getCookies();
+            if (cookies != null && cookies.isNotEmpty) {
+              options.headers['Cookie'] = cookies;
+            }
+          }
           final wabaId = _localStorage.getWabaId();
           if (wabaId != null) {
             options.headers['x-waba-account-id'] = wabaId;
           }
           return handler.next(options);
         },
+        onResponse: (response, handler) {
+          if (!kIsWeb) {
+            _storeCookiesFromHeaders(response.headers['set-cookie']);
+          }
+          return handler.next(response);
+        },
         onError: (error, handler) async {
+          if (!kIsWeb) {
+            _storeCookiesFromHeaders(error.response?.headers['set-cookie']);
+          }
           if (error.response?.statusCode == 401 &&
               error.requestOptions.path != '/auth/refresh' &&
               !_publicPaths.contains(error.requestOptions.path)) {
@@ -85,6 +102,21 @@ class ApiService {
         },
       ),
     );
+  }
+
+  void _storeCookiesFromHeaders(List<String>? setCookies) {
+    if (setCookies == null || setCookies.isEmpty) return;
+    final parsed = setCookies.map((c) {
+      final idx = c.indexOf(';');
+      return idx == -1 ? c.trim() : c.substring(0, idx).trim();
+    }).join('; ');
+    if (parsed.isNotEmpty) {
+      final existing = _localStorage.getCookies() ?? '';
+      if (parsed != existing) {
+        _localStorage.setCookies(parsed);
+        onCookiesChanged?.call();
+      }
+    }
   }
 
   void _onTokenRefreshed([String? error]) {

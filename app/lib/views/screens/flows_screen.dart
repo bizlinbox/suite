@@ -11,6 +11,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class FlowsViewModel extends BaseViewModel {
@@ -18,7 +19,11 @@ class FlowsViewModel extends BaseViewModel {
   final ConversationRepository _conversationRepo;
   final LocalStorageService _localStorage;
 
-  FlowsViewModel(this._settingsRepo, this._conversationRepo, this._localStorage);
+  FlowsViewModel(
+    this._settingsRepo,
+    this._conversationRepo,
+    this._localStorage,
+  );
 
   List<Flow> _flows = [];
   List<Flow> get flows => _flows;
@@ -96,7 +101,12 @@ class FlowsViewModel extends BaseViewModel {
     setBusy();
     try {
       final parsed = jsonDecode(flowJson) as Map<String, dynamic>;
-      final result = await _settingsRepo.createFlow(name, category, parsed, wabaId);
+      final result = await _settingsRepo.createFlow(
+        name,
+        category,
+        parsed,
+        wabaId,
+      );
       result.when(
         success: (_) => loadFlows(),
         error: (message, exception) => setError(message),
@@ -106,11 +116,21 @@ class FlowsViewModel extends BaseViewModel {
     }
   }
 
-  Future<void> updateFlow(String id, String name, String category, String flowJson) async {
+  Future<void> updateFlow(
+    String id,
+    String name,
+    String category,
+    String flowJson,
+  ) async {
     setBusy();
     try {
       final parsed = jsonDecode(flowJson) as Map<String, dynamic>;
-      final result = await _settingsRepo.updateFlow(id, name: name, category: category, flowJson: parsed);
+      final result = await _settingsRepo.updateFlow(
+        id,
+        name: name,
+        category: category,
+        flowJson: parsed,
+      );
       result.when(
         success: (_) => loadFlows(),
         error: (message, exception) => setError(message),
@@ -122,22 +142,24 @@ class FlowsViewModel extends BaseViewModel {
 
   Future<void> deleteFlow(String id) async {
     final result = await _settingsRepo.deleteFlow(id);
-    result.when(
-      success: (_) => loadFlows(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadFlows(), error: (message, exception) {});
   }
 
   Future<void> publishFlow(String id) async {
     final result = await _settingsRepo.publishFlow(id);
-    result.when(
-      success: (_) => loadFlows(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadFlows(), error: (message, exception) {});
   }
 
-  Future<bool> sendFlow(String flowId, String conversationId, String body,
-      {String? header, String? footer, String? flowToken, String? screen, String? dataJson}) async {
+  Future<bool> sendFlow(
+    String flowId,
+    String conversationId,
+    String body, {
+    String? header,
+    String? footer,
+    String? flowToken,
+    String? screen,
+    String? dataJson,
+  }) async {
     setBusy();
     Map<String, dynamic>? data;
     if (dataJson != null && dataJson.trim().isNotEmpty) {
@@ -185,11 +207,14 @@ class FlowsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => FlowsViewModel(
-        locator<SettingsRepository>(),
-        locator<ConversationRepository>(),
-        locator<LocalStorageService>(),
-      )..loadFlows()..loadConversations(),
+      create: (_) =>
+          FlowsViewModel(
+              locator<SettingsRepository>(),
+              locator<ConversationRepository>(),
+              locator<LocalStorageService>(),
+            )
+            ..loadFlows()
+            ..loadConversations(),
       child: const _FlowsBody(),
     );
   }
@@ -202,7 +227,8 @@ class _FlowsBody extends StatefulWidget {
   State<_FlowsBody> createState() => _FlowsBodyState();
 }
 
-class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMixin {
+class _FlowsBodyState extends State<_FlowsBody>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   @override
@@ -253,10 +279,16 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
         actions: [
           AppIconButton(
             icon: vm.isBusy && vm.flows.isNotEmpty
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             tooltip: 'Sync from Meta',
-            onPressed: vm.isBusy || vm.wabaId == null ? null : () => _handleSync(context, vm),
+            onPressed: vm.isBusy || vm.wabaId == null
+                ? null
+                : () => _handleSync(context, vm),
           ),
         ],
       ),
@@ -267,10 +299,14 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
           _SubmissionsTab(vm: vm, canManage: canManage),
         ],
       ),
-      floatingActionButton: canManage && _tabController.index == 0 ? AppFloatingActionButton(
-        onPressed: vm.wabaId == null ? null : () => _showCreateEditDialog(context, vm),
-        child: const PhosphorIcon(PhosphorIconsRegular.plus),
-      ) : null,
+      floatingActionButton: canManage && _tabController.index == 0
+          ? AppFloatingActionButton(
+              onPressed: vm.wabaId == null
+                  ? null
+                  : () => _showCreateEditDialog(context, vm),
+              child: const PhosphorIcon(PhosphorIconsRegular.plus),
+            )
+          : null,
     );
   }
 
@@ -279,9 +315,16 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -301,11 +344,17 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
     }
   }
 
-  Future<void> _showCreateEditDialog(BuildContext context, FlowsViewModel vm, {Flow? flow}) async {
+  Future<void> _showCreateEditDialog(
+    BuildContext context,
+    FlowsViewModel vm, {
+    Flow? flow,
+  }) async {
     final nameController = TextEditingController(text: flow?.name ?? '');
     String category = flow?.category ?? 'OTHER';
     final flowJsonController = TextEditingController(
-      text: flow?.flowJson != null ? const JsonEncoder.withIndent('  ').convert(flow!.flowJson) : '{}',
+      text: flow?.flowJson != null
+          ? const JsonEncoder.withIndent('  ').convert(flow!.flowJson)
+          : '{}',
     );
 
     await showDialog(
@@ -319,10 +368,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppInput(
-                      controller: nameController,
-                      label: 'Name',
-                    ),
+                    AppInput(controller: nameController, label: 'Name'),
                     const SizedBox(height: 12),
                     AppInput.dropdown(
                       value: category,
@@ -331,15 +377,27 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                         AppInputOption(value: 'OTHER', label: 'Other'),
                         AppInputOption(value: 'SIGN_UP', label: 'Sign Up'),
                         AppInputOption(value: 'SIGN_IN', label: 'Sign In'),
-                        AppInputOption(value: 'LEAD_GENERATION', label: 'Lead Generation'),
+                        AppInputOption(
+                          value: 'LEAD_GENERATION',
+                          label: 'Lead Generation',
+                        ),
                         AppInputOption(value: 'BOOKING', label: 'Booking'),
-                        AppInputOption(value: 'APPOINTMENT', label: 'Appointment'),
+                        AppInputOption(
+                          value: 'APPOINTMENT',
+                          label: 'Appointment',
+                        ),
                         AppInputOption(value: 'FEEDBACK', label: 'Feedback'),
                         AppInputOption(value: 'SURVEY', label: 'Survey'),
                         AppInputOption(value: 'QUIZ', label: 'Quiz'),
-                        AppInputOption(value: 'RESERVATION', label: 'Reservation'),
+                        AppInputOption(
+                          value: 'RESERVATION',
+                          label: 'Reservation',
+                        ),
                         AppInputOption(value: 'ORDER', label: 'Order'),
-                        AppInputOption(value: 'REGISTRATION', label: 'Registration'),
+                        AppInputOption(
+                          value: 'REGISTRATION',
+                          label: 'Registration',
+                        ),
                         AppInputOption(value: 'TICKETING', label: 'Ticketing'),
                       ],
                       onSelected: (v) {
@@ -351,24 +409,38 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                       controller: flowJsonController,
                       label: 'Flow JSON Definition',
                       maxLines: 12,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: vm.isBusy
                       ? null
                       : () async {
                           if (flow == null) {
-                            await vm.createFlow(nameController.text.trim(), category, flowJsonController.text.trim());
+                            await vm.createFlow(
+                              nameController.text.trim(),
+                              category,
+                              flowJsonController.text.trim(),
+                            );
                           } else {
-                            await vm.updateFlow(flow.id, nameController.text.trim(), category, flowJsonController.text.trim());
+                            await vm.updateFlow(
+                              flow.id,
+                              nameController.text.trim(),
+                              category,
+                              flowJsonController.text.trim(),
+                            );
                           }
                           if (ctx.mounted && vm.isIdle) {
                             Navigator.pop(ctx);
@@ -397,95 +469,154 @@ class _FlowsTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            PhosphorIcon(PhosphorIconsRegular.buildings, size: 48, color: Colors.grey),
+            PhosphorIcon(
+              PhosphorIconsRegular.buildings,
+              size: 48,
+              color: Colors.grey,
+            ),
             SizedBox(height: 16),
-            Text('Please select a WABA account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(
+              'Please select a WABA account',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
             SizedBox(height: 8),
-            Text('Use the WABA dropdown in the sidebar to choose an account.', style: TextStyle(color: Colors.grey)),
+            Text(
+              'Use the WABA dropdown in the sidebar to choose an account.',
+              style: TextStyle(color: Colors.grey),
+            ),
           ],
         ),
       );
     }
 
     if (vm.isBusy && vm.flows.isEmpty) {
-      return const Center(child: AppProgressIndicator());
+      return AppShimmer(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: 6,
+          itemBuilder: (context, index) => const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: GenericCardSkeleton(lines: 2),
+          ),
+        ),
+      );
     }
 
     if (vm.flows.isEmpty) {
-      return const Center(child: Text('No flows yet. Sync from Meta or create one.'));
+      return const Center(
+        child: Text('No flows yet. Sync from Meta or create one.'),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: vm.flows.length,
-      itemBuilder: (context, index) {
-        final flow = vm.flows[index];
-        return AppCard(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(flow.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                    ),
-                    _StatusBadge(status: flow.status),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    Chip(
-                      label: Text(flow.category ?? 'OTHER', style: const TextStyle(fontSize: 12)),
-                      padding: EdgeInsets.zero,
-                      visualDensity: VisualDensity.compact,
-                    ),
-                    const SizedBox(width: 8),
-                    Text('Updated ${_formatDate(flow.updatedAt)}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    AppIconButton(
-                      icon: const PhosphorIcon(PhosphorIconsRegular.eye, size: 20),
-                      tooltip: 'Preview JSON',
-                      onPressed: () => _showPreviewDialog(context, flow),
-                    ),
-                    if (canManage)
-                      AppIconButton(
-                        icon: const PhosphorIcon(PhosphorIconsRegular.paperPlaneRight, size: 20, color: Colors.blue),
-                        tooltip: 'Send',
-                        onPressed: () => _showSendDialog(context, vm, flow),
+    return RefreshIndicator(
+      onRefresh: () => vm.loadFlows(),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(12),
+        itemCount: vm.flows.length,
+        itemBuilder: (context, index) {
+          final flow = vm.flows[index];
+          return AppCard(
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          flow.name,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
-                    if (canManage && flow.status != 'PUBLISHED')
-                      AppIconButton(
-                        icon: const PhosphorIcon(PhosphorIconsRegular.play, size: 20, color: Colors.green),
-                        tooltip: 'Publish',
-                        onPressed: () => vm.publishFlow(flow.id),
+                      _StatusBadge(status: flow.status),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Chip(
+                        label: Text(
+                          flow.category ?? 'OTHER',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        padding: EdgeInsets.zero,
+                        visualDensity: VisualDensity.compact,
                       ),
-                    if (canManage)
-                      AppIconButton(
-                        icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple, size: 20),
-                        tooltip: 'Edit',
-                        onPressed: () => _showEditDialog(context, vm, flow),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Updated ${_formatDate(flow.updatedAt)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
                       ),
-                    if (canManage)
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
                       AppIconButton(
-                        icon: const PhosphorIcon(PhosphorIconsRegular.trash, size: 20, color: Colors.red),
-                        tooltip: 'Delete',
-                        onPressed: () => _confirmDeleteFlow(context, vm, flow),
+                        icon: const PhosphorIcon(
+                          PhosphorIconsRegular.eye,
+                          size: 20,
+                        ),
+                        tooltip: 'Preview JSON',
+                        onPressed: () => _showPreviewDialog(context, flow),
                       ),
-                  ],
-                ),
-              ],
+                      if (canManage)
+                        AppIconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.paperPlaneRight,
+                            size: 20,
+                            color: Colors.blue,
+                          ),
+                          tooltip: 'Send',
+                          onPressed: () => _showSendDialog(context, vm, flow),
+                        ),
+                      if (canManage && flow.status != 'PUBLISHED')
+                        AppIconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.play,
+                            size: 20,
+                            color: Colors.green,
+                          ),
+                          tooltip: 'Publish',
+                          onPressed: () => vm.publishFlow(flow.id),
+                        ),
+                      if (canManage)
+                        AppIconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.pencilSimple,
+                            size: 20,
+                          ),
+                          tooltip: 'Edit',
+                          onPressed: () => _showEditDialog(context, vm, flow),
+                        ),
+                      if (canManage)
+                        AppIconButton(
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.trash,
+                            size: 20,
+                            color: Colors.red,
+                          ),
+                          tooltip: 'Delete',
+                          onPressed: () =>
+                              _confirmDeleteFlow(context, vm, flow),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -512,7 +643,8 @@ class _FlowsTab extends StatelessWidget {
           ),
         ),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, 
+          AppButton(
+            variant: AppButtonVariant.ghost,
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
           ),
@@ -521,12 +653,20 @@ class _FlowsTab extends StatelessWidget {
     );
   }
 
-  Future<void> _showSendDialog(BuildContext context, FlowsViewModel vm, Flow flow) async {
+  Future<void> _showSendDialog(
+    BuildContext context,
+    FlowsViewModel vm,
+    Flow flow,
+  ) async {
     String? selectedConversationId;
-    final bodyController = TextEditingController(text: 'Please complete: ${flow.name}');
+    final bodyController = TextEditingController(
+      text: 'Please complete: ${flow.name}',
+    );
     final headerController = TextEditingController();
     final footerController = TextEditingController();
-    final flowTokenController = TextEditingController(text: 'flow-${DateTime.now().millisecondsSinceEpoch}');
+    final flowTokenController = TextEditingController(
+      text: 'flow-${DateTime.now().millisecondsSinceEpoch}',
+    );
     final screenController = TextEditingController();
     final dataController = TextEditingController();
 
@@ -546,13 +686,17 @@ class _FlowsTab extends StatelessWidget {
                       label: 'Conversation',
                       hint: 'Select conversation...',
                       options: [
-                        const AppInputOption(value: null, label: 'Select conversation...'),
-                        ...vm.conversations.map((c) => AppInputOption(
-                          value: c.id,
-                          label: c.contactName,
-                        )),
+                        const AppInputOption(
+                          value: null,
+                          label: 'Select conversation...',
+                        ),
+                        ...vm.conversations.map(
+                          (c) =>
+                              AppInputOption(value: c.id, label: c.contactName),
+                        ),
                       ],
-                      onSelected: (v) => setDialogState(() => selectedConversationId = v),
+                      onSelected: (v) =>
+                          setDialogState(() => selectedConversationId = v),
                     ),
                     const SizedBox(height: 12),
                     AppInput(
@@ -587,17 +731,22 @@ class _FlowsTab extends StatelessWidget {
                       label: 'Screen Data (optional)',
                       hint: '{"key": "value"}',
                       maxLines: 3,
-                      style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: selectedConversationId == null || vm.isBusy
                       ? null
                       : () async {
@@ -614,11 +763,22 @@ class _FlowsTab extends StatelessWidget {
                           if (success && ctx.mounted) {
                             Navigator.pop(ctx);
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Flow sent successfully')),
+                              const SnackBar(
+                                content: Text('Flow sent successfully'),
+                              ),
                             );
                           }
                         },
-                  child: vm.isBusy ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Send Flow'),
+                  child: vm.isBusy
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Send Flow'),
                 ),
               ],
             );
@@ -628,22 +788,38 @@ class _FlowsTab extends StatelessWidget {
     );
   }
 
-  Future<void> _showEditDialog(BuildContext context, FlowsViewModel vm, Flow flow) async {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    FlowsViewModel vm,
+    Flow flow,
+  ) async {
     final parent = context.findAncestorStateOfType<_FlowsBodyState>();
     if (parent != null) {
       await parent._showCreateEditDialog(context, vm, flow: flow);
     }
   }
 
-  Future<void> _confirmDeleteFlow(BuildContext context, FlowsViewModel vm, Flow flow) async {
+  Future<void> _confirmDeleteFlow(
+    BuildContext context,
+    FlowsViewModel vm,
+    Flow flow,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Flow'),
         content: Text('Are you sure you want to delete "${flow.name}"?'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          AppButton(variant: AppButtonVariant.primary, onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.primary,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -661,46 +837,72 @@ class _SubmissionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (vm.isBusy && vm.submissions.isEmpty) {
-      return const Center(child: AppProgressIndicator());
+      return AppShimmer(
+        child: ListView.builder(
+          padding: const EdgeInsets.all(12),
+          itemCount: 6,
+          itemBuilder: (context, index) => const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: GenericCardSkeleton(lines: 2),
+          ),
+        ),
+      );
     }
 
     if (vm.submissions.isEmpty) {
-      return const Center(child: Text('No submissions yet. Send a flow and wait for responses.'));
+      return const Center(
+        child: Text('No submissions yet. Send a flow and wait for responses.'),
+      );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(12),
-      itemCount: vm.submissions.length,
-      itemBuilder: (context, index) {
-        final s = vm.submissions[index];
-        return AppCard(
-          child: AppListTile(
-            title: Text(s.flowName ?? 'Unknown Flow'),
-            subtitle: Text(s.contactName ?? 'Unknown'),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _SubmissionStatusBadge(status: s.status),
-                const SizedBox(width: 8),
-                AppIconButton(
-                  icon: const PhosphorIcon(PhosphorIconsRegular.eye, size: 20),
-                  onPressed: () => _showSubmissionDetail(context, vm, s),
-                ),
-                if (canManage)
+    return RefreshIndicator(
+      onRefresh: () => vm.loadSubmissions(),
+      child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(12),
+        itemCount: vm.submissions.length,
+        itemBuilder: (context, index) {
+          final s = vm.submissions[index];
+          return AppCard(
+            child: AppListTile(
+              title: Text(s.flowName ?? 'Unknown Flow'),
+              subtitle: Text(s.contactName ?? 'Unknown'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _SubmissionStatusBadge(status: s.status),
+                  const SizedBox(width: 8),
                   AppIconButton(
-                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, size: 20, color: Colors.red),
-                    onPressed: () => _confirmDeleteSubmission(context, vm, s),
+                    icon: const PhosphorIcon(
+                      PhosphorIconsRegular.eye,
+                      size: 20,
+                    ),
+                    onPressed: () => _showSubmissionDetail(context, vm, s),
                   ),
-              ],
+                  if (canManage)
+                    AppIconButton(
+                      icon: const PhosphorIcon(
+                        PhosphorIconsRegular.trash,
+                        size: 20,
+                        color: Colors.red,
+                      ),
+                      onPressed: () => _confirmDeleteSubmission(context, vm, s),
+                    ),
+                ],
+              ),
+              onTap: () => _showSubmissionDetail(context, vm, s),
             ),
-            onTap: () => _showSubmissionDetail(context, vm, s),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
-  Future<void> _showSubmissionDetail(BuildContext context, FlowsViewModel vm, FlowSubmission s) async {
+  Future<void> _showSubmissionDetail(
+    BuildContext context,
+    FlowsViewModel vm,
+    FlowSubmission s,
+  ) async {
     final entries = _formatFlowResponseEntries(s.responseJson ?? {});
     await showDialog(
       context: context,
@@ -711,11 +913,17 @@ class _SubmissionsTab extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Flow: ${s.flowName ?? 'Unknown'}', style: const TextStyle(fontSize: 14)),
+              Text(
+                'Flow: ${s.flowName ?? 'Unknown'}',
+                style: const TextStyle(fontSize: 14),
+              ),
               const SizedBox(height: 4),
               Text('Status: ${s.status}', style: const TextStyle(fontSize: 14)),
               const SizedBox(height: 4),
-              Text('Completed: ${_formatDate(s.completedAt ?? s.createdAt)}', style: const TextStyle(fontSize: 14)),
+              Text(
+                'Completed: ${_formatDate(s.completedAt ?? s.createdAt)}',
+                style: const TextStyle(fontSize: 14),
+              ),
               const SizedBox(height: 16),
               Container(
                 width: double.maxFinite,
@@ -727,20 +935,43 @@ class _SubmissionsTab extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Response', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.grey)),
-                    const SizedBox(height: 8),
-                    ...entries.map((e) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('${e.label}: ', style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
-                          Expanded(child: Text(e.value, style: const TextStyle(fontSize: 13))),
-                        ],
+                    const Text(
+                      'Response',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
                       ),
-                    )),
+                    ),
+                    const SizedBox(height: 8),
+                    ...entries.map(
+                      (e) => Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${e.label}: ',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 13,
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                e.value,
+                                style: const TextStyle(fontSize: 13),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                     if (entries.isEmpty)
-                      const Text('No response data', style: TextStyle(color: Colors.grey)),
+                      const Text(
+                        'No response data',
+                        style: TextStyle(color: Colors.grey),
+                      ),
                   ],
                 ),
               ),
@@ -748,11 +979,13 @@ class _SubmissionsTab extends StatelessWidget {
           ),
         ),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, 
+          AppButton(
+            variant: AppButtonVariant.ghost,
             onPressed: () => vm.deleteSubmission(s.id),
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
-          AppButton(variant: AppButtonVariant.ghost, 
+          AppButton(
+            variant: AppButtonVariant.ghost,
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
           ),
@@ -761,15 +994,27 @@ class _SubmissionsTab extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDeleteSubmission(BuildContext context, FlowsViewModel vm, FlowSubmission s) async {
+  Future<void> _confirmDeleteSubmission(
+    BuildContext context,
+    FlowsViewModel vm,
+    FlowSubmission s,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Submission'),
         content: const Text('Are you sure you want to delete this submission?'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          AppButton(variant: AppButtonVariant.primary, onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.primary,
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -803,7 +1048,13 @@ class _StatusBadge extends StatelessWidget {
         color = Colors.grey;
     }
     return Chip(
-      label: Text(status, style: TextStyle(color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontSize: 12)),
+      label: Text(
+        status,
+        style: TextStyle(
+          color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+          fontSize: 12,
+        ),
+      ),
       backgroundColor: color.withValues(alpha: 0.15),
       side: BorderSide(color: color.withValues(alpha: 0.5)),
       padding: EdgeInsets.zero,
@@ -827,7 +1078,13 @@ class _SubmissionStatusBadge extends StatelessWidget {
       color = Colors.amber;
     }
     return Chip(
-      label: Text(status, style: TextStyle(color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white, fontSize: 12)),
+      label: Text(
+        status,
+        style: TextStyle(
+          color: color.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+          fontSize: 12,
+        ),
+      ),
       backgroundColor: color.withValues(alpha: 0.15),
       side: BorderSide(color: color.withValues(alpha: 0.5)),
       padding: EdgeInsets.zero,
@@ -853,7 +1110,9 @@ List<_Entry> _formatFlowResponseEntries(Map<String, dynamic> data) {
     if (entry.key == 'flow_token') continue;
     String display;
     if (entry.value is List) {
-      display = (entry.value as List).map((v) => v is String ? v.replaceAll('_', ' ') : v.toString()).join(', ');
+      display = (entry.value as List)
+          .map((v) => v is String ? v.replaceAll('_', ' ') : v.toString())
+          .join(', ');
     } else if (entry.value is String) {
       display = (entry.value as String).replaceAll('_', ' ');
     } else {

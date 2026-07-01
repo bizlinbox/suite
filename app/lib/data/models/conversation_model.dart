@@ -25,6 +25,7 @@ class Conversation {
   final String? assignedAgentName;
   final bool? isPrivate;
   final String? assignedAgentId;
+  final String? status;
   final List<ConversationLabel>? labels;
 
   Conversation({
@@ -38,6 +39,7 @@ class Conversation {
     this.assignedAgentName,
     this.isPrivate,
     this.assignedAgentId,
+    this.status,
     this.labels,
   });
 
@@ -53,6 +55,7 @@ class Conversation {
       assignedAgentName: json['assignedAgentName'] as String?,
       isPrivate: json['isPrivate'] as bool?,
       assignedAgentId: json['assignedAgentId'] as String?,
+      status: json['status'] as String?,
       labels: (json['labels'] as List<dynamic>?)
           ?.map((e) => ConversationLabel.fromJson(e as Map<String, dynamic>))
           .toList(),

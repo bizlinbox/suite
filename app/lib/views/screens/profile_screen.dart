@@ -189,6 +189,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             controller: _nameController,
                             label: 'Full Name',
                             prefix: const PhosphorIcon(PhosphorIconsRegular.user, size: 20),
+                            autofillHints: const [AutofillHints.name],
                           ),
                           const SizedBox(height: 12),
                           AppInput(
@@ -228,22 +229,32 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          AppInput.password(
-                            controller: _currentPasswordController,
-                            label: 'Current Password',
-                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
-                          ),
-                          const SizedBox(height: 12),
-                          AppInput.password(
-                            controller: _newPasswordController,
-                            label: 'New Password',
-                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
-                          ),
-                          const SizedBox(height: 12),
-                          AppInput.password(
-                            controller: _confirmPasswordController,
-                            label: 'Confirm New Password',
-                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                          AutofillGroup(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppInput.password(
+                                  controller: _currentPasswordController,
+                                  label: 'Current Password',
+                                  prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                                  autofillHints: const [AutofillHints.password],
+                                ),
+                                const SizedBox(height: 12),
+                                AppInput.password(
+                                  controller: _newPasswordController,
+                                  label: 'New Password',
+                                  prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                                  autofillHints: const [AutofillHints.newPassword],
+                                ),
+                                const SizedBox(height: 12),
+                                AppInput.password(
+                                  controller: _confirmPasswordController,
+                                  label: 'Confirm New Password',
+                                  prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                                  autofillHints: const [AutofillHints.newPassword],
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 16),
                           Align(

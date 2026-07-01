@@ -7,6 +7,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/quick_reply_dialog.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class QuickRepliesViewModel extends BaseViewModel {
@@ -59,7 +60,9 @@ class QuickRepliesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => QuickRepliesViewModel(locator<SettingsRepository>())..loadQuickReplies(),
+      create: (_) =>
+          QuickRepliesViewModel(locator<SettingsRepository>())
+            ..loadQuickReplies(),
       child: const _QuickRepliesBody(),
     );
   }
@@ -68,7 +71,11 @@ class QuickRepliesScreen extends StatelessWidget {
 class _QuickRepliesBody extends StatelessWidget {
   const _QuickRepliesBody();
 
-  Future<void> _showDialog(BuildContext context, QuickRepliesViewModel vm, {QuickReply? quickReply}) async {
+  Future<void> _showDialog(
+    BuildContext context,
+    QuickRepliesViewModel vm, {
+    QuickReply? quickReply,
+  }) async {
     await showDialog(
       context: context,
       builder: (ctx) => QuickReplyDialog(
@@ -116,38 +123,63 @@ class _QuickRepliesBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.quickReplies.isEmpty
-          ? const Center(child: AppProgressIndicator())
-          : vm.quickReplies.isEmpty
-              ? const Center(child: Text('No quick replies found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.quickReplies.length,
-                  itemBuilder: (context, index) {
-                    final q = vm.quickReplies[index];
-                    return AppCard(
-                      child: AppListTile(
-                        title: Text('/${q.shortcut}'),
-                        subtitle: Text(q.content, maxLines: 2, overflow: TextOverflow.ellipsis),
-                        onTap: canManage ? () => _showDialog(context, vm, quickReply: q) : null,
-                        trailing: canManage
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
-                                    onPressed: () => _showDialog(context, vm, quickReply: q),
-                                  ),
-                                  AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                    onPressed: () => vm.deleteQuickReply(q.id),
-                                  ),
-                                ],
-                              )
-                            : null,
-                      ),
-                    );
-                  },
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (_, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
                 ),
+              ),
+            )
+          : vm.quickReplies.isEmpty
+          ? const Center(child: Text('No quick replies found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadQuickReplies(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.quickReplies.length,
+                itemBuilder: (context, index) {
+                  final q = vm.quickReplies[index];
+                  return AppCard(
+                    child: AppListTile(
+                      title: Text('/${q.shortcut}'),
+                      subtitle: Text(
+                        q.content,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: canManage
+                          ? () => _showDialog(context, vm, quickReply: q)
+                          : null,
+                      trailing: canManage
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppIconButton(
+                                  icon: const PhosphorIcon(
+                                    PhosphorIconsRegular.pencilSimple,
+                                  ),
+                                  onPressed: () =>
+                                      _showDialog(context, vm, quickReply: q),
+                                ),
+                                AppIconButton(
+                                  icon: const PhosphorIcon(
+                                    PhosphorIconsRegular.trash,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () => vm.deleteQuickReply(q.id),
+                                ),
+                              ],
+                            )
+                          : null,
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -156,9 +188,16 @@ class _QuickRepliesBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

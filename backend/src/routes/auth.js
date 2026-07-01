@@ -8,13 +8,6 @@ const logger = require('../utils/logger');
 const { authenticate } = require('../middleware/auth');
 const { z } = require('zod');
 
-const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(8).max(128),
-  name: z.string().min(1).max(100),
-  org_name: z.string().min(1).max(100),
-});
-
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
@@ -100,88 +93,6 @@ async function buildUserResponse(user) {
     })),
   };
 }
-
-// POST /register
-router.post('/register', async (req, res, next) => {
-  const parse = registerSchema.safeParse(req.body);
-  if (!parse.success) {
-    return res.status(400).json({ error: 'Invalid input', details: parse.error.errors });
-  }
-
-  try {
-    const { email, password, name, org_name } = req.body;
-    if (!email || !password || !name || !org_name) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    // Check if public registration is enabled
-    const settingsResult = await query(
-      'SELECT enable_public_registration FROM organizations ORDER BY created_at LIMIT 1'
-    );
-    if (settingsResult.rows.length > 0 && settingsResult.rows[0].enable_public_registration === false) {
-      return res.status(403).json({ error: 'Public registration is disabled' });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    const orgResult = await query(
-      'INSERT INTO organizations (name) VALUES ($1) RETURNING id',
-      [org_name]
-    );
-    const orgId = orgResult.rows[0].id;
-
-    // Seed default roles for the new organization
-    const ALL_PERMISSIONS = [
-      'conversations.read','conversations.manage',
-      'contacts.read','contacts.manage',
-      'campaigns.read','campaigns.manage',
-      'automations.read','automations.manage',
-      'analytics.read',
-      'users.read','users.manage',
-      'roles.read','roles.manage',
-      'settings.read','settings.manage',
-    ];
-    const AGENT_PERMISSIONS = [
-      'conversations.read','conversations.manage',
-      'contacts.read','contacts.manage',
-      'analytics.read',
-      'settings.read',
-    ];
-    await query(
-      `INSERT INTO roles (org_id, name, permissions, is_system) VALUES ($1, 'admin', $2, true)`,
-      [orgId, JSON.stringify(ALL_PERMISSIONS)]
-    );
-    await query(
-      `INSERT INTO roles (org_id, name, permissions, is_system) VALUES ($1, 'agent', $2, true)`,
-      [orgId, JSON.stringify(AGENT_PERMISSIONS)]
-    );
-
-    const userResult = await query(
-      `INSERT INTO users (org_id, name, email, password_hash, role, status)
-       VALUES ($1, $2, $3, $4, 'admin', 'active')
-       RETURNING id, org_id, name, email, role, status`,
-      [orgId, name, email, passwordHash]
-    );
-    const user = userResult.rows[0];
-
-    const accessToken = generateAccessToken(user);
-    const refreshToken = generateRefreshToken(user);
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-    await query(
-      'INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES ($1, $2, $3)',
-      [user.id, refreshToken, expiresAt]
-    );
-
-    setTokenCookies(res, accessToken, refreshToken);
-
-    const userResponse = await buildUserResponse(user);
-    res.status(201).json({ user: userResponse });
-  } catch (err) {
-    logger.error('Registration error', err);
-    next(err);
-  }
-});
 
 // POST /login
 router.post('/login', async (req, res, next) => {
@@ -412,20 +323,18 @@ router.patch('/me', authenticate, async (req, res, next) => {
 router.get('/public-settings', async (req, res, next) => {
   try {
     const result = await query(
-      'SELECT platform_name, platform_logo, enable_public_registration FROM organizations ORDER BY created_at LIMIT 1'
+      'SELECT platform_name, platform_logo FROM organizations ORDER BY created_at LIMIT 1'
     );
     if (result.rows.length === 0) {
       return res.json({
         platformName: 'BizlInbox',
         platformLogo: null,
-        enablePublicRegistration: true,
       });
     }
     const row = result.rows[0];
     res.json({
       platformName: row.platform_name || 'BizlInbox',
       platformLogo: row.platform_logo || null,
-      enablePublicRegistration: row.enable_public_registration ?? true,
     });
   } catch (err) {
     logger.error('Public settings error', err);

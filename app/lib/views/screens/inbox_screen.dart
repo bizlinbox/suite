@@ -7,19 +7,27 @@ import '../../core/services/notification_manager.dart';
 import '../../core/services/socket_service.dart';
 import '../../data/models/conversation_model.dart';
 import '../../data/models/contact_model.dart';
+import '../../data/models/label_model.dart';
 import '../../data/repositories/conversation_repository.dart';
 import '../../data/repositories/contact_repository.dart';
+import '../../data/repositories/settings_repository.dart';
+import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/new_chat_dialog.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class InboxViewModel extends BaseViewModel {
   final ConversationRepository _repo;
   final ContactRepository _contactRepo;
+  final SettingsRepository _settingsRepo;
 
-  InboxViewModel(this._repo, this._contactRepo);
+  InboxViewModel(this._repo, this._contactRepo, this._settingsRepo);
+
+  List<Label> _allLabels = [];
+  List<Label> get allLabels => _allLabels;
 
   List<Conversation> _conversations = [];
   List<Conversation> get conversations => _conversations;
@@ -69,6 +77,26 @@ class InboxViewModel extends BaseViewModel {
     await loadConversations();
   }
 
+  Future<void> updateStatus(String id, String status) async {
+    final result = await _repo.updateStatus(id, status);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
+  Future<void> closeConversation(String id) async {
+    final result = await _repo.closeConversation(id);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
+  Future<void> assignAgent(String id, String? agentId) async {
+    final result = await _repo.assignAgent(id, agentId);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
+  Future<void> togglePrivacy(String id, bool isPrivate) async {
+    final result = await _repo.togglePrivacy(id, isPrivate);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
   Future<void> loadConversations({bool append = false}) async {
     await runAsync(() async {
       final result = await _repo.getConversations(offset: append ? _offset + 20 : 0, search: _search.isEmpty ? null : _search);
@@ -101,6 +129,21 @@ class InboxViewModel extends BaseViewModel {
     );
   }
 
+  Future<void> loadLabels() async {
+    final result = await _settingsRepo.getLabels();
+    result.when(success: (data) => _allLabels = data, error: (message, exception) {});
+  }
+
+  Future<void> addLabel(String conversationId, String labelId) async {
+    final result = await _repo.addConversationLabel(conversationId, labelId);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
+  Future<void> removeLabel(String conversationId, String labelId) async {
+    final result = await _repo.removeConversationLabel(conversationId, labelId);
+    result.when(success: (_) => loadConversations(), error: (message, exception) {});
+  }
+
   Future<void> createConversation(String phone, {String? message}) async {
     if (phone.trim().isEmpty) return;
     setBusy();
@@ -115,47 +158,91 @@ class InboxViewModel extends BaseViewModel {
   }
 
   void handleNewMessage(Map<String, dynamic> data) {
-    // Try optimistic update if conversation data is present in the payload
-    final convData = data['conversation'] as Map<String, dynamic>?;
-    if (convData != null) {
-      try {
-        final updated = Conversation.fromJson(convData);
-        final index = _conversations.indexWhere((c) => c.id == updated.id);
-        if (index >= 0) {
-          _conversations[index] = updated;
-          if (updated.unreadCount > 0 || updated.id != _conversations.first.id) {
-            final conv = _conversations.removeAt(index);
-            _conversations.insert(0, conv);
-          }
-          notifyListeners();
-        } else {
-          _conversations.insert(0, updated);
-          notifyListeners();
-        }
-        return;
-      } catch (_) {}
+    // new_message event sends the message object; trigger a lightweight
+    // conversation update via conversation_updated instead (handled below).
+    // Fallback to full reload if conversation_id is present but not handled.
+    final conversationId = data['conversationId'] as String?;
+    if (conversationId != null) {
+      _optimisticUpdateConversation(conversationId, lastMessagePreview: data['content'] as String?);
     }
-    // Fall back to full reload if we can't parse the payload
-    loadConversations();
   }
 
   void handleConversationUpdated(Map<String, dynamic> data) {
     try {
-      final updated = Conversation.fromJson(data);
-      final index = _conversations.indexWhere((c) => c.id == updated.id);
-      if (index >= 0) {
-        _conversations[index] = updated;
-        // Move to top if unread
-        if (updated.unreadCount > 0) {
+      // Full conversation object (from assign/status/privacy changes)
+      final fullId = data['id'] as String?;
+      if (fullId != null) {
+        final updated = Conversation.fromJson(data);
+        final index = _conversations.indexWhere((c) => c.id == updated.id);
+        if (index >= 0) {
+          _conversations[index] = updated;
           final conv = _conversations.removeAt(index);
           _conversations.insert(0, conv);
+        } else {
+          _conversations.insert(0, updated);
         }
         notifyListeners();
-      } else {
-        _conversations.insert(0, updated);
-        notifyListeners();
+        return;
       }
-    } catch (_) {}
+
+      // Partial update from messages (conversationId, lastMessagePreview, lastMessageAt)
+      final partialId = data['conversationId'] as String?;
+      if (partialId != null) {
+        _optimisticUpdateConversation(
+          partialId,
+          lastMessagePreview: data['lastMessagePreview'] as String?,
+          lastMessageAt: data['lastMessageAt'] as String?,
+          status: data['status'] as String?,
+          assignedAgentId: data['assignedAgentId'] as String?,
+          assignedAgentName: data['assignedAgentName'] as String?,
+          isPrivate: data['isPrivate'] as bool?,
+          unreadCount: data['unreadCount'] as int?,
+        );
+        return;
+      }
+
+      // Unknown payload - reload to be safe
+      loadConversations();
+    } catch (_) {
+      loadConversations();
+    }
+  }
+
+  void _optimisticUpdateConversation(
+    String conversationId, {
+    String? lastMessagePreview,
+    String? lastMessageAt,
+    String? status,
+    String? assignedAgentId,
+    String? assignedAgentName,
+    bool? isPrivate,
+    int? unreadCount,
+  }) {
+    final index = _conversations.indexWhere((c) => c.id == conversationId);
+    if (index >= 0) {
+      final existing = _conversations[index];
+      _conversations[index] = Conversation(
+        id: existing.id,
+        contactId: existing.contactId,
+        contactName: existing.contactName,
+        contactPhone: existing.contactPhone,
+        lastMessagePreview: lastMessagePreview ?? existing.lastMessagePreview,
+        lastMessageAt: lastMessageAt ?? existing.lastMessageAt,
+        unreadCount: unreadCount ?? existing.unreadCount,
+        assignedAgentName: assignedAgentName ?? existing.assignedAgentName,
+        assignedAgentId: assignedAgentId ?? existing.assignedAgentId,
+        status: status ?? existing.status,
+        isPrivate: isPrivate ?? existing.isPrivate,
+        labels: existing.labels,
+      );
+      // Move to top since there is new activity
+      final conv = _conversations.removeAt(index);
+      _conversations.insert(0, conv);
+      notifyListeners();
+    } else {
+      // Conversation not in current list (new or filtered out) - reload
+      loadConversations();
+    }
   }
 
   Future<Contact?> getContact(String contactId) async {
@@ -177,7 +264,8 @@ class InboxScreen extends StatelessWidget {
       create: (_) => InboxViewModel(
         locator<ConversationRepository>(),
         locator<ContactRepository>(),
-      )..loadConversations(),
+        locator<SettingsRepository>(),
+      )..loadConversations()..loadLabels(),
       child: _InboxBody(detail: detail),
     );
   }
@@ -285,7 +373,7 @@ class _InboxBodyState extends State<_InboxBody> {
             ? null
             : AppFloatingActionButton(
                 onPressed: () => _showNewChatDialog(context, vm),
-                child: const PhosphorIcon(PhosphorIconsRegular.chatTeardropText),
+                child: const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, color: Colors.white),
               ),
       );
     }
@@ -307,7 +395,7 @@ class _InboxBodyState extends State<_InboxBody> {
       appBar: AppAppBar(
         title: vm.isSelectionMode
             ? Text('${vm.selectedIds.length} selected')
-            : const Text('Inbox'),
+            : null,
         leading: vm.isSelectionMode
             ? AppIconButton(
                 icon: const PhosphorIcon(PhosphorIconsRegular.x),
@@ -315,17 +403,11 @@ class _InboxBodyState extends State<_InboxBody> {
               )
             : null,
         actions: [
-          if (vm.isSelectionMode) ...[
+          if (vm.isSelectionMode)
             AppIconButton(
               icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
               onPressed: vm.isBusy ? null : () => _confirmBulkDelete(context, vm),
             ),
-          ] else ...[
-            AppIconButton(
-              icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
-              onPressed: vm.isBusy ? null : () => vm.loadConversations(),
-            ),
-          ],
         ],
       ),
       body: Column(
@@ -340,43 +422,56 @@ class _InboxBodyState extends State<_InboxBody> {
           ),
           Expanded(
             child: vm.isBusy && vm.conversations.isEmpty
-                ? const Center(child: AppProgressIndicator())
+                ? AppShimmer(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: 8,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: ConversationSkeletonItem(),
+                      ),
+                    ),
+                  )
                 : vm.conversations.isEmpty
                     ? const Center(child: Text('No conversations found'))
-                    : ListView.builder(
-                        itemCount: vm.conversations.length + (vm.hasMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == vm.conversations.length) {
-                            return Center(
-                              child: AppButton(
-                                variant: AppButtonVariant.ghost,
-                                onPressed: () => vm.loadConversations(append: true),
-                                child: const Text('Load more'),
-                              ),
+                    : RefreshIndicator(
+                        onRefresh: () => vm.loadConversations(),
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: vm.conversations.length + (vm.hasMore ? 1 : 0),
+                          itemBuilder: (context, index) {
+                            if (index == vm.conversations.length) {
+                              return Center(
+                                child: AppButton(
+                                  variant: AppButtonVariant.ghost,
+                                  onPressed: () => vm.loadConversations(append: true),
+                                  child: const Text('Load more'),
+                                ),
+                              );
+                            }
+                            final conv = vm.conversations[index];
+                            final selectedPath = '/dashboard/inbox/${conv.id}';
+                            final isSelected = GoRouterState.of(context).uri.path == selectedPath;
+                            return _ConversationTile(
+                              conversation: conv,
+                              vm: vm,
+                              selected: isSelected,
+                              onTap: () {
+                                if (vm.isSelectionMode) {
+                                  vm.toggleSelection(conv.id);
+                                } else {
+                                  context.go(selectedPath);
+                                }
+                              },
+                              onLongPress: () {
+                                if (!vm.isSelectionMode) {
+                                  vm.enterSelectionMode();
+                                  vm.toggleSelection(conv.id);
+                                }
+                              },
                             );
-                          }
-                          final conv = vm.conversations[index];
-                          final selectedPath = '/dashboard/inbox/${conv.id}';
-                          final isSelected = GoRouterState.of(context).uri.path == selectedPath;
-                          return _ConversationTile(
-                            conversation: conv,
-                            vm: vm,
-                            selected: isSelected,
-                            onTap: () {
-                              if (vm.isSelectionMode) {
-                                vm.toggleSelection(conv.id);
-                              } else {
-                                context.go(selectedPath);
-                              }
-                            },
-                            onLongPress: () {
-                              if (!vm.isSelectionMode) {
-                                vm.enterSelectionMode();
-                                vm.toggleSelection(conv.id);
-                              }
-                            },
-                          );
-                        },
+                          },
+                        ),
                       ),
           ),
         ],
@@ -461,28 +556,52 @@ class _ConversationTile extends StatelessWidget {
           color: hasUnread ? Theme.of(context).colorScheme.onSurface : Colors.grey,
         ),
       ),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          if (hasUnread)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.primary,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                '${conversation.unreadCount}',
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
-              ),
-            )
-          else
-            const SizedBox(height: 24),
-          if (conversation.assignedAgentName != null)
-            Text(
-              conversation.assignedAgentName!,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              if (hasUnread)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '${conversation.unreadCount}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                const SizedBox(height: 24),
+              if (conversation.assignedAgentName != null)
+                Text(
+                  conversation.assignedAgentName!,
+                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                ),
+            ],
+          ),
+          if (!vm.isSelectionMode)
+            PopupMenuButton<String>(
+              icon: const PhosphorIcon(PhosphorIconsRegular.dotsThreeVertical, size: 20),
+              onSelected: (value) => _onMenuSelected(context, value),
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'status', child: _menuRow(PhosphorIconsRegular.circle, 'Status: ${conversation.status ?? 'open'}')),
+                const PopupMenuItem(value: 'close', child: Text('Close conversation')),
+                if (conversation.isPrivate == true)
+                  const PopupMenuItem(value: 'unprivate', child: Text('Make public'))
+                else
+                  const PopupMenuItem(value: 'private', child: Text('Make private')),
+                const PopupMenuItem(value: 'labels', child: Text('Labels')),
+                if (conversation.assignedAgentId == null)
+                  const PopupMenuItem(value: 'assign_me', child: Text('Assign to me'))
+                else
+                  const PopupMenuItem(value: 'unassign', child: Text('Unassign')),
+                const PopupMenuItem(value: 'delete', child: Text('Delete', style: TextStyle(color: Colors.red))),
+              ],
             ),
         ],
       ),
@@ -500,5 +619,118 @@ class _ConversationTile extends StatelessWidget {
         builder: (_) => ContactProfileSheet(contact: contact),
       );
     }
+  }
+
+  Widget _menuRow(IconData icon, String label) {
+    return Row(
+      children: [
+        PhosphorIcon(icon, size: 16),
+        const SizedBox(width: 8),
+        Text(label),
+      ],
+    );
+  }
+
+  void _onMenuSelected(BuildContext context, String value) {
+    switch (value) {
+      case 'status':
+        _showStatusPicker(context);
+        break;
+      case 'close':
+        vm.closeConversation(conversation.id);
+        break;
+      case 'private':
+        vm.togglePrivacy(conversation.id, true);
+        break;
+      case 'unprivate':
+        vm.togglePrivacy(conversation.id, false);
+        break;
+      case 'labels':
+        _showLabelPicker(context);
+        break;
+      case 'assign_me':
+        final authVm = Provider.of<AuthViewModel>(context, listen: false);
+        vm.assignAgent(conversation.id, authVm.user?.id);
+        break;
+      case 'unassign':
+        vm.assignAgent(conversation.id, null);
+        break;
+      case 'delete':
+        vm.deleteConversation(conversation.id);
+        break;
+    }
+  }
+
+  void _showStatusPicker(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text('Change Status', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            ...['open', 'closed', 'pending'].map((s) => ListTile(
+              leading: Icon(Icons.circle, size: 10, color: s == 'open' ? Colors.green : s == 'closed' ? Colors.grey : Colors.orange),
+              title: Text(s[0].toUpperCase() + s.substring(1)),
+              trailing: conversation.status == s ? const Icon(Icons.check) : null,
+              onTap: () {
+                Navigator.pop(context);
+                vm.updateStatus(conversation.id, s);
+              },
+            )),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLabelPicker(BuildContext context) {
+    final convLabels = conversation.labels ?? [];
+    final convLabelIds = convLabels.map((l) => l.id).toSet();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Labels'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: vm.allLabels.isEmpty
+              ? const Text('No labels available. Create labels in Settings.')
+              : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: vm.allLabels.length,
+                  itemBuilder: (_, index) {
+                    final label = vm.allLabels[index];
+                    final isSelected = convLabelIds.contains(label.id);
+                    final bg = Color(int.parse(label.color.replaceFirst('#', '0xFF')));
+                    return ListTile(
+                      leading: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+                      ),
+                      title: Text(label.name),
+                      trailing: isSelected ? const Icon(Icons.check) : null,
+                      onTap: () {
+                        if (isSelected) {
+                          vm.removeLabel(conversation.id, label.id);
+                        } else {
+                          vm.addLabel(conversation.id, label.id);
+                        }
+                      },
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
 }

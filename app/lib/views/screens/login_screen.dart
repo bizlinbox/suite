@@ -6,9 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
-import 'register_screen.dart';
 import 'setup_screen.dart';
-import 'accept_invite_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -56,14 +54,13 @@ class _LoginBodyState extends State<_LoginBody> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.asset(
+                      'assets/icon/icon.png',
+                      width: 56,
+                      height: 56,
                     ),
-                    child: const PhosphorIcon(PhosphorIconsRegular.chatTeardrop, size: 28, color: Colors.white),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -101,19 +98,28 @@ class _LoginBodyState extends State<_LoginBody> {
                         ],
                       ),
                     ),
-                  AppInput.email(
-                    controller: _emailController,
-                    label: 'Email',
-                    prefix: const PhosphorIcon(PhosphorIconsRegular.envelope, size: 20),
-                    textInputAction: TextInputAction.next,
-                  ),
-                  const SizedBox(height: 16),
-                  AppInput.password(
-                    controller: _passwordController,
-                    label: 'Password',
-                    prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
-                    textInputAction: TextInputAction.done,
-                    onSubmitted: (_) => _login(context, loginVm),
+                  AutofillGroup(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AppInput.email(
+                          controller: _emailController,
+                          label: 'Email',
+                          prefix: const PhosphorIcon(PhosphorIconsRegular.envelope, size: 20),
+                          textInputAction: TextInputAction.next,
+                          autofillHints: const [AutofillHints.email],
+                        ),
+                        const SizedBox(height: 16),
+                        AppInput.password(
+                          controller: _passwordController,
+                          label: 'Password',
+                          prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                          textInputAction: TextInputAction.done,
+                          onSubmitted: (_) => _login(context, loginVm),
+                          autofillHints: const [AutofillHints.password],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
@@ -131,27 +137,12 @@ class _LoginBodyState extends State<_LoginBody> {
                     onPressed: () => context.go('/domain'),
                     child: const Text('Change domain'),
                   ),
-                  if (loginVm.enableRegistration)
-                    AppButton(
-                      variant: AppButtonVariant.ghost,
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                      ),
-                      child: const Text('Create an account'),
-                    ),
                   AppButton(
                     variant: AppButtonVariant.ghost,
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute(builder: (_) => const SetupScreen()),
                     ),
                     child: const Text('Initial setup'),
-                  ),
-                  AppButton(
-                    variant: AppButtonVariant.ghost,
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const AcceptInviteScreen()),
-                    ),
-                    child: const Text('Have an invite?'),
                   ),
                 ],
               ),

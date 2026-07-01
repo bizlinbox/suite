@@ -48,7 +48,7 @@ class AppAlertDialog extends StatelessWidget {
                   child: title!,
                 ),
               if (title != null && content != null) const SizedBox(height: 12),
-              if (content != null) content!,
+              content ?? const SizedBox.shrink(),
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,

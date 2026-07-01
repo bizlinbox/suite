@@ -319,7 +319,7 @@ class DonutChart extends StatelessWidget {
   final String title;
   final double height;
 
-  DonutChart({
+  const DonutChart({
     super.key,
     required this.values,
     required this.labels,

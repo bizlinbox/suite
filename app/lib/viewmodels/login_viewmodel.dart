@@ -10,15 +10,12 @@ class LoginViewModel extends BaseViewModel {
 
   String _platformName = 'BizlInbox';
   String get platformName => _platformName;
-  bool _enableRegistration = true;
-  bool get enableRegistration => _enableRegistration;
 
   Future<void> loadPublicSettings() async {
     final result = await _authRepo.getPublicSettings();
     result.when(
       success: (data) {
         _platformName = data['platformName'] as String? ?? 'BizlInbox';
-        _enableRegistration = data['enablePublicRegistration'] as bool? ?? true;
       },
       error: (message, exception) {},
     );

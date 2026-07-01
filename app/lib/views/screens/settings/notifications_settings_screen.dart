@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/di.dart';
 import '../../../core/services/local_storage_service.dart';
+import '../../../core/services/local_notification_service.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
@@ -27,9 +28,12 @@ class _NotificationsViewModel extends ChangeNotifier {
     _enabled = _storage.getNotificationsEnabled();
   }
 
-  void toggle() {
+  Future<void> toggle() async {
     _enabled = !_enabled;
-    _storage.setNotificationsEnabled(_enabled);
+    await _storage.setNotificationsEnabled(_enabled);
+    if (_enabled) {
+      await locator<LocalNotificationService>().requestPermissions();
+    }
     notifyListeners();
   }
 }
@@ -74,7 +78,7 @@ class _NotificationsBody extends StatelessWidget {
                     subtitle: Text(vm.enabled ? 'Notifications are enabled' : 'Notifications are disabled'),
                     trailing: AppInput.switchInput(
                       value: vm.enabled,
-                      onToggled: (_) => vm.toggle(),
+                      onToggled: (_) async => vm.toggle(),
                     ),
                   ),
                   const Padding(

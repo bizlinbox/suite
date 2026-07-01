@@ -117,7 +117,6 @@ const authLimiter = rateLimit({
 
 app.use('/api/', apiLimiter);
 app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/register', authLimiter);
 
 // Health check with DB + Redis
 app.get('/health', async (req, res) => {

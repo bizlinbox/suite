@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/di.dart';
 import '../../data/models/role_model.dart';
 import '../../data/models/user_model.dart';
@@ -11,6 +9,7 @@ import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class UsersViewModel extends BaseViewModel {
@@ -28,9 +27,6 @@ class UsersViewModel extends BaseViewModel {
 
   List<WabaAccount> _wabaAccounts = [];
   List<WabaAccount> get wabaAccounts => _wabaAccounts;
-
-  String? _inviteUrl;
-  String? get inviteUrl => _inviteUrl;
 
   Future<void> loadUsers() async {
     await runAsync(() async {
@@ -68,27 +64,17 @@ class UsersViewModel extends BaseViewModel {
     required String name,
     required String email,
     required String role,
-    String? password,
-    bool sendInvitation = false,
+    required String password,
   }) async {
     setBusy();
-    _inviteUrl = null;
-    final payload = <String, dynamic>{
+    final result = await _userRepo.createUser({
       'name': name,
       'email': email,
       'role': role,
-    };
-    if (sendInvitation) {
-      payload['sendInvitation'] = true;
-    } else if (password != null && password.isNotEmpty) {
-      payload['password'] = password;
-    }
-    final result = await _userRepo.createUser(payload);
+      'password': password,
+    });
     result.when(
-      success: (data) {
-        if (data['invitation'] != null) {
-          _inviteUrl = data['invitation']['inviteUrl'] as String? ?? data['invitation']['url'] as String?;
-        }
+      success: (_) {
         loadUsers();
         setSuccess();
       },
@@ -96,7 +82,12 @@ class UsersViewModel extends BaseViewModel {
     );
   }
 
-  Future<void> updateUser(String id, {required String name, required String email, required String role}) async {
+  Future<void> updateUser(
+    String id, {
+    required String name,
+    required String email,
+    required String role,
+  }) async {
     setBusy();
     final result = await _userRepo.updateUser(id, {
       'name': name,
@@ -112,33 +103,19 @@ class UsersViewModel extends BaseViewModel {
     );
   }
 
-  void clearInvite() {
-    _inviteUrl = null;
-    notifyListeners();
-  }
-
   Future<void> deleteUser(String id) async {
     final result = await _userRepo.deleteUser(id);
-    result.when(
-      success: (_) => loadUsers(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadUsers(), error: (message, exception) {});
   }
 
   Future<void> assignWaba(String wabaId, String agentId) async {
     final result = await _wabaRepo.assignAgent(wabaId, agentId);
-    result.when(
-      success: (_) => loadUsers(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadUsers(), error: (message, exception) {});
   }
 
   Future<void> removeWaba(String wabaId, String agentId) async {
     final result = await _wabaRepo.removeAgent(wabaId, agentId);
-    result.when(
-      success: (_) => loadUsers(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadUsers(), error: (message, exception) {});
   }
 }
 
@@ -148,13 +125,15 @@ class UsersScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => UsersViewModel(
-        locator<UserRepository>(),
-        locator<SettingsRepository>(),
-        locator<WabaAccountRepository>(),
-      )..loadUsers()
-        ..loadRoles()
-        ..loadWabaAccounts(),
+      create: (_) =>
+          UsersViewModel(
+              locator<UserRepository>(),
+              locator<SettingsRepository>(),
+              locator<WabaAccountRepository>(),
+            )
+            ..loadUsers()
+            ..loadRoles()
+            ..loadWabaAccounts(),
       child: const _UsersBody(),
     );
   }
@@ -194,86 +173,121 @@ class _UsersBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.users.isEmpty
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : vm.users.isEmpty
-              ? const Center(child: Text('No users found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.users.length,
-                  itemBuilder: (context, index) {
-                    final u = vm.users[index];
-                    return AppCard(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          children: [
-                            AppListTile(
-                              leading: AppAvatar(child: Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?')),
-                              title: Text(u.name),
-                              subtitle: Text(u.email),
-                              trailing: canManage
-                                  ? Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Chip(label: Text(u.role)),
-                                        AppIconButton(
-                                          icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
-                                          onPressed: () => _showEditDialog(context, vm, u),
-                                        ),
-                                        AppIconButton(
-                                          icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                          onPressed: () => _confirmDelete(context, vm, u),
-                                        ),
-                                      ],
-                                    )
-                                  : Chip(label: Text(u.role)),
-                            ),
-                            const AppDivider(height: 1),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('WABA Access', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 6),
-                                  Wrap(
-                                    spacing: 8,
-                                    children: vm.wabaAccounts.map((waba) {
-                                      final hasAccess = u.wabaAccounts.any((w) => w.id == waba.id);
-                                      return FilterChip(
-                                        label: Text(waba.name),
-                                        selected: hasAccess,
-                                        onSelected: canManage
-                                            ? (_) {
-                                                if (hasAccess) {
-                                                  vm.removeWaba(waba.id, u.id);
-                                                } else {
-                                                  vm.assignWaba(waba.id, u.id);
-                                                }
-                                              }
-                                            : null,
-                                      );
-                                    }).toList(),
-                                  ),
-                                ],
+          ? const Center(child: Text('No users found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadUsers(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.users.length,
+                itemBuilder: (context, index) {
+                  final u = vm.users[index];
+                  return AppCard(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        children: [
+                          AppListTile(
+                            leading: AppAvatar(
+                              child: Text(
+                                u.name.isNotEmpty
+                                    ? u.name[0].toUpperCase()
+                                    : '?',
                               ),
                             ),
-                          ],
-                        ),
+                            title: Text(u.name),
+                            subtitle: Text(u.email),
+                            trailing: canManage
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Chip(label: Text(u.role)),
+                                      AppIconButton(
+                                        icon: const PhosphorIcon(
+                                          PhosphorIconsRegular.pencilSimple,
+                                        ),
+                                        onPressed: () =>
+                                            _showEditDialog(context, vm, u),
+                                      ),
+                                      AppIconButton(
+                                        icon: const PhosphorIcon(
+                                          PhosphorIconsRegular.trash,
+                                          color: Colors.red,
+                                        ),
+                                        onPressed: () =>
+                                            _confirmDelete(context, vm, u),
+                                      ),
+                                    ],
+                                  )
+                                : Chip(label: Text(u.role)),
+                          ),
+                          const AppDivider(height: 1),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'WABA Access',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Wrap(
+                                  spacing: 8,
+                                  children: vm.wabaAccounts.map((waba) {
+                                    final hasAccess = u.wabaAccounts.any(
+                                      (w) => w.id == waba.id,
+                                    );
+                                    return FilterChip(
+                                      label: Text(waba.name),
+                                      selected: hasAccess,
+                                      onSelected: canManage
+                                          ? (_) {
+                                              if (hasAccess) {
+                                                vm.removeWaba(waba.id, u.id);
+                                              } else {
+                                                vm.assignWaba(waba.id, u.id);
+                                              }
+                                            }
+                                          : null,
+                                    );
+                                  }).toList(),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
   Future<void> _showAddDialog(BuildContext context, UsersViewModel vm) async {
-    vm.clearInvite();
     final nameController = TextEditingController();
     final emailController = TextEditingController();
     final passwordController = TextEditingController();
     String selectedRole = vm.roles.isNotEmpty ? vm.roles.first.name : '';
-    bool sendInvitation = false;
 
     await showDialog(
       context: context,
@@ -287,58 +301,9 @@ class _UsersBody extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    if (vm.isSuccess && vm.inviteUrl != null) ...[
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Invitation sent!', style: TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 4),
-                            SelectableText(vm.inviteUrl!),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () {
-                                    Clipboard.setData(ClipboardData(text: vm.inviteUrl!));
-                                    ScaffoldMessenger.of(ctx).showSnackBar(
-                                      const SnackBar(content: Text('Copied to clipboard')),
-                                    );
-                                  },
-                                  icon: const PhosphorIcon(PhosphorIconsRegular.copy),
-                                  label: const Text('Copy'),
-                                ),
-                                TextButton.icon(
-                                  onPressed: () async {
-                                    final uri = Uri.parse(vm.inviteUrl!);
-                                    if (await canLaunchUrl(uri)) {
-                                      await launchUrl(uri, mode: LaunchMode.externalApplication);
-                                    }
-                                  },
-                                  icon: const PhosphorIcon(PhosphorIconsRegular.arrowSquareOut),
-                                  label: const Text('Open'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                    ],
-                    AppInput(
-                      controller: nameController,
-                      label: 'Name',
-                    ),
+                    AppInput(controller: nameController, label: 'Name'),
                     const SizedBox(height: 12),
-                    AppInput.email(
-                      controller: emailController,
-                      label: 'Email',
-                    ),
+                    AppInput.email(controller: emailController, label: 'Email'),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
                       AppInput.dropdown(
@@ -352,27 +317,21 @@ class _UsersBody extends StatelessWidget {
                         },
                       ),
                     const SizedBox(height: 12),
-                    AppInput.switchInput(
-                      label: 'Send invitation link',
-                      value: sendInvitation,
-                      onToggled: (v) => setDialogState(() => sendInvitation = v),
+                    AppInput.password(
+                      controller: passwordController,
+                      label: 'Password',
                     ),
-                    if (!sendInvitation) ...[
-                      const SizedBox(height: 8),
-                      AppInput.password(
-                        controller: passwordController,
-                        label: 'Password',
-                      ),
-                    ],
                   ],
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -381,14 +340,16 @@ class _UsersBody extends StatelessWidget {
                             email: emailController.text.trim(),
                             role: selectedRole,
                             password: passwordController.text,
-                            sendInvitation: sendInvitation,
                           );
                         },
                   child: vm.isBusy
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Create'),
                 ),
@@ -400,7 +361,11 @@ class _UsersBody extends StatelessWidget {
     );
   }
 
-  Future<void> _showEditDialog(BuildContext context, UsersViewModel vm, User user) async {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    UsersViewModel vm,
+    User user,
+  ) async {
     final nameController = TextEditingController(text: user.name);
     final emailController = TextEditingController(text: user.email);
     String selectedRole = user.role;
@@ -417,15 +382,9 @@ class _UsersBody extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppInput(
-                      controller: nameController,
-                      label: 'Name',
-                    ),
+                    AppInput(controller: nameController, label: 'Name'),
                     const SizedBox(height: 12),
-                    AppInput.email(
-                      controller: emailController,
-                      label: 'Email',
-                    ),
+                    AppInput.email(controller: emailController, label: 'Email'),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
                       AppInput.dropdown(
@@ -442,11 +401,13 @@ class _UsersBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -462,7 +423,10 @@ class _UsersBody extends StatelessWidget {
                       ? const SizedBox(
                           height: 20,
                           width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Save'),
                 ),
@@ -474,15 +438,24 @@ class _UsersBody extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, UsersViewModel vm, User user) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    UsersViewModel vm,
+    User user,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppAlertDialog(
         title: const Text('Delete User'),
         content: Text('Are you sure you want to delete ${user.name}?'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          AppButton(variant: AppButtonVariant.danger,
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete'),
           ),
@@ -499,9 +472,16 @@ class _UsersBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

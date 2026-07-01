@@ -66,6 +66,7 @@ class AppInput<T> extends StatefulWidget {
   final String? helperText;
   final String? errorText;
   final AutovalidateMode? autovalidateMode;
+  final Iterable<String>? autofillHints;
 
   const AppInput({
     super.key,
@@ -97,6 +98,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   });
 
   const AppInput.text({
@@ -124,6 +126,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.text,
        value = null,
        options = null,
@@ -154,6 +157,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.email,
        value = null,
        options = null,
@@ -185,6 +189,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.password,
        value = null,
        options = null,
@@ -216,6 +221,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.number,
        value = null,
        options = null,
@@ -247,6 +253,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.phone,
        value = null,
        options = null,
@@ -279,6 +286,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.multiline,
        value = null,
        options = null,
@@ -309,6 +317,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.search,
        value = null,
        options = null,
@@ -345,7 +354,8 @@ class AppInput<T> extends StatefulWidget {
        onSubmitted = null,
        focusNode = null,
        keyboardType = null,
-       autovalidateMode = null;
+       autovalidateMode = null,
+       autofillHints = null;
 
   const AppInput.checkbox({
     super.key,
@@ -376,7 +386,8 @@ class AppInput<T> extends StatefulWidget {
        borderRadius = 12,
        focusNode = null,
        keyboardType = null,
-       autovalidateMode = null;
+       autovalidateMode = null,
+       autofillHints = null;
 
   const AppInput.switchInput({
     super.key,
@@ -407,7 +418,8 @@ class AppInput<T> extends StatefulWidget {
        borderRadius = 12,
        focusNode = null,
        keyboardType = null,
-       autovalidateMode = null;
+       autovalidateMode = null,
+       autofillHints = null;
 
   const AppInput.date({
     super.key,
@@ -431,6 +443,7 @@ class AppInput<T> extends StatefulWidget {
     this.helperText,
     this.errorText,
     this.autovalidateMode,
+    this.autofillHints,
   }) : type = AppInputType.date,
        value = null,
        options = null,
@@ -624,6 +637,7 @@ class _AppInputState<T> extends State<AppInput<T>> {
       onFieldSubmitted: widget.onSubmitted,
       validator: widget.validator,
       autovalidateMode: widget.autovalidateMode,
+      autofillHints: widget.autofillHints,
       style: widget.style ?? TextStyle(
         color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
         fontSize: 14,

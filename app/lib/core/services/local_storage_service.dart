@@ -7,6 +7,7 @@ class LocalStorageService {
   static const String _wabaKey = 'bizlinbox:waba';
   static const String _notificationsKey = 'bizlinbox:notifications';
   static const String _themeKey = 'bizlinbox:theme';
+  static const String _cookiesKey = 'bizlinbox:cookies';
 
   late final SharedPreferences _prefs;
 
@@ -45,6 +46,11 @@ class LocalStorageService {
   // Theme
   String? getTheme() => _prefs.getString(_themeKey);
   Future<bool> setTheme(String theme) => _prefs.setString(_themeKey, theme);
+
+  // Cookies (for non-web cookie-based auth)
+  String? getCookies() => _prefs.getString(_cookiesKey);
+  Future<bool> setCookies(String cookies) => _prefs.setString(_cookiesKey, cookies);
+  Future<bool> clearCookies() => _prefs.remove(_cookiesKey);
 
   // Clear all bizlinbox data
   Future<void> clearAll() async {

@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
@@ -107,45 +106,46 @@ class _SidebarState extends State<Sidebar> {
       ),
       child: Column(
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
             child: Row(
               children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary,
-                    borderRadius: BorderRadius.circular(8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    'assets/icon/icon.png',
+                    width: 32,
+                    height: 32,
                   ),
-                  child: const PhosphorIcon(PhosphorIconsRegular.chatTeardrop, color: Colors.white, size: 18),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'BizlInbox',
-                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                const SizedBox(width: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'BizlInbox',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                    ),
+                    Text(
+                      'WhatsApp Business',
+                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           const AppDivider(height: 1),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: AppInput<String>.dropdown(
-              value: selectedAccount?.id,
-              label: 'WABA Account',
-              hint: 'Select WABA',
-              options: activeAccounts.map((account) {
-                return AppInputOption<String>(
-                  value: account.id,
-                  label: account.name,
-                );
-              }).toList(),
-              onSelected: (value) {
-                if (value != null) _selectWaba(value);
-              },
+          if (activeAccounts.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+              child: _WabaSwitcher(
+                accounts: activeAccounts,
+                selected: selectedAccount,
+                onSelect: _selectWaba,
+              ),
             ),
-          ),
           if (activeAccounts.isEmpty && authVm.isAdmin)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -202,14 +202,46 @@ class _SidebarState extends State<Sidebar> {
           ),
           const AppDivider(height: 1),
           Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-            child: AppListTile(
-              leading: const PhosphorIcon(PhosphorIconsRegular.signOut),
-              title: const Text('Logout'),
-              onTap: () async {
-                await authVm.logout();
-                if (context.mounted) context.go('/login');
-              },
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            child: Row(
+              children: [
+                AppAvatar(
+                  radius: 18,
+                  child: Text(
+                    authVm.user?.name.isNotEmpty == true ? authVm.user!.name[0].toUpperCase() : '?',
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        authVm.user?.name ?? 'User',
+                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        authVm.user?.role ?? '',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                AppIconButton(
+                  icon: const PhosphorIcon(PhosphorIconsRegular.signOut, size: 18),
+                  tooltip: 'Logout',
+                  onPressed: () async {
+                    await authVm.logout();
+                    if (context.mounted) context.go('/login');
+                  },
+                ),
+              ],
             ),
           ),
         ],
@@ -240,10 +272,146 @@ class _NavTile extends StatelessWidget {
         title: Text(item.label),
         selected: selected,
         selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-        padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
+        padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16, top: 10, bottom: 10),
         onTap: onTap,
       ),
     );
   }
 }
 
+class _WabaSwitcher extends StatelessWidget {
+  final List<WabaAccount> accounts;
+  final WabaAccount? selected;
+  final ValueChanged<String?> onSelect;
+
+  const _WabaSwitcher({
+    required this.accounts,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isActive = selected?.isActive ?? false;
+
+    return PopupMenuButton<String>(
+      tooltip: 'Switch WABA account',
+      onSelected: onSelect,
+      offset: const Offset(0, 44),
+      itemBuilder: (_) => accounts.map((a) {
+        final isSelected = a.id == selected?.id;
+        return PopupMenuItem<String>(
+          value: a.id,
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: isSelected ? Colors.green : Colors.transparent,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected ? Colors.green : theme.colorScheme.outline,
+                    width: 1.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      a.name,
+                      style: TextStyle(
+                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                        color: isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+                      ),
+                    ),
+                    if (a.phoneNumberId != null && a.phoneNumberId!.isNotEmpty)
+                      Text(
+                        a.phoneNumberId!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (isSelected)
+                PhosphorIcon(
+                  PhosphorIconsRegular.check,
+                  size: 16,
+                  color: theme.colorScheme.primary,
+                ),
+            ],
+          ),
+        );
+      }).toList(),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: isActive ? const Color(0xFF25D366) : Colors.grey,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.phone_android,
+                color: Colors.white,
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    selected?.name ?? 'Select Account',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (selected?.phoneNumberId != null && selected!.phoneNumberId!.isNotEmpty)
+                    Text(
+                      selected!.phoneNumberId!,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 4),
+            PhosphorIcon(
+              PhosphorIconsRegular.caretDown,
+              size: 14,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

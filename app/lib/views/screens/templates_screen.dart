@@ -6,6 +6,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class TemplatesViewModel extends BaseViewModel {
@@ -32,7 +33,8 @@ class TemplatesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TemplatesViewModel(locator<SettingsRepository>())..loadTemplates(),
+      create: (_) =>
+          TemplatesViewModel(locator<SettingsRepository>())..loadTemplates(),
       child: const _TemplatesBody(),
     );
   }
@@ -64,26 +66,41 @@ class _TemplatesBody extends StatelessWidget {
         ],
       ),
       body: vm.isBusy && vm.templates.isEmpty
-          ? const Center(child: AppProgressIndicator())
-          : vm.templates.isEmpty
-              ? const Center(child: Text('No templates found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.templates.length,
-                  itemBuilder: (context, index) {
-                    final t = vm.templates[index];
-                    return AppCard(
-                      child: AppListTile(
-                        title: Text(t.templateName),
-                        subtitle: Text('${t.category} | ${t.language}'),
-                        trailing: Chip(
-                          label: Text(t.status),
-                          backgroundColor: t.status == 'APPROVED' ? Colors.green.withValues(alpha: 0.2) : Colors.amber.withValues(alpha: 0.2),
-                        ),
-                      ),
-                    );
-                  },
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (_, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
                 ),
+              ),
+            )
+          : vm.templates.isEmpty
+          ? const Center(child: Text('No templates found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadTemplates(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.templates.length,
+                itemBuilder: (context, index) {
+                  final t = vm.templates[index];
+                  return AppCard(
+                    child: AppListTile(
+                      title: Text(t.templateName),
+                      subtitle: Text('${t.category} | ${t.language}'),
+                      trailing: Chip(
+                        label: Text(t.status),
+                        backgroundColor: t.status == 'APPROVED'
+                            ? Colors.green.withValues(alpha: 0.2)
+                            : Colors.amber.withValues(alpha: 0.2),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -92,9 +109,16 @@ class _TemplatesBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

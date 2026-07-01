@@ -333,6 +333,39 @@ class SettingsRepository {
     }
   }
 
+  Future<Result<Role>> createRole(String name, List<String> permissions) async {
+    try {
+      final res = await _api.post('/roles', data: {
+        'name': name,
+        'permissions': permissions,
+      });
+      return Success(Role.fromJson(res.data['role'] as Map<String, dynamic>));
+    } catch (e) {
+      return Error(extractApiError(e, fallback: 'Failed to create role'));
+    }
+  }
+
+  Future<Result<Role>> updateRole(String id, {String? name, List<String>? permissions}) async {
+    try {
+      final payload = <String, dynamic>{};
+      if (name != null) payload['name'] = name;
+      if (permissions != null) payload['permissions'] = permissions;
+      final res = await _api.put('/roles/$id', data: payload);
+      return Success(Role.fromJson(res.data['role'] as Map<String, dynamic>));
+    } catch (e) {
+      return Error(extractApiError(e, fallback: 'Failed to update role'));
+    }
+  }
+
+  Future<Result<void>> deleteRole(String id) async {
+    try {
+      await _api.delete('/roles/$id');
+      return const Success(null);
+    } catch (e) {
+      return Error(extractApiError(e, fallback: 'Failed to delete role'));
+    }
+  }
+
   // API Logs
   Future<Result<Map<String, dynamic>>> getApiLogs({
     int offset = 0,

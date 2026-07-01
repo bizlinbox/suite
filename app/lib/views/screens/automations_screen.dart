@@ -7,6 +7,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'automation_form_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class AutomationsViewModel extends BaseViewModel {
@@ -49,7 +50,9 @@ class AutomationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AutomationsViewModel(locator<AutomationRepository>())..loadAutomations(),
+      create: (_) =>
+          AutomationsViewModel(locator<AutomationRepository>())
+            ..loadAutomations(),
       child: const _AutomationsBody(),
     );
   }
@@ -87,7 +90,9 @@ class _AutomationsBody extends StatelessWidget {
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const AutomationFormScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const AutomationFormScreen(),
+                  ),
                 );
                 if (result == true) {
                   vm.loadAutomations();
@@ -98,61 +103,88 @@ class _AutomationsBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.automations.isEmpty
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (_, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : vm.automations.isEmpty
-              ? const Center(child: Text('No automations found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.automations.length,
-                  itemBuilder: (context, index) {
-                    final a = vm.automations[index];
-                    return AppCard(
-                      child: GestureDetector(
-                        onTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => AutomationFormScreen(automation: a)),
-                          );
-                          if (result == true) {
-                            vm.loadAutomations();
-                          }
-                        },
-                        child: AppListTile(
-                          title: Text(a.name),
-                          subtitle: Text('${a.stepCount} steps | ${a.executionCount} runs'),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              AppInput.switchInput(
-                                value: a.isActive,
-                                onToggled: (_) => vm.toggle(a.id),
-                              ),
-                              AppIconButton(
-                                icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                onPressed: () => _confirmDelete(context, vm, a.id),
-                              ),
-                            ],
+          ? const Center(child: Text('No automations found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadAutomations(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.automations.length,
+                itemBuilder: (context, index) {
+                  final a = vm.automations[index];
+                  return AppCard(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => AutomationFormScreen(automation: a),
                           ),
+                        );
+                        if (result == true) {
+                          vm.loadAutomations();
+                        }
+                      },
+                      child: AppListTile(
+                        title: Text(a.name),
+                        subtitle: Text(
+                          '${a.stepCount} steps | ${a.executionCount} runs',
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            AppInput.switchInput(
+                              value: a.isActive,
+                              onToggled: (_) => vm.toggle(a.id),
+                            ),
+                            AppIconButton(
+                              icon: const PhosphorIcon(
+                                PhosphorIconsRegular.trash,
+                                color: Colors.red,
+                              ),
+                              onPressed: () =>
+                                  _confirmDelete(context, vm, a.id),
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
-  void _confirmDelete(BuildContext context, AutomationsViewModel vm, String id) {
+  void _confirmDelete(
+    BuildContext context,
+    AutomationsViewModel vm,
+    String id,
+  ) {
     showDialog(
       context: context,
       builder: (context) => AppAlertDialog(
         title: const Text('Delete Automation?'),
         content: const Text('This action cannot be undone.'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, 
+          AppButton(
+            variant: AppButtonVariant.ghost,
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          AppButton(variant: AppButtonVariant.primary, 
+          AppButton(
+            variant: AppButtonVariant.primary,
             onPressed: () {
               Navigator.pop(context);
               vm.deleteAutomation(id);
@@ -169,9 +201,16 @@ class _AutomationsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

@@ -7,6 +7,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'campaign_form_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class CampaignsViewModel extends BaseViewModel {
@@ -65,7 +66,8 @@ class CampaignsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CampaignsViewModel(locator<CampaignRepository>())..loadCampaigns(),
+      create: (_) =>
+          CampaignsViewModel(locator<CampaignRepository>())..loadCampaigns(),
       child: const _CampaignsBody(),
     );
   }
@@ -114,84 +116,129 @@ class _CampaignsBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.campaigns.isEmpty
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (_, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : vm.campaigns.isEmpty
-              ? const Center(child: Text('No campaigns found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.campaigns.length,
-                  itemBuilder: (context, index) {
-                    final c = vm.campaigns[index];
-                    return AppCard(
-                      child: GestureDetector(
-                        onTap: () async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => CampaignFormScreen(campaign: c)),
-                          );
-                          if (result == true) {
-                            vm.loadCampaigns();
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(12),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Text(
-                                      c.name,
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                                    ),
-                                  ),
-                                  Chip(
-                                    label: Text(c.status),
-                                    backgroundColor: vm._statusColor(c.status).withValues(alpha: 0.2),
-                                    side: BorderSide(color: vm._statusColor(c.status)),
-                                    labelStyle: TextStyle(color: vm._statusColor(c.status)),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 4),
-                              Text('${c.messageType} | ${c.totalRecipients} recipients'),
-                              const SizedBox(height: 8),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  if (c.status == 'draft' || c.status == 'paused')
-                                    AppIconButton(
-                                      icon: const PhosphorIcon(PhosphorIconsRegular.play, color: Colors.green),
-                                      tooltip: 'Start',
-                                      onPressed: () => vm.actionCampaign(c.id, 'start'),
-                                    ),
-                                  if (c.status == 'running')
-                                    AppIconButton(
-                                      icon: const PhosphorIcon(PhosphorIconsRegular.pause, color: Colors.orange),
-                                      tooltip: 'Pause',
-                                      onPressed: () => vm.actionCampaign(c.id, 'pause'),
-                                    ),
-                                  if (c.status == 'draft' || c.status == 'scheduled' || c.status == 'running' || c.status == 'paused')
-                                    AppIconButton(
-                                      icon: const PhosphorIcon(PhosphorIconsRegular.xCircle, color: Colors.red),
-                                      tooltip: 'Cancel',
-                                      onPressed: () => vm.actionCampaign(c.id, 'cancel'),
-                                    ),
-                                  AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                    tooltip: 'Delete',
-                                    onPressed: () => _confirmDelete(context, vm, c.id),
-                                  ),
-                                ],
-                              ),
-                            ],
+          ? const Center(child: Text('No campaigns found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadCampaigns(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.campaigns.length,
+                itemBuilder: (context, index) {
+                  final c = vm.campaigns[index];
+                  return AppCard(
+                    child: GestureDetector(
+                      onTap: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => CampaignFormScreen(campaign: c),
                           ),
+                        );
+                        if (result == true) {
+                          vm.loadCampaigns();
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    c.name,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                Chip(
+                                  label: Text(c.status),
+                                  backgroundColor: vm
+                                      ._statusColor(c.status)
+                                      .withValues(alpha: 0.2),
+                                  side: BorderSide(
+                                    color: vm._statusColor(c.status),
+                                  ),
+                                  labelStyle: TextStyle(
+                                    color: vm._statusColor(c.status),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              '${c.messageType} | ${c.totalRecipients} recipients',
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                if (c.status == 'draft' || c.status == 'paused')
+                                  AppIconButton(
+                                    icon: const PhosphorIcon(
+                                      PhosphorIconsRegular.play,
+                                      color: Colors.green,
+                                    ),
+                                    tooltip: 'Start',
+                                    onPressed: () =>
+                                        vm.actionCampaign(c.id, 'start'),
+                                  ),
+                                if (c.status == 'running')
+                                  AppIconButton(
+                                    icon: const PhosphorIcon(
+                                      PhosphorIconsRegular.pause,
+                                      color: Colors.orange,
+                                    ),
+                                    tooltip: 'Pause',
+                                    onPressed: () =>
+                                        vm.actionCampaign(c.id, 'pause'),
+                                  ),
+                                if (c.status == 'draft' ||
+                                    c.status == 'scheduled' ||
+                                    c.status == 'running' ||
+                                    c.status == 'paused')
+                                  AppIconButton(
+                                    icon: const PhosphorIcon(
+                                      PhosphorIconsRegular.xCircle,
+                                      color: Colors.red,
+                                    ),
+                                    tooltip: 'Cancel',
+                                    onPressed: () =>
+                                        vm.actionCampaign(c.id, 'cancel'),
+                                  ),
+                                AppIconButton(
+                                  icon: const PhosphorIcon(
+                                    PhosphorIconsRegular.trash,
+                                    color: Colors.red,
+                                  ),
+                                  tooltip: 'Delete',
+                                  onPressed: () =>
+                                      _confirmDelete(context, vm, c.id),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -202,11 +249,13 @@ class _CampaignsBody extends StatelessWidget {
         title: const Text('Delete Campaign?'),
         content: const Text('This action cannot be undone.'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, 
+          AppButton(
+            variant: AppButtonVariant.ghost,
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          AppButton(variant: AppButtonVariant.primary, 
+          AppButton(
+            variant: AppButtonVariant.primary,
             onPressed: () {
               Navigator.pop(context);
               vm.deleteCampaign(id);
@@ -223,9 +272,16 @@ class _CampaignsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

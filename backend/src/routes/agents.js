@@ -8,68 +8,6 @@ const camelize = require('../utils/camelize');
 
 const router = express.Router();
 
-// Public route - must be before authenticate middleware
-// POST /agents/accept-invite - accept invitation and set password
-router.post('/accept-invite', async (req, res, next) => {
-  try {
-    const { token, name, password } = req.body;
-    if (!token || !name || !password) {
-      return res.status(400).json({ error: 'Token, name and password are required' });
-    }
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
-
-    // Find valid invitation
-    const inviteResult = await query(
-      `SELECT id, org_id, email, token, role, used, expires_at
-       FROM invitations WHERE token = $1`,
-      [token]
-    );
-
-    if (inviteResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Invalid invitation token' });
-    }
-
-    const invitation = inviteResult.rows[0];
-
-    if (invitation.used) {
-      return res.status(410).json({ error: 'Invitation already used' });
-    }
-
-    if (new Date(invitation.expires_at) < new Date()) {
-      return res.status(410).json({ error: 'Invitation expired' });
-    }
-
-    // Check if user already exists
-    const existingUser = await query(
-      'SELECT id FROM users WHERE email = $1 AND org_id = $2',
-      [invitation.email, invitation.org_id]
-    );
-    if (existingUser.rows.length > 0) {
-      await query('UPDATE invitations SET used = true WHERE id = $1', [invitation.id]);
-      return res.status(409).json({ error: 'User already exists' });
-    }
-
-    // Create user
-    const passwordHash = await bcrypt.hash(password, 12);
-    const userResult = await query(
-      `INSERT INTO users (org_id, name, email, password_hash, role, status)
-       VALUES ($1, $2, $3, $4, $5, 'active')
-       RETURNING id, org_id, name, email, role, status, created_at`,
-      [invitation.org_id, name, invitation.email, passwordHash, invitation.role]
-    );
-
-    // Mark invitation as used
-    await query('UPDATE invitations SET used = true WHERE id = $1', [invitation.id]);
-
-    res.status(201).json({ agent: camelize(userResult.rows[0]) });
-  } catch (err) {
-    logger.error('Accept invite error', err);
-    next(err);
-  }
-});
-
 router.use(authenticate);
 
 // GET / - list agents in org
@@ -106,13 +44,11 @@ router.get('/:id', async (req, res, next) => {
 });
 
 // POST / - create agent (admin only)
-// If password is provided, agent is created immediately.
-// If no password, an invitation token is returned.
 router.post('/', requireAdmin, async (req, res, next) => {
   try {
     const { name, email, password, role = 'agent' } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required' });
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'Name, email and password are required' });
     }
 
     // Validate role exists in organization
@@ -133,37 +69,14 @@ router.post('/', requireAdmin, async (req, res, next) => {
       return res.status(409).json({ error: 'Email already exists in this organization' });
     }
 
-    if (password) {
-      // Create agent directly with password
-      const passwordHash = await bcrypt.hash(password, 12);
-      const result = await query(
-        `INSERT INTO users (org_id, name, email, password_hash, role, status)
-         VALUES ($1, $2, $3, $4, $5, 'active')
-         RETURNING id, org_id, name, email, role, status, created_at`,
-        [req.user.org_id, name, email, passwordHash, role]
-      );
-      res.status(201).json({ agent: camelize(result.rows[0]) });
-    } else {
-      // Generate invitation token
-      const token = crypto.randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
-
-      await query(
-        `INSERT INTO invitations (org_id, email, token, role, expires_at)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [req.user.org_id, email, token, role, expiresAt]
-      );
-
-      res.status(201).json({
-        invitation: {
-          token,
-          email,
-          role,
-          expiresAt,
-          inviteUrl: `/accept-invite?token=${token}`,
-        },
-      });
-    }
+    const passwordHash = await bcrypt.hash(password, 12);
+    const result = await query(
+      `INSERT INTO users (org_id, name, email, password_hash, role, status)
+       VALUES ($1, $2, $3, $4, $5, 'active')
+       RETURNING id, org_id, name, email, role, status, created_at`,
+      [req.user.org_id, name, email, passwordHash, role]
+    );
+    res.status(201).json({ agent: camelize(result.rows[0]) });
   } catch (err) {
     logger.error('Create agent error', err);
     next(err);

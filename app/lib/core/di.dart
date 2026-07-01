@@ -3,6 +3,7 @@ import 'services/local_storage_service.dart';
 import 'services/api_service.dart';
 import 'services/socket_service.dart';
 import 'services/notification_manager.dart';
+import 'services/local_notification_service.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/conversation_repository.dart';
 import '../data/repositories/contact_repository.dart';
@@ -21,12 +22,23 @@ Future<void> setupDependencies() async {
   await localStorage.init();
   locator.registerSingleton<LocalStorageService>(localStorage);
 
-  locator.registerLazySingleton<ApiService>(() => ApiService(locator<LocalStorageService>()));
+  final apiService = ApiService(locator<LocalStorageService>());
+  locator.registerSingleton<ApiService>(apiService);
   locator.registerLazySingleton<SocketService>(() => SocketService(locator<LocalStorageService>()));
+  final localNotifications = LocalNotificationService();
+  await localNotifications.init();
+  locator.registerSingleton<LocalNotificationService>(localNotifications);
+
   locator.registerLazySingleton<NotificationManager>(() => NotificationManager(
         locator<SocketService>(),
         locator<LocalStorageService>(),
+        locator<LocalNotificationService>(),
       ));
+
+  // Reconnect socket when cookies change (e.g. after token refresh)
+  apiService.onCookiesChanged = () {
+    locator<SocketService>().connect();
+  };
 
   // Repositories
   locator.registerLazySingleton<AuthRepository>(() => AuthRepository(

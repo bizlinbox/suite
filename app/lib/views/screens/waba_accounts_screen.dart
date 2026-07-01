@@ -7,6 +7,7 @@ import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class WabaAccountsViewModel extends BaseViewModel {
@@ -29,7 +30,13 @@ class WabaAccountsViewModel extends BaseViewModel {
     });
   }
 
-  Future<void> createAccount(String name, String phoneNumberId, String businessAccountId, String accessToken, bool isActive) async {
+  Future<void> createAccount(
+    String name,
+    String phoneNumberId,
+    String businessAccountId,
+    String accessToken,
+    bool isActive,
+  ) async {
     setBusy();
     final result = await _repo.createWabaAccount({
       'name': name,
@@ -44,7 +51,14 @@ class WabaAccountsViewModel extends BaseViewModel {
     );
   }
 
-  Future<void> updateAccount(String id, String name, String phoneNumberId, String businessAccountId, String accessToken, bool isActive) async {
+  Future<void> updateAccount(
+    String id,
+    String name,
+    String phoneNumberId,
+    String businessAccountId,
+    String accessToken,
+    bool isActive,
+  ) async {
     setBusy();
     final result = await _repo.updateWabaAccount(id, {
       'name': name,
@@ -61,17 +75,15 @@ class WabaAccountsViewModel extends BaseViewModel {
 
   Future<void> deleteAccount(String id) async {
     final result = await _repo.deleteWabaAccount(id);
-    result.when(
-      success: (_) => loadAccounts(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadAccounts(), error: (message, exception) {});
   }
 
   Future<String?> testAccount(String id) async {
     final result = await _repo.testWabaAccount(id);
     String? message;
     result.when(
-      success: (data) => message = data['message'] as String? ?? 'Connection successful',
+      success: (data) =>
+          message = data['message'] as String? ?? 'Connection successful',
       error: (msg, exception) => message = msg,
     );
     return message;
@@ -81,7 +93,8 @@ class WabaAccountsViewModel extends BaseViewModel {
     final result = await _repo.subscribeWabaAccount(id);
     String? message;
     result.when(
-      success: (data) => message = data['message'] as String? ?? 'Subscribed successfully',
+      success: (data) =>
+          message = data['message'] as String? ?? 'Subscribed successfully',
       error: (msg, exception) => message = msg,
     );
     return message;
@@ -105,7 +118,9 @@ class WabaAccountsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => WabaAccountsViewModel(locator<WabaAccountRepository>())..loadAccounts(),
+      create: (_) =>
+          WabaAccountsViewModel(locator<WabaAccountRepository>())
+            ..loadAccounts(),
       child: const _WabaAccountsBody(),
     );
   }
@@ -145,88 +160,139 @@ class _WabaAccountsBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.accounts.isEmpty
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (_, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : vm.accounts.isEmpty
-              ? const Center(child: Text('No WABA accounts found'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.accounts.length,
-                  itemBuilder: (context, index) {
-                    final a = vm.accounts[index];
-                    final config = vm.webhookConfigs[a.id];
-                    return AppCard(
-                      child: ExpansionTile(
-                        leading: const PhosphorIcon(PhosphorIconsRegular.deviceMobile),
-                        title: Text(a.name),
-                        subtitle: Text(a.phoneNumberId ?? 'No phone number ID'),
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
+          ? const Center(child: Text('No WABA accounts found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadAccounts(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.accounts.length,
+                itemBuilder: (context, index) {
+                  final a = vm.accounts[index];
+                  final config = vm.webhookConfigs[a.id];
+                  return AppCard(
+                    child: ExpansionTile(
+                      leading: const PhosphorIcon(
+                        PhosphorIconsRegular.deviceMobile,
+                      ),
+                      title: Text(a.name),
+                      subtitle: Text(a.phoneNumberId ?? 'No phone number ID'),
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  AppButton(
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () async {
+                                      final msg = await vm.testAccount(a.id);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              msg ?? 'Test complete',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Test Connection'),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  AppButton(
+                                    variant: AppButtonVariant.secondary,
+                                    onPressed: () async {
+                                      final msg = await vm.subscribeAccount(
+                                        a.id,
+                                      );
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              msg ?? 'Subscription complete',
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    child: const Text('Subscribe Webhook'),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              if (config != null) ...[
+                                const Text(
+                                  'Webhook Config',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 8),
+                                _CopyRow(
+                                  label: 'Callback URL',
+                                  value: config['callbackUrl'] as String? ?? '',
+                                ),
+                                const SizedBox(height: 8),
+                                _CopyRow(
+                                  label: 'Verify Token',
+                                  value: config['verifyToken'] as String? ?? '',
+                                ),
+                              ] else
+                                AppButton(
+                                  variant: AppButtonVariant.ghost,
+                                  onPressed: () => vm.loadWebhookConfig(a.id),
+                                  child: const Text('Load Webhook Config'),
+                                ),
+                              const SizedBox(height: 8),
+                              if (canManage)
                                 Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    AppButton(variant: AppButtonVariant.secondary, 
-                                      onPressed: () async {
-                                        final msg = await vm.testAccount(a.id);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(msg ?? 'Test complete')),
-                                          );
-                                        }
-                                      },
-                                      child: const Text('Test Connection'),
+                                    AppIconButton(
+                                      icon: const PhosphorIcon(
+                                        PhosphorIconsRegular.pencilSimple,
+                                      ),
+                                      onPressed: () =>
+                                          _showEditDialog(context, vm, a),
                                     ),
-                                    const SizedBox(width: 8),
-                                    AppButton(variant: AppButtonVariant.secondary, 
-                                      onPressed: () async {
-                                        final msg = await vm.subscribeAccount(a.id);
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text(msg ?? 'Subscription complete')),
-                                          );
-                                        }
-                                      },
-                                      child: const Text('Subscribe Webhook'),
+                                    AppIconButton(
+                                      icon: const PhosphorIcon(
+                                        PhosphorIconsRegular.trash,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () =>
+                                          _confirmDelete(context, vm, a),
                                     ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                if (config != null) ...[
-                                  const Text('Webhook Config', style: TextStyle(fontWeight: FontWeight.bold)),
-                                  const SizedBox(height: 8),
-                                  _CopyRow(label: 'Callback URL', value: config['callbackUrl'] as String? ?? ''),
-                                  const SizedBox(height: 8),
-                                  _CopyRow(label: 'Verify Token', value: config['verifyToken'] as String? ?? ''),
-                                ] else
-                                  AppButton(variant: AppButtonVariant.ghost, 
-                                    onPressed: () => vm.loadWebhookConfig(a.id),
-                                    child: const Text('Load Webhook Config'),
-                                  ),
-                                const SizedBox(height: 8),
-                                if (canManage)
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.end,
-                                    children: [
-                                      AppIconButton(
-                                        icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
-                                        onPressed: () => _showEditDialog(context, vm, a),
-                                      ),
-                                      AppIconButton(
-                                        icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                        onPressed: () => _confirmDelete(context, vm, a),
-                                      ),
-                                    ],
-                                  ),
-                              ],
-                            ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -235,26 +301,48 @@ class _WabaAccountsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _showCreateDialog(BuildContext context, WabaAccountsViewModel vm) async {
+  Future<void> _showCreateDialog(
+    BuildContext context,
+    WabaAccountsViewModel vm,
+  ) async {
     await _showAccountDialog(context, vm, null);
   }
 
-  Future<void> _showEditDialog(BuildContext context, WabaAccountsViewModel vm, WabaAccount account) async {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    WabaAccountsViewModel vm,
+    WabaAccount account,
+  ) async {
     await _showAccountDialog(context, vm, account);
   }
 
-  Future<void> _showAccountDialog(BuildContext context, WabaAccountsViewModel vm, WabaAccount? existing) async {
+  Future<void> _showAccountDialog(
+    BuildContext context,
+    WabaAccountsViewModel vm,
+    WabaAccount? existing,
+  ) async {
     final nameController = TextEditingController(text: existing?.name ?? '');
-    final phoneController = TextEditingController(text: existing?.phoneNumberId ?? '');
-    final businessController = TextEditingController(text: existing?.businessAccountId ?? '');
+    final phoneController = TextEditingController(
+      text: existing?.phoneNumberId ?? '',
+    );
+    final businessController = TextEditingController(
+      text: existing?.businessAccountId ?? '',
+    );
     final tokenController = TextEditingController();
     bool isActive = existing?.isActive ?? true;
 
@@ -265,15 +353,14 @@ class _WabaAccountsBody extends StatelessWidget {
           builder: (ctx, setDialogState) {
             final vm = ctx.watch<WabaAccountsViewModel>();
             return AppAlertDialog(
-              title: Text(existing == null ? 'Add WA Business Account' : 'Edit Account'),
+              title: Text(
+                existing == null ? 'Add WA Business Account' : 'Edit Account',
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppInput(
-                      controller: nameController,
-                      label: 'Name',
-                    ),
+                    AppInput(controller: nameController, label: 'Name'),
                     const SizedBox(height: 12),
                     AppInput(
                       controller: phoneController,
@@ -299,11 +386,13 @@ class _WabaAccountsBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -337,15 +426,24 @@ class _WabaAccountsBody extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, WabaAccountsViewModel vm, WabaAccount account) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WabaAccountsViewModel vm,
+    WabaAccount account,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Account'),
         content: Text('Are you sure you want to delete ${account.name}?'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          AppButton(variant: AppButtonVariant.danger,
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete'),
           ),
@@ -372,8 +470,14 @@ class _CopyRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-              SelectableText(value, style: const TextStyle(fontWeight: FontWeight.w500)),
+              Text(
+                label,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              SelectableText(
+                value,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
         ),

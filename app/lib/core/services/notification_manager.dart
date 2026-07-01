@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 import 'socket_service.dart';
 import 'local_storage_service.dart';
+import 'local_notification_service.dart';
 
 class NotificationEvent {
   final String type;
@@ -19,6 +22,7 @@ class NotificationEvent {
 class NotificationManager {
   final SocketService _socket;
   final LocalStorageService _storage;
+  final LocalNotificationService _localNotifications;
 
   StreamSubscription? _msgSub;
   StreamSubscription? _convSub;
@@ -27,7 +31,10 @@ class NotificationManager {
   final _notificationController = StreamController<NotificationEvent>.broadcast();
   Stream<NotificationEvent> get onNotification => _notificationController.stream;
 
-  NotificationManager(this._socket, this._storage);
+  final _audioPlayer = AudioPlayer();
+  int _notificationId = 0;
+
+  NotificationManager(this._socket, this._storage, this._localNotifications);
 
   void setCurrentConversationId(String? id) {
     _currentConversationId = id;
@@ -48,6 +55,28 @@ class NotificationManager {
   void dispose() {
     stop();
     _notificationController.close();
+    _audioPlayer.dispose();
+  }
+
+  Future<void> _playNotificationSound() async {
+    try {
+      await _audioPlayer.play(AssetSource('assets/sounds/notification.mp3'));
+    } catch (_) {}
+  }
+
+  Future<void> _showLocalNotification({
+    required String conversationId,
+    required String contactName,
+    String? content,
+  }) async {
+    if (kIsWeb) return;
+    _notificationId++;
+    await _localNotifications.showMessageNotification(
+      id: _notificationId,
+      conversationId: conversationId,
+      contactName: contactName,
+      content: content,
+    );
   }
 
   void _handleNewMessage(Map<String, dynamic> data) {
@@ -64,6 +93,14 @@ class NotificationManager {
 
         final contactName = data['contactName'] as String? ?? data['contact_name'] as String? ?? 'New message';
         final preview = data['content'] as String? ?? data['preview'] as String? ?? '';
+
+        _playNotificationSound();
+
+        _showLocalNotification(
+          conversationId: conversationId ?? '',
+          contactName: contactName,
+          content: preview,
+        );
 
         _notificationController.add(NotificationEvent(
           type: 'new_message',

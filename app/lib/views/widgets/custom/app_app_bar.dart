@@ -8,6 +8,7 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double height;
   final Color? backgroundColor;
   final Color? foregroundColor;
+  final bool centerTitle;
 
   const AppAppBar({
     super.key,
@@ -18,6 +19,7 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.height = 56,
     this.backgroundColor,
     this.foregroundColor,
+    this.centerTitle = false,
   });
 
   @override
@@ -30,12 +32,22 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
     final bgColor = backgroundColor ?? appBarTheme.backgroundColor ?? theme.colorScheme.surface;
     final fgColor = foregroundColor ?? appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
     final borderColor = theme.dividerTheme.color ?? theme.colorScheme.outlineVariant;
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
         color: bgColor,
         border: Border(bottom: BorderSide(color: borderColor)),
+        boxShadow: isDark
+            ? null
+            : [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: SafeArea(
         bottom: false,
@@ -46,31 +58,52 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
               height: height,
               child: Row(
                 children: [
-                  if (leading != null) leading!,
-                  Expanded(
-                    child: title != null
-                        ? DefaultTextStyle(
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: fgColor,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            child: title!,
-                          )
-                        : const SizedBox.shrink(),
-                  ),
+                  if (leading != null)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: leading!,
+                    ),
+                  if (centerTitle)
+                    Expanded(
+                      child: title != null
+                          ? DefaultTextStyle(
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: fgColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              child: title!,
+                            )
+                          : const SizedBox.shrink(),
+                    )
+                  else
+                    Expanded(
+                      child: title != null
+                          ? DefaultTextStyle(
+                              style: TextStyle(
+                                color: fgColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              child: title!,
+                            )
+                          : const SizedBox.shrink(),
+                    ),
                   if (actions != null)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: actions!,
+                    Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: actions!,
+                      ),
                     )
                   else
                     const SizedBox(width: 40),
                 ],
               ),
             ),
-            if (bottom != null) bottom!,
+            bottom ?? const SizedBox.shrink(),
           ],
         ),
       ),

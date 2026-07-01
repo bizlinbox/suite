@@ -39,11 +39,30 @@ class _SplashScreenState extends State<SplashScreen> {
     }
 
     final hasDomain = storage.getDomain() != null && storage.getDomain()!.isNotEmpty;
-    if (hasDomain) {
-      context.go('/login');
-    } else {
+    if (!hasDomain) {
       context.go('/domain');
+      return;
     }
+
+    // Check if user is already logged in
+    final storedUser = storage.getUser();
+    if (storedUser != null) {
+      final result = await authRepo.getMe();
+      final isValid = result.when(
+        success: (_) => true,
+        error: (message, exception) => false,
+      );
+      if (!mounted) return;
+      if (isValid) {
+        context.go('/dashboard/inbox');
+        return;
+      }
+      // Token expired — clear stale state
+      await storage.clearAll();
+      if (!mounted) return;
+    }
+
+    context.go('/login');
   }
 
   @override

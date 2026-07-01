@@ -9,6 +9,7 @@ import '../../data/repositories/analytics_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/charts.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class AnalyticsViewModel extends BaseViewModel {
@@ -35,7 +36,8 @@ class AnalyticsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => AnalyticsViewModel(locator<AnalyticsRepository>())..loadAnalytics(),
+      create: (_) =>
+          AnalyticsViewModel(locator<AnalyticsRepository>())..loadAnalytics(),
       child: const _AnalyticsBody(),
     );
   }
@@ -66,68 +68,107 @@ class _AnalyticsBody extends StatelessWidget {
         ],
       ),
       body: vm.isBusy
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : data == null
-              ? const Center(child: Text('No data available'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: CenteredMaxWidth(
-                    maxWidth: 960,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ResponsiveGrid(
-                          mobileColumns: 1,
-                          tabletColumns: 2,
-                          desktopColumns: 3,
-                          children: [
-                            _StatCard(title: 'Total Conversations', value: '${data.totalConversations}'),
-                            _StatCard(title: 'Total Messages', value: '${data.totalMessages}'),
-                            _StatCard(title: 'Avg Response Time', value: '${(data.avgResponseTimeSeconds / 60).toStringAsFixed(1)} min'),
-                          ],
+          ? const Center(child: Text('No data available'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadAnalytics(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: CenteredMaxWidth(
+                  maxWidth: 960,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ResponsiveGrid(
+                        mobileColumns: 1,
+                        tabletColumns: 2,
+                        desktopColumns: 3,
+                        children: [
+                          _StatCard(
+                            title: 'Total Conversations',
+                            value: '${data.totalConversations}',
+                          ),
+                          _StatCard(
+                            title: 'Total Messages',
+                            value: '${data.totalMessages}',
+                          ),
+                          _StatCard(
+                            title: 'Avg Response Time',
+                            value:
+                                '${(data.avgResponseTimeSeconds / 60).toStringAsFixed(1)} min',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      if (data.messagesPerDay.isNotEmpty)
+                        LineChart(
+                          title: 'Messages Per Day',
+                          values: data.messagesPerDay
+                              .map((e) => e.count)
+                              .toList(),
+                          labels: data.messagesPerDay
+                              .map((e) => _shortDate(e.day))
+                              .toList(),
                         ),
-                        const SizedBox(height: 24),
-                        if (data.messagesPerDay.isNotEmpty)
-                          LineChart(
-                            title: 'Messages Per Day',
-                            values: data.messagesPerDay.map((e) => e.count).toList(),
-                            labels: data.messagesPerDay.map((e) => _shortDate(e.day)).toList(),
-                          ),
-                        const SizedBox(height: 16),
-                        if (data.conversationsPerDay.isNotEmpty)
-                          LineChart(
-                            title: 'Conversations Per Day',
-                            values: data.conversationsPerDay.map((e) => e.count).toList(),
-                            labels: data.conversationsPerDay.map((e) => _shortDate(e.day)).toList(),
-                          ),
-                        const SizedBox(height: 16),
-                        if (data.topAgents.isNotEmpty)
-                          BarChart(
-                            title: 'Top Agents',
-                            values: data.topAgents.map((e) => e.conversationsHandled).toList(),
-                            labels: data.topAgents.map((e) => e.name).toList(),
-                          ),
-                        const SizedBox(height: 16),
-                        if (data.messagesByType.isNotEmpty)
-                          DonutChart(
-                            title: 'Messages by Type',
-                            values: data.messagesByType.map((e) => e.count).toList(),
-                            labels: data.messagesByType.map((e) => e.messageType).toList(),
-                          ),
-                        const SizedBox(height: 24),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: FilledButton.icon(
-                            onPressed: () => _exportCsv(context, data),
-                            icon: const PhosphorIcon(PhosphorIconsRegular.downloadSimple),
-                            label: const Text('Export to CSV'),
-                          ),
+                      const SizedBox(height: 16),
+                      if (data.conversationsPerDay.isNotEmpty)
+                        LineChart(
+                          title: 'Conversations Per Day',
+                          values: data.conversationsPerDay
+                              .map((e) => e.count)
+                              .toList(),
+                          labels: data.conversationsPerDay
+                              .map((e) => _shortDate(e.day))
+                              .toList(),
                         ),
-                        const SizedBox(height: 24),
-                      ],
-                    ),
+                      const SizedBox(height: 16),
+                      if (data.topAgents.isNotEmpty)
+                        BarChart(
+                          title: 'Top Agents',
+                          values: data.topAgents
+                              .map((e) => e.conversationsHandled)
+                              .toList(),
+                          labels: data.topAgents.map((e) => e.name).toList(),
+                        ),
+                      const SizedBox(height: 16),
+                      if (data.messagesByType.isNotEmpty)
+                        DonutChart(
+                          title: 'Messages by Type',
+                          values: data.messagesByType
+                              .map((e) => e.count)
+                              .toList(),
+                          labels: data.messagesByType
+                              .map((e) => e.messageType)
+                              .toList(),
+                        ),
+                      const SizedBox(height: 24),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: FilledButton.icon(
+                          onPressed: () => _exportCsv(context, data),
+                          icon: const PhosphorIcon(
+                            PhosphorIconsRegular.downloadSimple,
+                          ),
+                          label: const Text('Export to CSV'),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                   ),
                 ),
+              ),
+            ),
     );
   }
 
@@ -146,13 +187,25 @@ class _AnalyticsBody extends StatelessWidget {
     buffer.writeln('Metric,Value');
     buffer.writeln('Total Conversations,${data.totalConversations}');
     buffer.writeln('Total Messages,${data.totalMessages}');
-    buffer.writeln('Avg Response Time (min),${(data.avgResponseTimeSeconds / 60).toStringAsFixed(2)}');
+    buffer.writeln(
+      'Avg Response Time (min),${(data.avgResponseTimeSeconds / 60).toStringAsFixed(2)}',
+    );
     buffer.writeln();
     buffer.writeln('Date,Messages,Conversations');
     final days = data.messagesPerDay.map((e) => e.day).toSet().toList()..sort();
     for (final day in days) {
-      final msgCount = data.messagesPerDay.firstWhere((e) => e.day == day, orElse: () => DayCount(day: day, count: 0)).count;
-      final convCount = data.conversationsPerDay.firstWhere((e) => e.day == day, orElse: () => DayCount(day: day, count: 0)).count;
+      final msgCount = data.messagesPerDay
+          .firstWhere(
+            (e) => e.day == day,
+            orElse: () => DayCount(day: day, count: 0),
+          )
+          .count;
+      final convCount = data.conversationsPerDay
+          .firstWhere(
+            (e) => e.day == day,
+            orElse: () => DayCount(day: day, count: 0),
+          )
+          .count;
       buffer.writeln('$day,$msgCount,$convCount');
     }
     buffer.writeln();
@@ -181,12 +234,11 @@ class _AnalyticsBody extends StatelessWidget {
             title: const Text('Export CSV'),
             content: SizedBox(
               width: double.maxFinite,
-              child: SingleChildScrollView(
-                child: SelectableText(csvContent),
-              ),
+              child: SingleChildScrollView(child: SelectableText(csvContent)),
             ),
             actions: [
-              AppButton(variant: AppButtonVariant.ghost, 
+              AppButton(
+                variant: AppButtonVariant.ghost,
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Close'),
               ),
@@ -194,9 +246,9 @@ class _AnalyticsBody extends StatelessWidget {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('CSV download started')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('CSV download started')));
       }
     });
   }
@@ -215,9 +267,15 @@ class _StatCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+            Text(
+              title,
+              style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+            ),
             const SizedBox(height: 8),
-            Text(value, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
       ),

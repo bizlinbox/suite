@@ -9,6 +9,8 @@ import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
+import '../widgets/label_switcher.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class ContactsViewModel extends BaseViewModel {
@@ -190,13 +192,25 @@ class _ContactsBody extends StatelessWidget {
           ),
           Expanded(
             child: vm.isBusy && vm.contacts.isEmpty
-                ? const Center(child: AppProgressIndicator())
+                ? AppShimmer(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: 8,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: ContactSkeletonItem(),
+                      ),
+                    ),
+                  )
                 : vm.filteredContacts.isEmpty
                     ? const Center(child: Text('No contacts found'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: vm.filteredContacts.length,
-                        itemBuilder: (context, index) {
+                    : RefreshIndicator(
+                        onRefresh: () => vm.loadContacts(),
+                        child: ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(12),
+                          itemCount: vm.filteredContacts.length,
+                          itemBuilder: (context, index) {
                           final c = vm.filteredContacts[index];
                           return AppCard(
                             child: GestureDetector(
@@ -251,6 +265,7 @@ class _ContactsBody extends StatelessWidget {
                           );
                         },
                       ),
+                    ),
           ),
         ],
       ),
@@ -313,7 +328,6 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
   late final TextEditingController _notesController;
   late final TextEditingController _remarksController;
   late final TextEditingController _languageController;
-  late final TextEditingController _tagsController;
   late final TextEditingController _addressController;
   late final TextEditingController _cityController;
   late final TextEditingController _stateController;
@@ -321,6 +335,7 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
   late final TextEditingController _zipCodeController;
   DateTime? _birthday;
   final TextEditingController _birthdayController = TextEditingController();
+  List<String> _selectedTags = [];
 
   @override
   void initState() {
@@ -334,7 +349,7 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
     _notesController = TextEditingController(text: c?.notes ?? '');
     _remarksController = TextEditingController(text: c?.remarks ?? '');
     _languageController = TextEditingController(text: c?.language ?? '');
-    _tagsController = TextEditingController(text: c?.tags?.join(', ') ?? '');
+    _selectedTags = List<String>.from(c?.tags ?? []);
     _addressController = TextEditingController(text: c?.address ?? '');
     _cityController = TextEditingController(text: c?.city ?? '');
     _stateController = TextEditingController(text: c?.state ?? '');
@@ -358,7 +373,6 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
     _notesController.dispose();
     _remarksController.dispose();
     _languageController.dispose();
-    _tagsController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -386,12 +400,6 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final tags = _tagsController.text
-        .split(',')
-        .map((t) => t.trim())
-        .where((t) => t.isNotEmpty)
-        .toList();
-
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
       'phone': _phoneController.text.trim(),
@@ -402,7 +410,7 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
       'remarks': _remarksController.text.trim().isEmpty ? null : _remarksController.text.trim(),
       'birthday': _birthday != null ? _birthdayController.text : null,
       'language': _languageController.text.trim().isEmpty ? null : _languageController.text.trim(),
-      'tags': tags.isEmpty ? null : tags,
+      'tags': _selectedTags.isEmpty ? null : _selectedTags,
       'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
       'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
       'state': _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
@@ -435,91 +443,109 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
         child: Form(
           key: _formKey,
           child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                AppInput(
-                  controller: _nameController,
-                  label: 'Name *',
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 8),
-                AppInput.phone(
-                  controller: _phoneController,
-                  label: 'Phone *',
-                  validator: (v) => v == null || v.isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 8),
-                AppInput.email(
-                  controller: _emailController,
-                  label: 'Email',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _companyController,
-                  label: 'Company',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _jobTitleController,
-                  label: 'Job Title',
-                ),
-                const SizedBox(height: 8),
-                AppInput.multiline(
-                  controller: _notesController,
-                  label: 'Notes',
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 8),
-                AppInput.multiline(
-                  controller: _remarksController,
-                  label: 'Remarks',
-                  maxLines: 2,
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _birthdayController,
-                  label: 'Birthday',
-                  readOnly: true,
-                  suffix: const PhosphorIcon(PhosphorIconsRegular.calendarBlank, size: 20),
-                  onTap: _pickBirthday,
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _languageController,
-                  label: 'Language',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _tagsController,
-                  label: 'Tags (comma-separated)',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _addressController,
-                  label: 'Address',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _cityController,
-                  label: 'City',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _stateController,
-                  label: 'State',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _countryController,
-                  label: 'Country',
-                ),
-                const SizedBox(height: 8),
-                AppInput(
-                  controller: _zipCodeController,
-                  label: 'Zip Code',
-                ),
-              ],
+            child: AutofillGroup(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AppInput(
+                    controller: _nameController,
+                    label: 'Name *',
+                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    autofillHints: const [AutofillHints.name],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput.phone(
+                    controller: _phoneController,
+                    label: 'Phone *',
+                    validator: (v) => v == null || v.isEmpty ? 'Required' : null,
+                    autofillHints: const [AutofillHints.telephoneNumber],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput.email(
+                    controller: _emailController,
+                    label: 'Email',
+                    autofillHints: const [AutofillHints.email],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _companyController,
+                    label: 'Company',
+                    autofillHints: const [AutofillHints.organizationName],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _jobTitleController,
+                    label: 'Job Title',
+                    autofillHints: const [AutofillHints.jobTitle],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput.multiline(
+                    controller: _notesController,
+                    label: 'Notes',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput.multiline(
+                    controller: _remarksController,
+                    label: 'Remarks',
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _birthdayController,
+                    label: 'Birthday',
+                    readOnly: true,
+                    suffix: const PhosphorIcon(PhosphorIconsRegular.calendarBlank, size: 20),
+                    onTap: _pickBirthday,
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _languageController,
+                    label: 'Language',
+                    autofillHints: const [AutofillHints.language],
+                  ),
+                  const SizedBox(height: 8),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text('Labels', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
+                  ),
+                  const SizedBox(height: 4),
+                  LabelSwitcher(
+                    selectedTags: _selectedTags,
+                    onChanged: (tags) => setState(() => _selectedTags = tags),
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _addressController,
+                    label: 'Address',
+                    autofillHints: const [AutofillHints.streetAddressLine1],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _cityController,
+                    label: 'City',
+                    autofillHints: const [AutofillHints.addressCity],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _stateController,
+                    label: 'State',
+                    autofillHints: const [AutofillHints.addressState],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _countryController,
+                    label: 'Country',
+                    autofillHints: const [AutofillHints.countryName],
+                  ),
+                  const SizedBox(height: 8),
+                  AppInput(
+                    controller: _zipCodeController,
+                    label: 'Zip Code',
+                    autofillHints: const [AutofillHints.postalCode],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

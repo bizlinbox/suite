@@ -5,6 +5,7 @@ import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
+import 'label_switcher.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class ContactProfileSheet extends StatefulWidget {
@@ -27,13 +28,13 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
   late final TextEditingController _notesController;
   late final TextEditingController _remarksController;
   late final TextEditingController _languageController;
-  late final TextEditingController _tagsController;
   late final TextEditingController _addressController;
   late final TextEditingController _cityController;
   late final TextEditingController _stateController;
   late final TextEditingController _countryController;
   late final TextEditingController _zipCodeController;
   String? _birthday;
+  List<String> _selectedTags = [];
 
   @override
   void initState() {
@@ -50,7 +51,7 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
     _notesController = TextEditingController(text: contact.notes ?? '');
     _remarksController = TextEditingController(text: contact.remarks ?? '');
     _languageController = TextEditingController(text: contact.language ?? '');
-    _tagsController = TextEditingController(text: (contact.tags ?? []).join(', '));
+    _selectedTags = List<String>.from(contact.tags ?? []);
     _addressController = TextEditingController(text: contact.address ?? '');
     _cityController = TextEditingController(text: contact.city ?? '');
     _stateController = TextEditingController(text: contact.state ?? '');
@@ -69,7 +70,6 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
     _notesController.dispose();
     _remarksController.dispose();
     _languageController.dispose();
-    _tagsController.dispose();
     _addressController.dispose();
     _cityController.dispose();
     _stateController.dispose();
@@ -107,9 +107,7 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
       'notes': _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
       'remarks': _remarksController.text.trim().isEmpty ? null : _remarksController.text.trim(),
       'language': _languageController.text.trim().isEmpty ? null : _languageController.text.trim(),
-      'tags': _tagsController.text.trim().isEmpty
-          ? null
-          : _tagsController.text.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList(),
+      'tags': _selectedTags.isEmpty ? null : _selectedTags,
       'address': _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
       'city': _cityController.text.trim().isEmpty ? null : _cityController.text.trim(),
       'state': _stateController.text.trim().isEmpty ? null : _stateController.text.trim(),
@@ -189,7 +187,15 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                       _EditField(label: 'Notes', controller: _notesController, maxLines: 3),
                       _EditField(label: 'Remarks', controller: _remarksController, maxLines: 3),
                       _EditField(label: 'Language', controller: _languageController),
-                      _EditField(label: 'Tags (comma separated)', controller: _tagsController),
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8, bottom: 4),
+                        child: Text('Labels', style: TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                      LabelSwitcher(
+                        selectedTags: _selectedTags,
+                        onChanged: (tags) => setState(() => _selectedTags = tags),
+                      ),
+                      const SizedBox(height: 8),
                       _EditField(label: 'Address', controller: _addressController),
                       _EditField(label: 'City', controller: _cityController),
                       _EditField(label: 'State', controller: _stateController),

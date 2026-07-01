@@ -8,6 +8,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import '../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class ApiLogsViewModel extends BaseViewModel {
@@ -106,10 +107,7 @@ class ApiLogsViewModel extends BaseViewModel {
 
   Future<void> clearLogs() async {
     final result = await _repo.clearApiLogs();
-    result.when(
-      success: (_) => loadLogs(),
-      error: (message, exception) {},
-    );
+    result.when(success: (_) => loadLogs(), error: (message, exception) {});
   }
 }
 
@@ -209,54 +207,77 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text('Total: ${vm.total}', style: const TextStyle(fontWeight: FontWeight.w600)),
+                Text(
+                  'Total: ${vm.total}',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
               ],
             ),
           ),
           const SizedBox(height: 8),
           Expanded(
             child: vm.isBusy && vm.logs.isEmpty
-                ? const Center(child: AppProgressIndicator())
-                : vm.logs.isEmpty
-                    ? const Center(child: Text('No API logs found'))
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(12),
-                        itemCount: vm.logs.length,
-                        itemBuilder: (context, index) {
-                          final log = vm.logs[index];
-                          return AppCard(
-                            child: AppListTile(
-                              leading: _DirectionBadge(direction: log.direction),
-                              title: Text(
-                                log.endpoint,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                              subtitle: Text('${log.provider} • ${log.method ?? ''}'),
-                              trailing: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    '${log.statusCode}',
-                                    style: TextStyle(
-                                      color: log.statusCode >= 200 && log.statusCode < 300
-                                          ? Colors.green
-                                          : Colors.red,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${log.durationMs}ms',
-                                    style: const TextStyle(fontSize: 11, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
-                              onTap: () => _showLogDetail(context, log),
-                            ),
-                          );
-                        },
+                ? AppShimmer(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: 6,
+                      itemBuilder: (context, index) => const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: GenericCardSkeleton(lines: 2),
                       ),
+                    ),
+                  )
+                : vm.logs.isEmpty
+                ? const Center(child: Text('No API logs found'))
+                : RefreshIndicator(
+                    onRefresh: () => vm.loadLogs(),
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.all(12),
+                      itemCount: vm.logs.length,
+                      itemBuilder: (context, index) {
+                        final log = vm.logs[index];
+                        return AppCard(
+                          child: AppListTile(
+                            leading: _DirectionBadge(direction: log.direction),
+                            title: Text(
+                              log.endpoint,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Text(
+                              '${log.provider} • ${log.method ?? ''}',
+                            ),
+                            trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text(
+                                  '${log.statusCode}',
+                                  style: TextStyle(
+                                    color:
+                                        log.statusCode >= 200 &&
+                                            log.statusCode < 300
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '${log.durationMs}ms',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            onTap: () => _showLogDetail(context, log),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(12),
@@ -292,7 +313,9 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (_) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -323,7 +346,9 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
               _DetailRow(
                 label: 'Status Code',
                 value: '${log.statusCode}',
-                valueColor: log.statusCode >= 200 && log.statusCode < 300 ? Colors.green : Colors.red,
+                valueColor: log.statusCode >= 200 && log.statusCode < 300
+                    ? Colors.green
+                    : Colors.red,
               ),
               _DetailRow(label: 'Duration', value: '${log.durationMs}ms'),
               _DetailRow(label: 'Created At', value: log.createdAt),
@@ -354,9 +379,16 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -372,13 +404,12 @@ class _DirectionBadge extends StatelessWidget {
     final isOutgoing = direction == 'outgoing';
     return Chip(
       avatar: Icon(
-        isOutgoing ? PhosphorIconsRegular.arrowUp : PhosphorIconsRegular.arrowDown,
+        isOutgoing
+            ? PhosphorIconsRegular.arrowUp
+            : PhosphorIconsRegular.arrowDown,
         size: 16,
       ),
-      label: Text(
-        direction,
-        style: const TextStyle(fontSize: 12),
-      ),
+      label: Text(direction, style: const TextStyle(fontSize: 12)),
       backgroundColor: isOutgoing ? Colors.blue.shade50 : Colors.orange.shade50,
       side: BorderSide.none,
     );
@@ -400,10 +431,7 @@ class _DetailRow extends StatelessWidget {
         children: [
           Text('$label: ', style: const TextStyle(fontWeight: FontWeight.w600)),
           Expanded(
-            child: Text(
-              value,
-              style: TextStyle(color: valueColor),
-            ),
+            child: Text(value, style: TextStyle(color: valueColor)),
           ),
         ],
       ),
@@ -423,7 +451,10 @@ class _JsonBlock extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+        Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
         const SizedBox(height: 6),
         Container(
           width: double.infinity,

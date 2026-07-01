@@ -6,6 +6,7 @@ import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import '../../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class IntegrationsSettingsViewModel extends BaseViewModel {
@@ -25,7 +26,12 @@ class IntegrationsSettingsViewModel extends BaseViewModel {
     });
   }
 
-  Future<void> createIntegration(String name, String type, List<String> urls, bool isActive) async {
+  Future<void> createIntegration(
+    String name,
+    String type,
+    List<String> urls,
+    bool isActive,
+  ) async {
     setBusy();
     final result = await _repo.createIntegration({
       'name': name,
@@ -39,7 +45,13 @@ class IntegrationsSettingsViewModel extends BaseViewModel {
     );
   }
 
-  Future<void> updateIntegration(String id, String name, String type, List<String> urls, bool isActive) async {
+  Future<void> updateIntegration(
+    String id,
+    String name,
+    String type,
+    List<String> urls,
+    bool isActive,
+  ) async {
     setBusy();
     final result = await _repo.updateIntegration(id, {
       'name': name,
@@ -76,7 +88,9 @@ class IntegrationsSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => IntegrationsSettingsViewModel(locator<SettingsRepository>())..loadIntegrations(),
+      create: (_) =>
+          IntegrationsSettingsViewModel(locator<SettingsRepository>())
+            ..loadIntegrations(),
       child: const _IntegrationsBody(),
     );
   }
@@ -111,46 +125,69 @@ class _IntegrationsBody extends StatelessWidget {
         ],
       ),
       body: vm.isBusy && vm.integrations.isEmpty
-          ? const Center(child: AppProgressIndicator())
-          : vm.integrations.isEmpty
-              ? const Center(child: Text('No integrations configured'))
-              : ListView.builder(
-                  padding: const EdgeInsets.all(12),
-                  itemCount: vm.integrations.length,
-                  itemBuilder: (context, index) {
-                    final i = vm.integrations[index];
-                    final urls = (i.config['urls'] as List<dynamic>?)?.cast<String>() ?? [];
-                    return AppCard(
-                      child: AppListTile(
-                        leading: const PhosphorIcon(PhosphorIconsRegular.plugs),
-                        title: Text(i.name),
-                        subtitle: Text('${i.type} \u2022 ${urls.length} URL(s)'),
-                        trailing: canManage
-                            ? Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  AppInput.switchInput(
-                                    value: i.isActive,
-                                    onToggled: (v) => vm.toggleIntegration(i.id, v),
-                                  ),
-                                  AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
-                                    onPressed: () => _showEditDialog(context, vm, i),
-                                  ),
-                                  AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
-                                    onPressed: () => _confirmDelete(context, vm, i),
-                                  ),
-                                ],
-                              )
-                            : AppInput.switchInput(
-                                value: i.isActive,
-                                onToggled: null,
-                              ),
-                      ),
-                    );
-                  },
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
                 ),
+              ),
+            )
+          : vm.integrations.isEmpty
+          ? const Center(child: Text('No integrations configured'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadIntegrations(),
+              child: ListView.builder(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(12),
+                itemCount: vm.integrations.length,
+                itemBuilder: (context, index) {
+                  final i = vm.integrations[index];
+                  final urls =
+                      (i.config['urls'] as List<dynamic>?)?.cast<String>() ??
+                      [];
+                  return AppCard(
+                    child: AppListTile(
+                      leading: const PhosphorIcon(PhosphorIconsRegular.plugs),
+                      title: Text(i.name),
+                      subtitle: Text('${i.type} \u2022 ${urls.length} URL(s)'),
+                      trailing: canManage
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                AppInput.switchInput(
+                                  value: i.isActive,
+                                  onToggled: (v) =>
+                                      vm.toggleIntegration(i.id, v),
+                                ),
+                                AppIconButton(
+                                  icon: const PhosphorIcon(
+                                    PhosphorIconsRegular.pencilSimple,
+                                  ),
+                                  onPressed: () =>
+                                      _showEditDialog(context, vm, i),
+                                ),
+                                AppIconButton(
+                                  icon: const PhosphorIcon(
+                                    PhosphorIconsRegular.trash,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () =>
+                                      _confirmDelete(context, vm, i),
+                                ),
+                              ],
+                            )
+                          : AppInput.switchInput(
+                              value: i.isActive,
+                              onToggled: null,
+                            ),
+                    ),
+                  );
+                },
+              ),
+            ),
     );
   }
 
@@ -159,28 +196,47 @@ class _IntegrationsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
-  Future<void> _showCreateDialog(BuildContext context, IntegrationsSettingsViewModel vm) async {
+  Future<void> _showCreateDialog(
+    BuildContext context,
+    IntegrationsSettingsViewModel vm,
+  ) async {
     await _showIntegrationDialog(context, vm, null);
   }
 
-  Future<void> _showEditDialog(BuildContext context, IntegrationsSettingsViewModel vm, Integration integration) async {
+  Future<void> _showEditDialog(
+    BuildContext context,
+    IntegrationsSettingsViewModel vm,
+    Integration integration,
+  ) async {
     await _showIntegrationDialog(context, vm, integration);
   }
 
-  Future<void> _showIntegrationDialog(BuildContext context, IntegrationsSettingsViewModel vm, Integration? existing) async {
+  Future<void> _showIntegrationDialog(
+    BuildContext context,
+    IntegrationsSettingsViewModel vm,
+    Integration? existing,
+  ) async {
     final nameController = TextEditingController(text: existing?.name ?? '');
     String type = existing?.type ?? 'webhook_forward';
     bool isActive = existing?.isActive ?? true;
     final urlControllers = <TextEditingController>[];
-    final existingUrls = (existing?.config['urls'] as List<dynamic>?)?.cast<String>() ?? [];
+    final existingUrls =
+        (existing?.config['urls'] as List<dynamic>?)?.cast<String>() ?? [];
     for (final url in existingUrls) {
       urlControllers.add(TextEditingController(text: url));
     }
@@ -193,23 +249,24 @@ class _IntegrationsBody extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
-            final vm = ctx.watch<IntegrationsSettingsViewModel>();
             return AppAlertDialog(
-              title: Text(existing == null ? 'Create Integration' : 'Edit Integration'),
+              title: Text(
+                existing == null ? 'Create Integration' : 'Edit Integration',
+              ),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppInput(
-                      controller: nameController,
-                      label: 'Name',
-                    ),
+                    AppInput(controller: nameController, label: 'Name'),
                     const SizedBox(height: 12),
                     AppInput.dropdown(
                       value: type,
                       label: 'Type',
                       options: const [
-                        AppInputOption(value: 'webhook_forward', label: 'Webhook Forward'),
+                        AppInputOption(
+                          value: 'webhook_forward',
+                          label: 'Webhook Forward',
+                        ),
                       ],
                       onSelected: (v) {
                         if (v != null) setDialogState(() => type = v);
@@ -224,7 +281,10 @@ class _IntegrationsBody extends StatelessWidget {
                     const SizedBox(height: 12),
                     const Align(
                       alignment: Alignment.centerLeft,
-                      child: Text('Config URLs', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text(
+                        'Config URLs',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ...urlControllers.asMap().entries.map((entry) {
@@ -241,10 +301,15 @@ class _IntegrationsBody extends StatelessWidget {
                               ),
                             ),
                             AppIconButton(
-                              icon: const PhosphorIcon(PhosphorIconsRegular.minusCircle, color: Colors.red),
+                              icon: const PhosphorIcon(
+                                PhosphorIconsRegular.minusCircle,
+                                color: Colors.red,
+                              ),
                               onPressed: () {
                                 if (urlControllers.length > 1) {
-                                  setDialogState(() => urlControllers.removeAt(idx));
+                                  setDialogState(
+                                    () => urlControllers.removeAt(idx),
+                                  );
                                 }
                               },
                             ),
@@ -255,7 +320,9 @@ class _IntegrationsBody extends StatelessWidget {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
-                        onPressed: () => setDialogState(() => urlControllers.add(TextEditingController())),
+                        onPressed: () => setDialogState(
+                          () => urlControllers.add(TextEditingController()),
+                        ),
                         icon: const PhosphorIcon(PhosphorIconsRegular.plus),
                         label: const Text('Add URL'),
                       ),
@@ -264,11 +331,13 @@ class _IntegrationsBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                AppButton(variant: AppButtonVariant.ghost, 
+                AppButton(
+                  variant: AppButtonVariant.ghost,
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                AppButton(variant: AppButtonVariant.primary, 
+                AppButton(
+                  variant: AppButtonVariant.primary,
                   onPressed: nameController.text.trim().isNotEmpty
                       ? () {
                           final urls = urlControllers
@@ -276,9 +345,20 @@ class _IntegrationsBody extends StatelessWidget {
                               .where((u) => u.isNotEmpty)
                               .toList();
                           if (existing == null) {
-                            vm.createIntegration(nameController.text.trim(), type, urls, isActive);
+                            vm.createIntegration(
+                              nameController.text.trim(),
+                              type,
+                              urls,
+                              isActive,
+                            );
                           } else {
-                            vm.updateIntegration(existing.id, nameController.text.trim(), type, urls, isActive);
+                            vm.updateIntegration(
+                              existing.id,
+                              nameController.text.trim(),
+                              type,
+                              urls,
+                              isActive,
+                            );
                           }
                           Navigator.of(ctx).pop();
                         }
@@ -293,15 +373,24 @@ class _IntegrationsBody extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(BuildContext context, IntegrationsSettingsViewModel vm, Integration integration) async {
+  Future<void> _confirmDelete(
+    BuildContext context,
+    IntegrationsSettingsViewModel vm,
+    Integration integration,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Integration'),
         content: Text('Are you sure you want to delete "${integration.name}"?'),
         actions: [
-          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          AppButton(variant: AppButtonVariant.danger,
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          AppButton(
+            variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete'),
           ),

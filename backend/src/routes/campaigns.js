@@ -146,6 +146,10 @@ router.post('/', async (req, res, next) => {
       return res.status(400).json({ error: 'name, waba_account_id, message_type, and recipients are required' });
     }
 
+    if (!template_name && !template_id) {
+      return res.status(400).json({ error: 'template is required' });
+    }
+
     // If template_id is provided, look up template and validate WABA ownership
     if (template_id) {
       const templateResult = await query(
@@ -166,7 +170,7 @@ router.post('/', async (req, res, next) => {
     }
 
     if (!content) {
-      return res.status(400).json({ error: 'content is required when no template_id is provided' });
+      return res.status(400).json({ error: 'content is required' });
     }
 
     // Validate message_type

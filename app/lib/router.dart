@@ -19,20 +19,18 @@ import 'views/screens/waba_accounts_screen.dart';
 import 'views/screens/profile_screen.dart';
 import 'views/screens/api_logs_screen.dart';
 import 'views/screens/help_screen.dart';
-import 'views/screens/register_screen.dart';
 import 'views/screens/setup_screen.dart';
-import 'views/screens/accept_invite_screen.dart';
 import 'views/screens/settings/general_settings_screen.dart';
 import 'views/screens/settings/labels_settings_screen.dart';
 import 'views/screens/settings/notifications_settings_screen.dart';
 import 'views/screens/settings/files_settings_screen.dart';
 import 'views/screens/settings/integrations_settings_screen.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createRouter() {
   return GoRouter(
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     routes: [
       GoRoute(
@@ -48,16 +46,8 @@ GoRouter createRouter() {
         builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
-      GoRoute(
         path: '/setup',
         builder: (context, state) => const SetupScreen(),
-      ),
-      GoRoute(
-        path: '/accept-invite',
-        builder: (context, state) => AcceptInviteScreen(token: state.uri.queryParameters['token'] ?? ''),
       ),
       ShellRoute(
         builder: (context, state, child) => DashboardShell(child: child),

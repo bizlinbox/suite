@@ -66,20 +66,6 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> register(String name, String email, String password, String orgName) async {
-    try {
-      await _api.post('/auth/register', data: {
-        'name': name,
-        'email': email,
-        'password': password,
-        'org_name': orgName,
-      });
-      return const Success(null);
-    } catch (e) {
-      return Error(extractApiError(e, fallback: 'Registration failed'));
-    }
-  }
-
   Future<Result<void>> setup(String name, String email, String password, String orgName) async {
     try {
       await _api.post('/auth/setup', data: {
@@ -91,19 +77,6 @@ class AuthRepository {
       return const Success(null);
     } catch (e) {
       return Error(extractApiError(e, fallback: 'Setup failed'));
-    }
-  }
-
-  Future<Result<void>> acceptInvite(String token, String name, String password) async {
-    try {
-      await _api.post('/agents/accept-invite', data: {
-        'token': token,
-        'name': name,
-        'password': password,
-      });
-      return const Success(null);
-    } catch (e) {
-      return Error(extractApiError(e, fallback: 'Failed to accept invite'));
     }
   }
 

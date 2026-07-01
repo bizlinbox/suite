@@ -260,6 +260,13 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
   Future<void> _submit(CampaignFormViewModel vm) async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_selectedTemplateName == null || _selectedTemplateName!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a template'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     final payload = <String, dynamic>{
       'name': _nameController.text.trim(),
       'messageType': _messageType,
@@ -332,14 +339,11 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                         final templateValue = validTemplate ? _selectedTemplateName : null;
                         return AppInput<String?>.dropdown(
                           value: templateValue,
-                          label: 'Template (optional)',
-                          options: [
-                            const AppInputOption(value: null, label: 'None'),
-                            ...vm.templates.map((t) => AppInputOption(
-                                  value: t.templateName,
-                                  label: t.templateName,
-                                )),
-                          ],
+                          label: 'Template',
+                          options: vm.templates.map((t) => AppInputOption(
+                                value: t.templateName,
+                                label: t.templateName,
+                              )).toList(),
                           onSelected: (v) => _onTemplateChanged(v, vm),
                         );
                       },

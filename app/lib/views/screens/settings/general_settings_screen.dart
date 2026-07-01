@@ -12,6 +12,7 @@ import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
 import '../../../core/responsive.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import '../../widgets/custom/app_shimmer.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class GeneralSettingsViewModel extends BaseViewModel {
@@ -43,15 +44,19 @@ class GeneralSettingsViewModel extends BaseViewModel {
       final file = result.files.first;
       final formData = FormData();
       if (file.bytes != null) {
-        formData.files.add(MapEntry(
-          'file',
-          MultipartFile.fromBytes(file.bytes!, filename: file.name),
-        ));
+        formData.files.add(
+          MapEntry(
+            'file',
+            MultipartFile.fromBytes(file.bytes!, filename: file.name),
+          ),
+        );
       } else if (file.path != null) {
-        formData.files.add(MapEntry(
-          'file',
-          await MultipartFile.fromFile(file.path!, filename: file.name),
-        ));
+        formData.files.add(
+          MapEntry(
+            'file',
+            await MultipartFile.fromFile(file.path!, filename: file.name),
+          ),
+        );
       } else {
         return null;
       }
@@ -59,7 +64,9 @@ class GeneralSettingsViewModel extends BaseViewModel {
       final url = res.data['url'] as String?;
       return url;
     } catch (e) {
-      setError(extractApiError(e, fallback: 'Upload failed. Please try again.'));
+      setError(
+        extractApiError(e, fallback: 'Upload failed. Please try again.'),
+      );
       return null;
     }
   }
@@ -83,7 +90,10 @@ class GeneralSettingsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => GeneralSettingsViewModel(locator<SettingsRepository>(), locator<ApiService>())..loadOrganization(),
+      create: (_) => GeneralSettingsViewModel(
+        locator<SettingsRepository>(),
+        locator<ApiService>(),
+      )..loadOrganization(),
       child: const _GeneralSettingsBody(),
     );
   }
@@ -100,7 +110,6 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
   final _nameController = TextEditingController();
   final _platformNameController = TextEditingController();
   String _timezone = 'UTC';
-  bool _enablePublicRegistration = true;
   String? _logoUrl;
   bool _uploadingLogo = false;
 
@@ -183,23 +192,34 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
       _nameController.text = org.name;
       _platformNameController.text = org.platformName;
       _timezone = org.timezone;
-      _enablePublicRegistration = org.enablePublicRegistration;
       _logoUrl = org.platformLogo;
     }
 
     return Scaffold(
       appBar: AppAppBar(title: const Text('General Settings')),
       body: vm.isBusy && org == null
-          ? const Center(child: AppProgressIndicator())
+          ? AppShimmer(
+              child: ListView.builder(
+                padding: const EdgeInsets.all(12),
+                itemCount: 6,
+                itemBuilder: (context, index) => const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: GenericCardSkeleton(lines: 2),
+                ),
+              ),
+            )
           : org == null
-              ? const Center(child: Text('No organization found'))
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
-                  child: CenteredMaxWidth(
-                    maxWidth: 640,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+          ? const Center(child: Text('No organization found'))
+          : RefreshIndicator(
+              onRefresh: () => vm.loadOrganization(),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16),
+                child: CenteredMaxWidth(
+                  maxWidth: 640,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -231,7 +251,13 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text('Logo', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Logo',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 12),
                       Center(
                         child: GestureDetector(
@@ -253,13 +279,25 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                             child: _uploadingLogo
                                 ? const Center(child: AppProgressIndicator())
                                 : _logoUrl == null
-                                    ? const Center(child: PhosphorIcon(PhosphorIconsRegular.image, size: 40, color: Colors.grey))
-                                    : null,
+                                ? const Center(
+                                    child: PhosphorIcon(
+                                      PhosphorIconsRegular.image,
+                                      size: 40,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                : null,
                           ),
                         ),
                       ),
                       const SizedBox(height: 24),
-                      const Text('Organization Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const Text(
+                        'Organization Details',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       AppInput(
                         controller: _nameController,
@@ -276,43 +314,47 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                       AppInput<String>.dropdown(
                         value: _timezone,
                         label: 'Timezone',
-                        options: _timezones.map((tz) => AppInputOption(value: tz, label: tz)).toList(),
-                        onSelected: canManage ? (v) => setState(() => _timezone = v ?? 'UTC') : null,
-                      ),
-                      const SizedBox(height: 16),
-                      AppInput.switchInput(
-                        label: 'Public Registration',
-                        helperText: 'Allow anyone to create an account',
-                        value: _enablePublicRegistration,
-                        onToggled: canManage ? (v) => setState(() => _enablePublicRegistration = v) : null,
+                        options: _timezones
+                            .map((tz) => AppInputOption(value: tz, label: tz))
+                            .toList(),
+                        onSelected: canManage
+                            ? (v) => setState(() => _timezone = v ?? 'UTC')
+                            : null,
                       ),
                       const SizedBox(height: 24),
                       if (canManage)
                         Align(
                           alignment: Alignment.centerRight,
-                          child: AppButton(variant: AppButtonVariant.primary, 
+                          child: AppButton(
+                            variant: AppButtonVariant.primary,
                             onPressed: vm.isBusy
                                 ? null
                                 : () => vm.saveOrganization(org.id, {
-                                      'name': _nameController.text.trim(),
-                                      'platform_name': _platformNameController.text.trim(),
-                                      'timezone': _timezone,
-                                      'enable_public_registration': _enablePublicRegistration,
-                                      if (_logoUrl != null) 'platform_logo': _logoUrl,
-                                    }),
+                                    'name': _nameController.text.trim(),
+                                    'platform_name': _platformNameController
+                                        .text
+                                        .trim(),
+                                    'timezone': _timezone,
+                                    if (_logoUrl != null)
+                                      'platform_logo': _logoUrl,
+                                  }),
                             child: vm.isBusy
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Text('Save Changes'),
                           ),
                         ),
                     ],
                   ),
-                  ),
                 ),
+              ),
+            ),
     );
   }
 
@@ -321,9 +363,16 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
+          PhosphorIcon(
+            PhosphorIconsRegular.lockKey,
+            size: 48,
+            color: Colors.grey,
+          ),
           SizedBox(height: 16),
-          Text('You do not have permission to view this page.', textAlign: TextAlign.center),
+          Text(
+            'You do not have permission to view this page.',
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );

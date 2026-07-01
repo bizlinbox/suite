@@ -30,14 +30,6 @@ describe('Auth Routes', () => {
     expect(res.body.error).toBeDefined();
   });
 
-  it('POST /api/v1/auth/register should validate missing fields', async () => {
-    const res = await request(app)
-      .post('/api/v1/auth/register')
-      .send({});
-    expect(res.statusCode).toBe(400);
-    expect(res.body.error).toBeDefined();
-  });
-
   it('GET /health should return status ok', async () => {
     const res = await request(app).get('/health');
     // May return 503 if DB/Redis is not available in test env, which is fine
