@@ -29,7 +29,6 @@ module.exports = {
   uploadDir: process.env.UPLOAD_DIR || 'uploads',
   cookieSecure: isProd,
   cookieSameSite: 'lax',
-  corsOrigin: process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',') : ['http://localhost:3000', 'http://localhost:8080'],
   trustProxy: isProd,
   publicUrl: process.env.PUBLIC_URL || process.env.WEBHOOK_BASE_URL || null,
   googleChatWebhookUrl: process.env.GOOGLE_CHAT_WEBHOOK_URL || null,

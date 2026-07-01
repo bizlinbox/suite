@@ -1,10 +1,9 @@
 const express = require('express');
 const helmet = require('helmet');
-const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const http = require('http');
-const path = require('path');
-const fs = require('fs');
+const http = require('node:http');
+const path = require('node:path');
+const fs = require('node:fs');
 
 const config = require('./config');
 const migrate = require('./db/migrate');
@@ -47,7 +46,7 @@ const server = http.createServer(app);
 
 // Request ID middleware
 app.use((req, res, next) => {
-  req.id = require('crypto').randomUUID();
+  req.id = require('node:crypto').randomUUID();
   req.log = logger.child({ requestId: req.id });
   next();
 });
@@ -62,7 +61,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      connectSrc: ["'self'", ...(config.corsOrigin || [])],
+      connectSrc: ["'self'"],
       imgSrc: ["'self'", "data:", "blob:", "*"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
@@ -71,13 +70,7 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 
-// CORS
-app.use(cors({
-  origin: config.corsOrigin,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'x-waba-account-id'],
-}));
+
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));
@@ -108,10 +101,8 @@ const apiLimiter = rateLimit({
   keyGenerator: (req) => {
     const token = req.cookies?.accessToken;
     if (token) {
-      try {
-        const decoded = require('jsonwebtoken').decode(token);
-        if (decoded?.id) return decoded.id;
-      } catch (_) { /* ignore invalid token */ }
+      const decoded = require('jsonwebtoken').decode(token);
+      if (decoded?.id) return decoded.id;
     }
     return req.ip;
   },
@@ -195,10 +186,7 @@ process.on('SIGTERM', gracefulShutdown('SIGTERM'));
 process.on('SIGINT', gracefulShutdown('SIGINT'));
 
 // Initialize Socket.IO
-initSocket(server, {
-  origin: config.corsOrigin,
-  credentials: true,
-});
+initSocket(server);
 
 // Start server
 async function start() {

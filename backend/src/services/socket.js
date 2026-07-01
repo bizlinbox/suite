@@ -1,12 +1,10 @@
 let io = null;
 
-function initSocket(server, corsOptions) {
+function initSocket(server) {
   const { Server } = require('socket.io');
   const jwt = require('jsonwebtoken');
   const config = require('../config');
-  io = new Server(server, {
-    cors: corsOptions,
-  });
+  io = new Server(server);
 
   io.on('connection', (socket) => {
     // Authenticate socket via accessToken cookie
