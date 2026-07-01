@@ -16,8 +16,7 @@ When enabled, always send notifications to Google Chat when tasks are completed.
 ```
 
 ## Build Commands
-- Frontend: `cd frontend && npm run build`
-- Type check: `cd frontend && npx tsc --noEmit --skipLibCheck`
+- Flutter web: `cd app && flutter build web --release`
 - Backend check: `node -c backend/src/routes/<file>.js`
 
 ## Auth & Token Refresh
@@ -26,12 +25,11 @@ When enabled, always send notifications to Google Chat when tasks are completed.
 - Frontend interceptor catches 401 and auto-refreshes via `/auth/refresh`
 - On refresh failure, redirect to `/login`
 - Logout clears cookies and all `localStorage` items prefixed with `bizlinbox:`
-- Service worker must NEVER cache `/auth/*` endpoints
+- Flutter web service worker (if enabled) must NEVER cache `/auth/*` endpoints
 
 ## Routing
 - `/dashboard/inbox` - Inbox list
-- `/dashboard/inbox/[id]` - Conversation chat (Next.js 15+ async params)
-- Dynamic route `[id]/page.tsx` must `await params` before using `params.id`
+- `/dashboard/inbox/:id` - Conversation chat (Flutter GoRouter path parameter)
 
 ## Pagination
 - Conversations: `limit=20`, `offset` query params; `q` for search

@@ -94,7 +94,6 @@ services:
       CLIENT_URL: https://${DOMAIN},http://localhost:8080
       PUBLIC_URL: https://${DOMAIN}
       INTERNAL_API_URL: http://localhost:4000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
       GOOGLE_CHAT_NOTIFICATIONS_ENABLED: ${GOOGLE_CHAT_NOTIFICATIONS_ENABLED:-false}
       GOOGLE_CHAT_WEBHOOK_URL: ${GOOGLE_CHAT_WEBHOOK_URL:-}
     networks:

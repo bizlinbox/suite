@@ -1,24 +1,19 @@
 # syntax=docker/dockerfile:1
 
 # ============================================================
-# BizlInbox — Single Image (Backend + Frontend)
-# Image: bizlintech/bizlinbox:develop
+# BizlInbox — Single Image (Backend + Flutter Web Frontend)
 # ============================================================
 
-# ---- Stage 1: Build Frontend ----
-FROM node:20-slim AS frontend-builder
+# ---- Stage 1: Build Flutter Web Frontend ----
+FROM --platform=$BUILDPLATFORM ghcr.io/cirruslabs/flutter:stable AS flutter-builder
 
-WORKDIR /app/frontend
+WORKDIR /app
 
-ENV NEXT_TELEMETRY_DISABLED=1
+COPY app/pubspec.yaml app/pubspec.lock ./
+RUN flutter pub get
 
-COPY frontend/package*.json ./
-RUN --mount=type=cache,target=/root/.npm \
-    npm ci
-
-COPY frontend/ .
-RUN --mount=type=cache,target=/app/frontend/.next/cache \
-    npm run build
+COPY app/ .
+RUN flutter build web --release
 
 # ---- Stage 2: Build Backend ----
 FROM node:20-slim AS backend-builder
@@ -40,18 +35,18 @@ WORKDIR /app
 RUN groupadd -g 1001 nodejs && \
     useradd -u 1001 -g nodejs nodejs
 
+# Install static file server for Flutter web build
+RUN npm install -g serve
+
 # Backend setup
 WORKDIR /app/backend
 COPY --from=backend-builder /app/backend/node_modules ./node_modules
 COPY --from=backend-builder /app/backend/src ./src
 RUN mkdir -p /app/uploads && chown -R nodejs:nodejs /app
 
-# Frontend setup
+# Flutter Web setup
 WORKDIR /app/frontend
-COPY --from=frontend-builder /app/frontend/.next/standalone ./
-COPY --from=frontend-builder /app/frontend/.next/static ./.next/static
-COPY --from=frontend-builder /app/frontend/public ./public
-COPY --from=frontend-builder /app/frontend/env-replace.js ./env-replace.js
+COPY --from=flutter-builder /app/build/web ./build/web
 
 # Copy startup script
 WORKDIR /app

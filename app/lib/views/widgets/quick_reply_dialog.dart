@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart';
@@ -173,12 +172,11 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
     final result = await FilePicker.platform.pickFiles(
       type: type,
       allowedExtensions: extensions,
-      withData: false,
-      withReadStream: true,
+      withData: true,
     );
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (file.readStream == null && file.path == null) return;
+    if (file.bytes == null && file.path == null) return;
 
     setState(() {
       _uploading = true;
@@ -188,13 +186,13 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
     try {
       final api = locator<ApiService>();
       late FormData formData;
-      if (file.path != null && File(file.path!).existsSync()) {
+      if (file.bytes != null) {
+        formData = FormData.fromMap({
+          'file': MultipartFile.fromBytes(file.bytes!, filename: file.name),
+        });
+      } else if (file.path != null) {
         formData = FormData.fromMap({
           'file': await MultipartFile.fromFile(file.path!, filename: file.name),
-        });
-      } else if (file.readStream != null && file.size > 0) {
-        formData = FormData.fromMap({
-          'file': MultipartFile.fromStream(() => file.readStream!, file.size, filename: file.name),
         });
       } else {
         throw Exception('Unable to read file');

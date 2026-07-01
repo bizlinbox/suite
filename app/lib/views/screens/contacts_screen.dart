@@ -83,13 +83,15 @@ class ContactsViewModel extends BaseViewModel {
       final picked = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['csv', 'xlsx', 'xls'],
-        withData: false,
+        withData: true,
       );
       if (picked == null || picked.files.isEmpty) return null;
-      final filePath = picked.files.single.path;
-      if (filePath == null) return null;
+      final file = picked.files.single;
+      if (file.bytes == null && file.path == null) return null;
       setBusy();
-      final result = await _repo.importContacts(filePath);
+      final result = file.bytes != null
+          ? await _repo.importContacts(file.bytes!, file.name)
+          : await _repo.importContactsFromPath(file.path!);
       setIdle();
       String? message;
       result.when(

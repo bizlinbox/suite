@@ -36,8 +36,7 @@ UPLOAD_DIR=uploads
 DOMAIN=example.com
 LETSENCRYPT_EMAIL=admin@example.com
 
-# Frontend runtime config (optional: leave empty for same-origin API calls)
-NEXT_PUBLIC_API_URL=
+# API base URL is configured at runtime in the Flutter web app via the domain screen.
 ```
 
 ## Docker Compose
@@ -134,7 +133,6 @@ services:
       CLIENT_URL: https://${DOMAIN}
       PUBLIC_URL: https://${DOMAIN}
       INTERNAL_API_URL: http://localhost:4000
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-}
     networks:
       - bizlinbox
     volumes:

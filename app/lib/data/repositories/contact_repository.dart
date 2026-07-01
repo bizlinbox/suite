@@ -47,7 +47,19 @@ class ContactRepository {
     }
   }
 
-  Future<Result<Map<String, dynamic>>> importContacts(String filePath) async {
+  Future<Result<Map<String, dynamic>>> importContacts(List<int> bytes, String filename) async {
+    try {
+      final formData = FormData.fromMap({
+        'file': MultipartFile.fromBytes(bytes, filename: filename),
+      });
+      final res = await _api.client.post('/contacts/import', data: formData);
+      return Success(res.data as Map<String, dynamic>);
+    } catch (e) {
+      return Error('Failed to import contacts: $e');
+    }
+  }
+
+  Future<Result<Map<String, dynamic>>> importContactsFromPath(String filePath) async {
     try {
       final formData = FormData.fromMap({
         'file': await MultipartFile.fromFile(filePath),

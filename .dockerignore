@@ -47,8 +47,13 @@ backend/.env.example
 backend/tests/
 backend/coverage/
 
-# Frontend-only dev files
-frontend/.env.example
-frontend/tests/
-frontend/coverage/
-frontend/tsconfig.tsbuildinfo
+# Flutter app exclusions
+app/.dart_tool/
+app/build/
+app/.idea/
+app/android/
+app/ios/
+app/linux/
+app/macos/
+app/windows/
+app/test/

@@ -156,9 +156,19 @@ class ChatViewModel extends BaseViewModel {
 
   Future<String?> uploadFile(PlatformFile file) async {
     try {
-      final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(file.path!, filename: file.name),
-      });
+      late final FormData formData;
+      if (file.bytes != null) {
+        formData = FormData.fromMap({
+          'file': MultipartFile.fromBytes(file.bytes!, filename: file.name),
+        });
+      } else if (file.path != null) {
+        formData = FormData.fromMap({
+          'file': await MultipartFile.fromFile(file.path!, filename: file.name),
+        });
+      } else {
+        setError('Unable to read file');
+        return null;
+      }
       final res = await _api.uploadFile('/upload', formData);
       final url = res.data['url'] ?? res.data['fileUrl'] ?? res.data['mediaUrl'];
       return url as String?;
@@ -489,10 +499,10 @@ class _ChatBodyState extends State<_ChatBody> {
   }
 
   Future<void> _pickAndUploadFile(ChatViewModel vm) async {
-    final result = await FilePicker.platform.pickFiles();
+    final result = await FilePicker.platform.pickFiles(withData: true);
     if (result == null || result.files.isEmpty) return;
     final file = result.files.first;
-    if (file.path == null) return;
+    if (file.bytes == null && file.path == null) return;
 
     final url = await vm.uploadFile(file);
     if (url != null) {
