@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class NavItem {
   final String label;
@@ -19,27 +20,27 @@ class NavItem {
 }
 
 final List<NavItem> _topNav = [
-  NavItem(label: 'Inbox', route: '/dashboard/inbox', icon: Icons.message, permission: 'conversations.read'),
-  NavItem(label: 'Contacts', route: '/dashboard/contacts', icon: Icons.people, permission: 'contacts.read'),
-  NavItem(label: 'Campaigns', route: '/dashboard/campaigns', icon: Icons.campaign, permission: 'campaigns.read'),
-  NavItem(label: 'Automations', route: '/dashboard/automations', icon: Icons.account_tree, permission: 'automations.read'),
-  NavItem(label: 'Analytics', route: '/dashboard/analytics', icon: Icons.bar_chart, permission: 'analytics.read'),
-  NavItem(label: 'Quick Replies', route: '/dashboard/quick-replies', icon: Icons.reply, permission: 'settings.read'),
-  NavItem(label: 'Templates', route: '/dashboard/templates', icon: Icons.description, permission: 'settings.read'),
-  NavItem(label: 'WhatsApp Forms', route: '/dashboard/flows', icon: Icons.input, permission: 'settings.read'),
+  NavItem(label: 'Inbox', route: '/dashboard/inbox', icon: PhosphorIconsRegular.chatTeardropText, permission: 'conversations.read'),
+  NavItem(label: 'Contacts', route: '/dashboard/contacts', icon: PhosphorIconsRegular.users, permission: 'contacts.read'),
+  NavItem(label: 'Campaigns', route: '/dashboard/campaigns', icon: PhosphorIconsRegular.megaphone, permission: 'campaigns.read'),
+  NavItem(label: 'Automations', route: '/dashboard/automations', icon: PhosphorIconsRegular.treeStructure, permission: 'automations.read'),
+  NavItem(label: 'Analytics', route: '/dashboard/analytics', icon: PhosphorIconsRegular.chartBar, permission: 'analytics.read'),
+  NavItem(label: 'Quick Replies', route: '/dashboard/quick-replies', icon: PhosphorIconsRegular.arrowBendUpLeft, permission: 'settings.read'),
+  NavItem(label: 'Templates', route: '/dashboard/templates', icon: PhosphorIconsRegular.fileText, permission: 'settings.read'),
+  NavItem(label: 'WhatsApp Forms', route: '/dashboard/flows', icon: PhosphorIconsRegular.textbox, permission: 'settings.read'),
 ];
 
 final List<NavItem> _settingsNav = [
-  NavItem(label: 'General', route: '/dashboard/settings/general', icon: Icons.business, permission: 'settings.read'),
-  NavItem(label: 'Labels', route: '/dashboard/settings/labels', icon: Icons.label, permission: 'settings.read'),
-  NavItem(label: 'Notifications', route: '/dashboard/settings/notifications', icon: Icons.notifications, permission: 'settings.read'),
-  NavItem(label: 'Files', route: '/dashboard/settings/files', icon: Icons.folder, permission: 'settings.read'),
-  NavItem(label: 'Integrations', route: '/dashboard/settings/integrations', icon: Icons.webhook, permission: 'settings.manage'),
-  NavItem(label: 'Users', route: '/dashboard/users', icon: Icons.people, permission: 'users.read'),
-  NavItem(label: 'Roles', route: '/dashboard/roles', icon: Icons.shield, permission: 'roles.read'),
-  NavItem(label: 'WABA', route: '/dashboard/waba-accounts', icon: Icons.phone_android, permission: 'settings.manage'),
-  NavItem(label: 'API Logs', route: '/dashboard/api-logs', icon: Icons.terminal, permission: 'settings.read'),
-  NavItem(label: 'Help', route: '/dashboard/help', icon: Icons.help_outline, permission: null),
+  NavItem(label: 'General', route: '/dashboard/settings/general', icon: PhosphorIconsRegular.buildings, permission: 'settings.read'),
+  NavItem(label: 'Labels', route: '/dashboard/settings/labels', icon: PhosphorIconsRegular.tag, permission: 'settings.read'),
+  NavItem(label: 'Notifications', route: '/dashboard/settings/notifications', icon: PhosphorIconsRegular.bell, permission: 'settings.read'),
+  NavItem(label: 'Files', route: '/dashboard/settings/files', icon: PhosphorIconsRegular.folder, permission: 'settings.read'),
+  NavItem(label: 'Integrations', route: '/dashboard/settings/integrations', icon: PhosphorIconsRegular.plugs, permission: 'settings.manage'),
+  NavItem(label: 'Users', route: '/dashboard/users', icon: PhosphorIconsRegular.users, permission: 'users.read'),
+  NavItem(label: 'Roles', route: '/dashboard/roles', icon: PhosphorIconsRegular.shield, permission: 'roles.read'),
+  NavItem(label: 'WABA', route: '/dashboard/waba-accounts', icon: PhosphorIconsRegular.deviceMobile, permission: 'settings.manage'),
+  NavItem(label: 'API Logs', route: '/dashboard/api-logs', icon: PhosphorIconsRegular.terminal, permission: 'settings.read'),
+  NavItem(label: 'Help', route: '/dashboard/help', icon: PhosphorIconsRegular.question, permission: null),
 ];
 
 class Sidebar extends StatefulWidget {
@@ -117,7 +118,7 @@ class _SidebarState extends State<Sidebar> {
                     color: AppColors.primary,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                  child: const PhosphorIcon(PhosphorIconsRegular.chatTeardrop, color: Colors.white, size: 18),
                 ),
                 const SizedBox(width: 12),
                 Text(
@@ -159,7 +160,7 @@ class _SidebarState extends State<Sidebar> {
                   padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
-                      Icon(Icons.warning_amber, color: Colors.amber[800]),
+                      PhosphorIcon(PhosphorIconsRegular.warning, color: Colors.amber[800]),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -174,42 +175,47 @@ class _SidebarState extends State<Sidebar> {
             ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               children: [
                 ..._topNav.where((item) => item.permission == null || authVm.can(item.permission!)).map(
-                  (item) => _NavTile(
-                    item: item,
-                    selected: currentRoute == item.route || currentRoute.startsWith('${item.route}/'),
-                    onTap: () => _navigate(item.route),
-                  ),
-                ),
+                      (item) => _NavTile(
+                        item: item,
+                        selected: currentRoute == item.route || currentRoute.startsWith('${item.route}/'),
+                        onTap: () => _navigate(item.route),
+                      ),
+                    ),
+                const SizedBox(height: 8),
                 const AppDivider(),
+                const SizedBox(height: 8),
                 AppListTile(
-                  leading: const Icon(Icons.settings),
+                  leading: const PhosphorIcon(PhosphorIconsRegular.gear),
                   title: const Text('Settings'),
-                  trailing: Icon(_settingsExpanded ? Icons.expand_less : Icons.expand_more),
+                  trailing: Icon(_settingsExpanded ? PhosphorIconsRegular.caretUp : PhosphorIconsRegular.caretDown),
                   onTap: () => setState(() => _settingsExpanded = !_settingsExpanded),
                 ),
                 if (_settingsExpanded)
                   ..._settingsNav.where((item) => item.permission == null || authVm.can(item.permission!)).map(
-                    (item) => _NavTile(
-                      item: item,
-                      selected: currentRoute == item.route,
-                      onTap: () => _navigate(item.route),
-                      indent: true,
-                    ),
-                  ),
+                        (item) => _NavTile(
+                          item: item,
+                          selected: currentRoute == item.route,
+                          onTap: () => _navigate(item.route),
+                          indent: true,
+                        ),
+                      ),
               ],
             ),
           ),
           const AppDivider(height: 1),
-          AppListTile(
-            leading: const Icon(Icons.logout),
-            title: const Text('Logout'),
-            onTap: () async {
-              await authVm.logout();
-              if (context.mounted) context.go('/login');
-            },
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+            child: AppListTile(
+              leading: const PhosphorIcon(PhosphorIconsRegular.signOut),
+              title: const Text('Logout'),
+              onTap: () async {
+                await authVm.logout();
+                if (context.mounted) context.go('/login');
+              },
+            ),
           ),
         ],
       ),
@@ -232,13 +238,16 @@ class _NavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AppListTile(
-      leading: Icon(item.icon, color: selected ? Theme.of(context).colorScheme.primary : null),
-      title: Text(item.label),
-      selected: selected,
-      selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-      padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
-      onTap: onTap,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: AppListTile(
+        leading: Icon(item.icon, color: selected ? Theme.of(context).colorScheme.primary : null),
+        title: Text(item.label),
+        selected: selected,
+        selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+        padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
+        onTap: onTap,
+      ),
     );
   }
 }

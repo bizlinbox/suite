@@ -62,11 +62,16 @@ GoRouter createRouter() {
       ShellRoute(
         builder: (context, state, child) => DashboardShell(child: child),
         routes: [
-          GoRoute(path: '/dashboard', builder: (context, state) => const InboxScreen()),
-          GoRoute(path: '/dashboard/inbox', builder: (context, state) => const InboxScreen()),
-          GoRoute(
-            path: '/dashboard/inbox/:id',
-            builder: (context, state) => ChatScreen(conversationId: state.pathParameters['id']!),
+          GoRoute(path: '/dashboard', redirect: (context, state) => '/dashboard/inbox'),
+          ShellRoute(
+            builder: (context, state, child) => InboxScreen(detail: child),
+            routes: [
+              GoRoute(path: '/dashboard/inbox', builder: (context, state) => const InboxEmptyDetail()),
+              GoRoute(
+                path: '/dashboard/inbox/:id',
+                builder: (context, state) => ChatScreen(conversationId: state.pathParameters['id']!),
+              ),
+            ],
           ),
           GoRoute(path: '/dashboard/contacts', builder: (context, state) => const ContactsScreen()),
           GoRoute(path: '/dashboard/campaigns', builder: (context, state) => const CampaignsScreen()),

@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:dio/dio.dart';
 import '../../core/di.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/api_error.dart';
 import '../../core/services/notification_manager.dart';
 import '../../core/services/socket_service.dart';
 import '../../data/models/message_model.dart' hide QuickReply;
@@ -23,6 +24,7 @@ import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/quick_reply_picker.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 sealed class ChatItem {}
 
@@ -148,7 +150,10 @@ class ChatViewModel extends BaseViewModel {
     final result = await _convRepo.sendMessage(conversationId, content.trim(), mediaUrl: mediaUrl);
     result.when(
       success: (msg) {
-        _messages.add(msg);
+        if (_messages.every((m) => m.id != msg.id)) {
+          _messages.add(msg);
+          notifyListeners();
+        }
       },
       error: (message, exception) {},
     );
@@ -174,7 +179,7 @@ class ChatViewModel extends BaseViewModel {
       final url = res.data['url'] ?? res.data['fileUrl'] ?? res.data['mediaUrl'];
       return url as String?;
     } catch (e) {
-      setError('Upload failed: $e');
+      setError(extractApiError(e, fallback: 'Upload failed. Please try again.'));
       return null;
     }
   }
@@ -183,7 +188,12 @@ class ChatViewModel extends BaseViewModel {
     setBusy();
     final result = await _convRepo.sendTemplate(conversationId, templateName, variables: variables);
     result.when(
-      success: (msg) => _messages.add(msg),
+      success: (msg) {
+        if (_messages.every((m) => m.id != msg.id)) {
+          _messages.add(msg);
+          notifyListeners();
+        }
+      },
       error: (message, exception) {},
     );
     setIdle();
@@ -193,7 +203,12 @@ class ChatViewModel extends BaseViewModel {
     setBusy();
     final result = await _convRepo.sendFlow(conversationId, flowId, parameters: parameters);
     result.when(
-      success: (msg) => _messages.add(msg),
+      success: (msg) {
+        if (_messages.every((m) => m.id != msg.id)) {
+          _messages.add(msg);
+          notifyListeners();
+        }
+      },
       error: (message, exception) {},
     );
     setIdle();
@@ -202,7 +217,7 @@ class ChatViewModel extends BaseViewModel {
   void handleNewMessage(Map<String, dynamic> data) {
     try {
       final msg = Message.fromJson(data);
-      if (msg.conversationId == conversationId) {
+      if (msg.conversationId == conversationId && _messages.every((m) => m.id != msg.id)) {
         _messages.add(msg);
         notifyListeners();
       }
@@ -327,7 +342,7 @@ class _ChatBodyState extends State<_ChatBody> {
       appBar: AppAppBar(
         leading: isMobile
             ? AppIconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const PhosphorIcon(PhosphorIconsRegular.arrowLeft),
                 onPressed: () => context.go('/dashboard/inbox'),
               )
             : null,
@@ -353,13 +368,13 @@ class _ChatBodyState extends State<_ChatBody> {
         actions: [
           if (vm.templates.isNotEmpty)
             AppIconButton(
-              icon: const Icon(Icons.description),
+              icon: const PhosphorIcon(PhosphorIconsRegular.fileText),
               tooltip: 'Send Template',
               onPressed: () => _showTemplatePicker(context, vm),
             ),
           if (vm.flows.isNotEmpty)
             AppIconButton(
-              icon: const Icon(Icons.input),
+              icon: const PhosphorIcon(PhosphorIconsRegular.textbox),
               tooltip: 'Send Flow',
               onPressed: () => _showFlowPicker(context, vm),
             ),
@@ -390,7 +405,7 @@ class _ChatBodyState extends State<_ChatBody> {
               child: Row(
                 children: [
                   AppIconButton(
-                    icon: const Icon(Icons.attach_file),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.paperclip),
                     onPressed: vm.isBusy ? null : () => _pickAndUploadFile(vm),
                   ),
                   Expanded(
@@ -408,7 +423,7 @@ class _ChatBodyState extends State<_ChatBody> {
                   const SizedBox(width: 8),
                   IconButton.filled(
                     onPressed: vm.isBusy ? null : () => _send(vm),
-                    icon: const Icon(Icons.send),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.paperPlaneRight),
                   ),
                 ],
               ),
@@ -598,7 +613,7 @@ class _MessageBubble extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)],
         ),
-        constraints: BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.75),
+        constraints: BoxConstraints(maxWidth: (MediaQuery.of(context).size.width * 0.75).clamp(0, 480)),
         child: Column(
           crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           children: [
@@ -660,7 +675,7 @@ class _MediaContent extends StatelessWidget {
             child: Image.network(
               url,
               fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => _FallbackFile(filename: filename, icon: Icons.image),
+              errorBuilder: (_, _, _) => _FallbackFile(filename: filename, icon: PhosphorIconsRegular.image),
             ),
           ),
         ),
@@ -670,16 +685,16 @@ class _MediaContent extends StatelessWidget {
     IconData icon;
     Color color;
     if (type == 'video') {
-      icon = Icons.videocam;
+      icon = PhosphorIconsRegular.videoCamera;
       color = Colors.red;
     } else if (type == 'audio' || message.voice == true) {
-      icon = Icons.audiotrack;
+      icon = PhosphorIconsRegular.speakerHigh;
       color = Colors.orange;
     } else if (type == 'document') {
-      icon = Icons.insert_drive_file;
+      icon = PhosphorIconsRegular.file;
       color = Colors.blue;
     } else {
-      icon = Icons.attach_file;
+      icon = PhosphorIconsRegular.paperclip;
       color = Colors.grey;
     }
 
@@ -749,15 +764,15 @@ class _StatusIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     switch (status?.toLowerCase()) {
       case 'read':
-        return const Icon(Icons.done_all, size: 14, color: Colors.blue);
+        return const PhosphorIcon(PhosphorIconsRegular.checks, size: 14, color: Colors.blue);
       case 'delivered':
-        return const Icon(Icons.done_all, size: 14, color: Colors.grey);
+        return const PhosphorIcon(PhosphorIconsRegular.checks, size: 14, color: Colors.grey);
       case 'sent':
-        return const Icon(Icons.done, size: 14, color: Colors.grey);
+        return const PhosphorIcon(PhosphorIconsRegular.check, size: 14, color: Colors.grey);
       case 'failed':
-        return const Icon(Icons.error_outline, size: 14, color: Colors.red);
+        return const PhosphorIcon(PhosphorIconsRegular.warningCircle, size: 14, color: Colors.red);
       default:
-        return const Icon(Icons.schedule, size: 14, color: Colors.grey);
+        return const PhosphorIcon(PhosphorIconsRegular.clock, size: 14, color: Colors.grey);
     }
   }
 }

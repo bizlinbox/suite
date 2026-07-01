@@ -13,6 +13,7 @@ import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/new_chat_dialog.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class InboxViewModel extends BaseViewModel {
   final ConversationRepository _repo;
@@ -167,7 +168,8 @@ class InboxViewModel extends BaseViewModel {
 }
 
 class InboxScreen extends StatelessWidget {
-  const InboxScreen({super.key});
+  final Widget detail;
+  const InboxScreen({super.key, required this.detail});
 
   @override
   Widget build(BuildContext context) {
@@ -176,13 +178,44 @@ class InboxScreen extends StatelessWidget {
         locator<ConversationRepository>(),
         locator<ContactRepository>(),
       )..loadConversations(),
-      child: const _InboxBody(),
+      child: _InboxBody(detail: detail),
+    );
+  }
+}
+
+class InboxEmptyDetail extends StatelessWidget {
+  const InboxEmptyDetail({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PhosphorIcon(PhosphorIconsRegular.chatsTeardrop, size: 64, color: Theme.of(context).colorScheme.outline),
+          const SizedBox(height: 16),
+          Text(
+            'Select a conversation',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Choose a chat from the list to start messaging',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _InboxBody extends StatefulWidget {
-  const _InboxBody();
+  final Widget detail;
+  const _InboxBody({required this.detail});
 
   @override
   State<_InboxBody> createState() => _InboxBodyState();
@@ -238,7 +271,38 @@ class _InboxBodyState extends State<_InboxBody> {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<InboxViewModel>();
+    final isMobile = MediaQuery.of(context).size.width < 768;
+    final currentPath = GoRouterState.of(context).uri.path;
+    final hasSelectedChat = currentPath != '/dashboard/inbox' && !currentPath.endsWith('/inbox');
 
+    final listPanel = _buildListPanel(vm);
+
+    // Mobile: show either the list or the active chat, never both at once.
+    if (isMobile) {
+      return Scaffold(
+        body: hasSelectedChat ? widget.detail : listPanel,
+        floatingActionButton: (hasSelectedChat || vm.isSelectionMode)
+            ? null
+            : AppFloatingActionButton(
+                onPressed: () => _showNewChatDialog(context, vm),
+                child: const PhosphorIcon(PhosphorIconsRegular.chatTeardropText),
+              ),
+      );
+    }
+
+    // Desktop / tablet: master-detail side by side.
+    return Scaffold(
+      body: Row(
+        children: [
+          SizedBox(width: 360, child: listPanel),
+          const VerticalDivider(width: 1),
+          Expanded(child: widget.detail),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListPanel(InboxViewModel vm) {
     return Scaffold(
       appBar: AppAppBar(
         title: vm.isSelectionMode
@@ -246,19 +310,19 @@ class _InboxBodyState extends State<_InboxBody> {
             : const Text('Inbox'),
         leading: vm.isSelectionMode
             ? AppIconButton(
-                icon: const Icon(Icons.close),
+                icon: const PhosphorIcon(PhosphorIconsRegular.x),
                 onPressed: () => vm.exitSelectionMode(),
               )
             : null,
         actions: [
           if (vm.isSelectionMode) ...[
             AppIconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
+              icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
               onPressed: vm.isBusy ? null : () => _confirmBulkDelete(context, vm),
             ),
           ] else ...[
             AppIconButton(
-              icon: const Icon(Icons.refresh),
+              icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
               onPressed: vm.isBusy ? null : () => vm.loadConversations(),
             ),
           ],
@@ -269,11 +333,8 @@ class _InboxBodyState extends State<_InboxBody> {
           Padding(
             padding: const EdgeInsets.all(12),
             child: AppTextField(
-              decoration: InputDecoration(
-                hintText: 'Search conversations...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+              hintText: 'Search conversations...',
+              prefix: const PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
               onChanged: vm.setSearch,
             ),
           ),
@@ -287,21 +348,25 @@ class _InboxBodyState extends State<_InboxBody> {
                         itemBuilder: (context, index) {
                           if (index == vm.conversations.length) {
                             return Center(
-                              child: AppButton(variant: AppButtonVariant.ghost, 
+                              child: AppButton(
+                                variant: AppButtonVariant.ghost,
                                 onPressed: () => vm.loadConversations(append: true),
                                 child: const Text('Load more'),
                               ),
                             );
                           }
                           final conv = vm.conversations[index];
+                          final selectedPath = '/dashboard/inbox/${conv.id}';
+                          final isSelected = GoRouterState.of(context).uri.path == selectedPath;
                           return _ConversationTile(
                             conversation: conv,
                             vm: vm,
+                            selected: isSelected,
                             onTap: () {
                               if (vm.isSelectionMode) {
                                 vm.toggleSelection(conv.id);
                               } else {
-                                context.go('/dashboard/inbox/${conv.id}');
+                                context.go(selectedPath);
                               }
                             },
                             onLongPress: () {
@@ -316,12 +381,6 @@ class _InboxBodyState extends State<_InboxBody> {
           ),
         ],
       ),
-      floatingActionButton: vm.isSelectionMode
-          ? null
-          : AppFloatingActionButton(
-              onPressed: () => _showNewChatDialog(context, vm),
-              child: const Icon(Icons.chat_bubble_outline),
-            ),
     );
   }
 
@@ -356,12 +415,14 @@ class _InboxBodyState extends State<_InboxBody> {
 class _ConversationTile extends StatelessWidget {
   final Conversation conversation;
   final InboxViewModel vm;
+  final bool selected;
   final VoidCallback onTap;
   final VoidCallback onLongPress;
 
   const _ConversationTile({
     required this.conversation,
     required this.vm,
+    this.selected = false,
     required this.onTap,
     required this.onLongPress,
   });
@@ -371,6 +432,7 @@ class _ConversationTile extends StatelessWidget {
     final hasUnread = conversation.unreadCount > 0;
 
     return AppListTile(
+      selected: selected,
       leading: vm.isSelectionMode
           ? AppCheckbox(
               value: vm.isSelected(conversation.id),

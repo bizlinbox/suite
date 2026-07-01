@@ -5,7 +5,9 @@ import '../../core/utils/result.dart';
 import '../../data/models/automation_model.dart';
 import '../../data/repositories/automation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../../core/responsive.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class AutomationFormViewModel extends BaseViewModel {
   final AutomationRepository _repo;
@@ -171,7 +173,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
               children: [
                 const Expanded(child: Text('Condition', style: TextStyle(fontWeight: FontWeight.bold))),
                 AppIconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                   onPressed: () => _removeCondition(index),
                 ),
               ],
@@ -219,7 +221,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
               children: [
                 const Expanded(child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
                 AppIconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                   onPressed: () => _removeAction(index),
                 ),
               ],
@@ -293,11 +295,13 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: CenteredMaxWidth(
+          maxWidth: 640,
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               TextFormField(
                 controller: _nameController,
                 decoration: const InputDecoration(labelText: 'Name'),
@@ -325,7 +329,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                     child: Text('Conditions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   AppIconButton(
-                    icon: const Icon(Icons.add_circle, color: Color(0xFF2563EB)),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: Color(0xFF2563EB)),
                     onPressed: _addCondition,
                   ),
                 ],
@@ -344,7 +348,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                     child: Text('Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   AppIconButton(
-                    icon: const Icon(Icons.add_circle, color: Color(0xFF2563EB)),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: Color(0xFF2563EB)),
                     onPressed: _addAction,
                   ),
                 ],
@@ -357,8 +361,8 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                   child: Text('No actions added yet.', style: TextStyle(color: Colors.grey)),
                 ),
               const SizedBox(height: 24),
-              SizedBox(
-                width: double.infinity,
+              Align(
+                alignment: Alignment.centerRight,
                 child: AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy ? null : () => _submit(vm),
                   child: vm.isBusy
@@ -368,6 +372,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
               ),
             ],
           ),
+        ),
         ),
       ),
     );

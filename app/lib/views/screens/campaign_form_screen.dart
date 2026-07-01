@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/di.dart';
+import '../../core/responsive.dart';
+import '../../core/utils/api_error.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/campaign_model.dart';
 import '../../data/models/contact_model.dart';
@@ -10,6 +12,7 @@ import '../../data/repositories/contact_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class CampaignFormViewModel extends BaseViewModel {
   final CampaignRepository _campaignRepo;
@@ -42,7 +45,7 @@ class CampaignFormViewModel extends BaseViewModel {
         error: (message, exception) {},
       );
     } catch (e) {
-      setError(e.toString());
+      setError(extractApiError(e));
     }
     setIdle();
   }
@@ -294,14 +297,16 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
           ? const Center(child: AppProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TextFormField(
+              child: CenteredMaxWidth(
+                maxWidth: 640,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                    AppInput(
                       controller: _nameController,
-                      decoration: const InputDecoration(labelText: 'Name'),
+                      label: 'Name',
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
@@ -314,10 +319,9 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       onChanged: (v) => setState(() => _messageType = v),
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
+                    AppInput.multiline(
                       controller: _contentController,
-                      decoration: const InputDecoration(labelText: 'Content'),
-                      maxLines: 4,
+                      label: 'Content',
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
@@ -368,7 +372,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       controller: _scheduledDateController,
                       decoration: const InputDecoration(
                         labelText: 'Scheduled At (optional)',
-                        suffixIcon: Icon(Icons.calendar_today),
+                        suffixIcon: PhosphorIcon(PhosphorIconsRegular.calendarBlank),
                       ),
                       readOnly: true,
                       onTap: _pickScheduledAt,
@@ -378,13 +382,13 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       child: AppListTile(
                         title: const Text('Recipients'),
                         subtitle: Text('${_selectedContactIds.length} selected'),
-                        trailing: const Icon(Icons.chevron_right),
+                        trailing: const PhosphorIcon(PhosphorIconsRegular.caretRight),
                         onTap: () => _selectRecipients(vm),
                       ),
                     ),
                     const SizedBox(height: 24),
-                    SizedBox(
-                      width: double.infinity,
+                    Align(
+                      alignment: Alignment.centerRight,
                       child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: vm.isBusy ? null : () => _submit(vm),
                         child: vm.isBusy ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save Campaign'),
@@ -392,6 +396,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                     ),
                   ],
                 ),
+              ),
               ),
             ),
     );

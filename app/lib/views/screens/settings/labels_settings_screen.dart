@@ -5,7 +5,9 @@ import '../../../data/models/label_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../../core/responsive.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class LabelsSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -111,7 +113,9 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
           if (canManage)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: AppCard(
+              child: CenteredMaxWidth(
+                maxWidth: 640,
+                child: AppCard(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -143,8 +147,8 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                         }).toList(),
                       ),
                       const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
+                      Align(
+                        alignment: Alignment.centerRight,
                         child: AppButton(variant: AppButtonVariant.primary, 
                           onPressed: vm.isBusy
                               ? null
@@ -160,6 +164,7 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                     ],
                   ),
                 ),
+              ),
               ),
             ),
           Expanded(
@@ -193,11 +198,11 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         AppIconButton(
-                                          icon: const Icon(Icons.edit_outlined),
+                                          icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
                                           onPressed: () => _showEditDialog(context, vm, l),
                                         ),
                                         AppIconButton(
-                                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                          icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                           onPressed: () => vm.deleteLabel(l.id),
                                         ),
                                       ],
@@ -219,7 +224,7 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],

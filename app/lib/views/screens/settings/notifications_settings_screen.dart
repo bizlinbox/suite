@@ -4,6 +4,7 @@ import '../../../core/di.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class NotificationsSettingsScreen extends StatelessWidget {
   const NotificationsSettingsScreen({super.key});
@@ -48,7 +49,7 @@ class _NotificationsBody extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+              PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
               SizedBox(height: 16),
               Text('You do not have permission to view this page.', textAlign: TextAlign.center),
             ],
@@ -68,7 +69,7 @@ class _NotificationsBody extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AppListTile(
-                    leading: Icon(vm.enabled ? Icons.notifications_active : Icons.notifications_off, color: Colors.blue),
+                    leading: Icon(vm.enabled ? PhosphorIconsRegular.bell : PhosphorIconsRegular.bellSlash, color: Colors.blue),
                     title: const Text('Push Notifications'),
                     subtitle: Text(vm.enabled ? 'Notifications are enabled' : 'Notifications are disabled'),
                     trailing: Switch(
@@ -98,7 +99,7 @@ class _NotificationsBody extends StatelessWidget {
                     Row(
                       children: [
                         Icon(
-                          vm.enabled ? Icons.check_circle : Icons.info_outline,
+                          vm.enabled ? PhosphorIconsRegular.checkCircle : PhosphorIconsRegular.info,
                           color: vm.enabled ? Colors.green : Colors.grey,
                         ),
                         const SizedBox(width: 8),

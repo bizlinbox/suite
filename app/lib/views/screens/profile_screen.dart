@@ -7,7 +7,9 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../../core/responsive.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ProfileViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -157,8 +159,10 @@ class _ProfileBodyState extends State<_ProfileBody> {
           ? const Center(child: Text('Not logged in'))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
+              child: CenteredMaxWidth(
+                maxWidth: 640,
+                child: Column(
+                  children: [
                   AppAvatar(
                     radius: 40,
                     child: Text(
@@ -187,7 +191,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             controller: _nameController,
                             decoration: const InputDecoration(
                               labelText: 'Full Name',
-                              prefixIcon: Icon(Icons.person_outline),
+                              prefixIcon: PhosphorIcon(PhosphorIconsRegular.user),
                               border: OutlineInputBorder(),
                             ),
                           ),
@@ -196,7 +200,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             enabled: false,
                             decoration: InputDecoration(
                               labelText: 'Email',
-                              prefixIcon: const Icon(Icons.email_outlined),
+                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.envelope),
                               border: const OutlineInputBorder(),
                               filled: true,
                               fillColor: Colors.grey.shade100,
@@ -204,8 +208,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             controller: TextEditingController(text: user.email),
                           ),
                           const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
+                          Align(
+                            alignment: Alignment.centerRight,
                             child: FilledButton.icon(
                               onPressed: vm.isBusy ? null : () => _saveAccountInfo(vm, authVm),
                               icon: vm.isBusy
@@ -214,7 +218,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                                       width: 18,
                                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                     )
-                                  : const Icon(Icons.save_outlined),
+                                  : const PhosphorIcon(PhosphorIconsRegular.floppyDisk),
                               label: const Text('Save Changes'),
                             ),
                           ),
@@ -239,9 +243,9 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             obscureText: _obscureCurrent,
                             decoration: InputDecoration(
                               labelText: 'Current Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
                               suffixIcon: AppIconButton(
-                                icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(_obscureCurrent ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
                                 onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
                               ),
                               border: const OutlineInputBorder(),
@@ -253,9 +257,9 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             obscureText: _obscureNew,
                             decoration: InputDecoration(
                               labelText: 'New Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
                               suffixIcon: AppIconButton(
-                                icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(_obscureNew ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
                                 onPressed: () => setState(() => _obscureNew = !_obscureNew),
                               ),
                               border: const OutlineInputBorder(),
@@ -267,17 +271,17 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
                               labelText: 'Confirm New Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
+                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
                               suffixIcon: AppIconButton(
-                                icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
+                                icon: Icon(_obscureConfirm ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
                                 onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                               ),
                               border: const OutlineInputBorder(),
                             ),
                           ),
                           const SizedBox(height: 16),
-                          SizedBox(
-                            width: double.infinity,
+                          Align(
+                            alignment: Alignment.centerRight,
                             child: FilledButton.icon(
                               onPressed: vm.isBusy ? null : () => _savePassword(vm, authVm),
                               icon: vm.isBusy
@@ -286,7 +290,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                                       width: 18,
                                       child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                                     )
-                                  : const Icon(Icons.save_outlined),
+                                  : const PhosphorIcon(PhosphorIconsRegular.floppyDisk),
                               label: const Text('Save Changes'),
                             ),
                           ),
@@ -295,8 +299,8 @@ class _ProfileBodyState extends State<_ProfileBody> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
+                  Align(
+                    alignment: Alignment.centerRight,
                     child: AppButton(
                       variant: AppButtonVariant.danger,
                       onPressed: () async {
@@ -306,7 +310,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.logout),
+                          PhosphorIcon(PhosphorIconsRegular.signOut),
                           SizedBox(width: 8),
                           Text('Logout'),
                         ],
@@ -314,6 +318,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                     ),
                   ),
                 ],
+              ),
               ),
             ),
     );

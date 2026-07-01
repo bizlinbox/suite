@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/di.dart';
 import '../../../core/services/api_service.dart';
+import '../../../core/utils/api_error.dart';
 import '../../../data/models/organization_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../../core/responsive.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class GeneralSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -55,7 +58,7 @@ class GeneralSettingsViewModel extends BaseViewModel {
       final url = res.data['url'] as String?;
       return url;
     } catch (e) {
-      setError('Upload failed: $e');
+      setError(extractApiError(e, fallback: 'Upload failed. Please try again.'));
       return null;
     }
   }
@@ -191,9 +194,11 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
               ? const Center(child: Text('No organization found'))
               : SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  child: CenteredMaxWidth(
+                    maxWidth: 640,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                       Container(
                         width: double.infinity,
                         decoration: BoxDecoration(
@@ -247,7 +252,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                             child: _uploadingLogo
                                 ? const Center(child: AppProgressIndicator())
                                 : _logoUrl == null
-                                    ? const Center(child: Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey))
+                                    ? const Center(child: PhosphorIcon(PhosphorIconsRegular.image, size: 40, color: Colors.grey))
                                     : null,
                           ),
                         ),
@@ -284,8 +289,8 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                       ),
                       const SizedBox(height: 24),
                       if (canManage)
-                        SizedBox(
-                          width: double.infinity,
+                        Align(
+                          alignment: Alignment.centerRight,
                           child: AppButton(variant: AppButtonVariant.primary, 
                             onPressed: vm.isBusy
                                 ? null
@@ -307,6 +312,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                         ),
                     ],
                   ),
+                  ),
                 ),
     );
   }
@@ -316,7 +322,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
