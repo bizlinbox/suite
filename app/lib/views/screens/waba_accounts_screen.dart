@@ -171,7 +171,11 @@ class _WabaAccountsBody extends StatelessWidget {
               ),
             )
           : vm.accounts.isEmpty
-          ? const Center(child: Text('No WABA accounts found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.deviceMobile,
+              title: 'No WABA accounts',
+              subtitle: 'Add a WhatsApp Business account to get started',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadAccounts(),
               child: ListView.builder(

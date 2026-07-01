@@ -311,7 +311,11 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
                     ),
                   )
                 : vm.files.isEmpty
-                ? const Center(child: Text('No files found'))
+                ? const AppEmptyState(
+                    icon: PhosphorIconsRegular.folder,
+                    title: 'No files',
+                    subtitle: 'Upload files to use in messages',
+                  )
                 : RefreshIndicator(
                     onRefresh: () => vm.loadFiles(),
                     child: ListView.builder(

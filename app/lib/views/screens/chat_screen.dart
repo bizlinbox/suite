@@ -478,26 +478,32 @@ class _ChatBodyState extends State<_ChatBody> {
                       itemBuilder: (_, index) => MessageSkeletonItem(isMe: index % 3 == 0),
                     ),
                   )
-                : RefreshIndicator(
-                    onRefresh: () => vm.loadMessages(),
-                    child: ListView.builder(
-                      controller: _scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(12),
-                      itemCount: vm.chatItems.length,
-                      itemBuilder: (context, index) {
-                        final item = vm.chatItems[index];
-                        if (item is ChatDateItem) {
-                          return _DateSeparator(date: item.date);
-                        }
-                        final msg = (item as ChatMessageItem).message;
-                        return _MessageBubble(
-                          message: msg,
-                          onReaction: () => _showReactionPicker(context, vm, msg.id),
-                        );
-                      },
-                    ),
-                  ),
+                : vm.messages.isEmpty
+                    ? AppEmptyState(
+                        icon: PhosphorIconsRegular.chatTeardropText,
+                        title: 'No messages yet',
+                        subtitle: 'Start the conversation by sending a message below',
+                      )
+                    : RefreshIndicator(
+                        onRefresh: () => vm.loadMessages(),
+                        child: ListView.builder(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.all(12),
+                          itemCount: vm.chatItems.length,
+                          itemBuilder: (context, index) {
+                            final item = vm.chatItems[index];
+                            if (item is ChatDateItem) {
+                              return _DateSeparator(date: item.date);
+                            }
+                            final msg = (item as ChatMessageItem).message;
+                            return _MessageBubble(
+                              message: msg,
+                              onReaction: () => _showReactionPicker(context, vm, msg.id),
+                            );
+                          },
+                        ),
+                      ),
           ),
           SafeArea(
             child: Padding(

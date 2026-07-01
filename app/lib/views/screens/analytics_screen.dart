@@ -79,7 +79,11 @@ class _AnalyticsBody extends StatelessWidget {
               ),
             )
           : data == null
-          ? const Center(child: Text('No data available'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.chartBar,
+              title: 'No data available',
+              subtitle: 'Analytics will appear once activity begins',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadAnalytics(),
               child: SingleChildScrollView(

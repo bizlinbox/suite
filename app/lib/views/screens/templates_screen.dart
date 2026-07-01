@@ -77,7 +77,11 @@ class _TemplatesBody extends StatelessWidget {
               ),
             )
           : vm.templates.isEmpty
-          ? const Center(child: Text('No templates found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.fileText,
+              title: 'No templates',
+              subtitle: 'Create message templates for your campaigns',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadTemplates(),
               child: ListView.builder(

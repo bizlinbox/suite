@@ -142,7 +142,11 @@ class _RolesBody extends StatelessWidget {
               ),
             )
           : vm.roles.isEmpty
-              ? const Center(child: Text('No roles found'))
+              ? const AppEmptyState(
+                  icon: PhosphorIconsRegular.shield,
+                  title: 'No roles',
+                  subtitle: 'Create roles to manage team permissions',
+                )
               : RefreshIndicator(
                   onRefresh: () => vm.loadRoles(),
                   child: ListView.builder(

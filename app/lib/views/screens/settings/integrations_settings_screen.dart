@@ -136,7 +136,11 @@ class _IntegrationsBody extends StatelessWidget {
               ),
             )
           : vm.integrations.isEmpty
-          ? const Center(child: Text('No integrations configured'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.plugs,
+              title: 'No integrations',
+              subtitle: 'Connect third-party services to your workspace',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadIntegrations(),
               child: ListView.builder(

@@ -228,7 +228,11 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                     ),
                   )
                 : vm.logs.isEmpty
-                ? const Center(child: Text('No API logs found'))
+                ? const AppEmptyState(
+                    icon: PhosphorIconsRegular.terminal,
+                    title: 'No API logs',
+                    subtitle: 'Logs will appear here after API calls are made',
+                  )
                 : RefreshIndicator(
                     onRefresh: () => vm.loadLogs(),
                     child: ListView.builder(

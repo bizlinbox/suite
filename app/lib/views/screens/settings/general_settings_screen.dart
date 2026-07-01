@@ -209,7 +209,11 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
               ),
             )
           : org == null
-          ? const Center(child: Text('No organization found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.buildings,
+              title: 'No organization found',
+              subtitle: 'Set up your organization details here',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadOrganization(),
               child: SingleChildScrollView(

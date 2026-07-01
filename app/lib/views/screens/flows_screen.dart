@@ -503,8 +503,10 @@ class _FlowsTab extends StatelessWidget {
     }
 
     if (vm.flows.isEmpty) {
-      return const Center(
-        child: Text('No flows yet. Sync from Meta or create one.'),
+      return const AppEmptyState(
+        icon: PhosphorIconsRegular.textbox,
+        title: 'No flows yet',
+        subtitle: 'Sync from Meta or create a new flow',
       );
     }
 
@@ -850,8 +852,10 @@ class _SubmissionsTab extends StatelessWidget {
     }
 
     if (vm.submissions.isEmpty) {
-      return const Center(
-        child: Text('No submissions yet. Send a flow and wait for responses.'),
+      return const AppEmptyState(
+        icon: PhosphorIconsRegular.textbox,
+        title: 'No submissions yet',
+        subtitle: 'Send a flow and wait for responses',
       );
     }
 

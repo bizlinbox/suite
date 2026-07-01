@@ -134,7 +134,11 @@ class _QuickRepliesBody extends StatelessWidget {
               ),
             )
           : vm.quickReplies.isEmpty
-          ? const Center(child: Text('No quick replies found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.arrowBendUpLeft,
+              title: 'No quick replies',
+              subtitle: 'Create quick replies for faster responses',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadQuickReplies(),
               child: ListView.builder(

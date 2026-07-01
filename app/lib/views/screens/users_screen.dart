@@ -184,7 +184,11 @@ class _UsersBody extends StatelessWidget {
               ),
             )
           : vm.users.isEmpty
-          ? const Center(child: Text('No users found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.users,
+              title: 'No users',
+              subtitle: 'Invite team members to your workspace',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadUsers(),
               child: ListView.builder(

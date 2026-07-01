@@ -433,7 +433,11 @@ class _InboxBodyState extends State<_InboxBody> {
                     ),
                   )
                 : vm.conversations.isEmpty
-                    ? const Center(child: Text('No conversations found'))
+                    ? const AppEmptyState(
+                        icon: PhosphorIconsRegular.chatTeardropText,
+                        title: 'No conversations',
+                        subtitle: 'Start a new chat or check back later',
+                      )
                     : RefreshIndicator(
                         onRefresh: () => vm.loadConversations(),
                         child: ListView.builder(

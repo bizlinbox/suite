@@ -195,7 +195,11 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                     ),
                   )
                 : vm.labels.isEmpty
-                ? const Center(child: Text('No labels yet'))
+                ? const AppEmptyState(
+                    icon: PhosphorIconsRegular.tag,
+                    title: 'No labels yet',
+                    subtitle: 'Create labels to organize conversations',
+                  )
                 : RefreshIndicator(
                     onRefresh: () => vm.loadLabels(),
                     child: ListView.builder(

@@ -203,7 +203,11 @@ class _ContactsBody extends StatelessWidget {
                     ),
                   )
                 : vm.filteredContacts.isEmpty
-                    ? const Center(child: Text('No contacts found'))
+                    ? const AppEmptyState(
+                        icon: PhosphorIconsRegular.users,
+                        title: 'No contacts',
+                        subtitle: 'Add contacts to start messaging',
+                      )
                     : RefreshIndicator(
                         onRefresh: () => vm.loadContacts(),
                         child: ListView.builder(

@@ -127,7 +127,11 @@ class _CampaignsBody extends StatelessWidget {
               ),
             )
           : vm.campaigns.isEmpty
-          ? const Center(child: Text('No campaigns found'))
+          ? const AppEmptyState(
+              icon: PhosphorIconsRegular.megaphone,
+              title: 'No campaigns',
+              subtitle: 'Create a campaign to broadcast messages',
+            )
           : RefreshIndicator(
               onRefresh: () => vm.loadCampaigns(),
               child: ListView.builder(
