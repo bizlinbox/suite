@@ -10,4 +10,4 @@ http:
         stsSeconds: 31536000
     dashboard-auth:
       basicAuth:
-        usersFile: /etc/traefik/.htpasswd
+        usersFile: /traefik-config/.htpasswd

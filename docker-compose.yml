@@ -10,13 +10,13 @@ services:
     container_name: bizlinbox-traefik
     restart: unless-stopped
     command:
-      - "--configFile=/etc/traefik/traefik.yml"
+      - "--configFile=/traefik-config/traefik.yml"
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik:/etc/traefik:ro
+      - ./traefik:/traefik-config:ro
       - ./traefik/acme:/letsencrypt
     networks:
       - bizlinbox
