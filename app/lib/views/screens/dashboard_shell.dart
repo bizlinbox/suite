@@ -35,6 +35,7 @@ class _DashboardShellBody extends StatefulWidget {
 
 class _DashboardShellBodyState extends State<_DashboardShellBody> {
   String? _selectedWabaId;
+  bool _sidebarCollapsed = false;
 
   @override
   void initState() {
@@ -43,6 +44,8 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
     locator<NotificationManager>().start();
     _selectedWabaId = locator<LocalStorageService>().getWabaId();
   }
+
+  void _toggleSidebar() => setState(() => _sidebarCollapsed = !_sidebarCollapsed);
 
   List<WabaAccount> _getActiveWabaAccounts(AuthViewModel authVm) {
     final accounts = authVm.user?.wabaAccounts ?? [];
@@ -99,7 +102,7 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
           ? AppAppBar(
               leading: Builder(
                 builder: (context) => AppIconButton(
-                  icon: const PhosphorIcon(PhosphorIconsRegular.list, size: 22),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.rows, size: 22),
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
@@ -175,7 +178,7 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
           : null,
       body: Row(
         children: [
-          if (!isMobile) const Sidebar(),
+          if (!isMobile) Sidebar(collapsed: _sidebarCollapsed, onToggle: _toggleSidebar),
           Expanded(child: widget.child),
         ],
       ),

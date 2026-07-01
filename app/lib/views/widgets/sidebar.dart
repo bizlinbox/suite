@@ -44,7 +44,10 @@ final List<NavItem> _settingsNav = [
 
 class Sidebar extends StatefulWidget {
   final VoidCallback? onItemSelected;
-  const Sidebar({super.key, this.onItemSelected});
+  final bool collapsed;
+  final VoidCallback? onToggle;
+
+  const Sidebar({super.key, this.onItemSelected, this.collapsed = false, this.onToggle});
 
   @override
   State<Sidebar> createState() => _SidebarState();
@@ -98,8 +101,9 @@ class _SidebarState extends State<Sidebar> {
     );
 
     final theme = Theme.of(context);
+    final collapsed = widget.collapsed;
     return Container(
-      width: 260,
+      width: collapsed ? 72 : 260,
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(right: BorderSide(color: theme.dividerTheme.color ?? theme.colorScheme.outlineVariant)),
@@ -107,8 +111,9 @@ class _SidebarState extends State<Sidebar> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+            padding: EdgeInsets.fromLTRB(collapsed ? 20 : 16, 16, collapsed ? 20 : 16, 12),
             child: Row(
+              mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -118,21 +123,23 @@ class _SidebarState extends State<Sidebar> {
                     height: 32,
                   ),
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'BizlInbox',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                    ),
-                    Text(
-                      'WhatsApp Business',
-                      style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
-                    ),
-                  ],
-                ),
+                if (!collapsed) ...[
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'BizlInbox',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        'WhatsApp Business',
+                        style: TextStyle(fontSize: 11, color: theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
@@ -144,6 +151,7 @@ class _SidebarState extends State<Sidebar> {
                 accounts: activeAccounts,
                 selected: selectedAccount,
                 onSelect: _selectWaba,
+                collapsed: collapsed,
               ),
             ),
           if (activeAccounts.isEmpty && authVm.isAdmin)
@@ -170,13 +178,14 @@ class _SidebarState extends State<Sidebar> {
             ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: collapsed ? 8 : 12, vertical: 8),
               children: [
                 ..._topNav.where((item) => item.permission == null || authVm.can(item.permission!)).map(
                       (item) => _NavTile(
                         item: item,
                         selected: currentRoute == item.route || currentRoute.startsWith('${item.route}/'),
                         onTap: () => _navigate(item.route),
+                        collapsed: collapsed,
                       ),
                     ),
                 const SizedBox(height: 8),
@@ -184,8 +193,8 @@ class _SidebarState extends State<Sidebar> {
                 const SizedBox(height: 8),
                 AppListTile(
                   leading: const PhosphorIcon(PhosphorIconsRegular.gear),
-                  title: const Text('Settings'),
-                  trailing: Icon(_settingsExpanded ? PhosphorIconsRegular.caretUp : PhosphorIconsRegular.caretDown),
+                  title: collapsed ? null : const Text('Settings'),
+                  trailing: collapsed ? null : Icon(_settingsExpanded ? PhosphorIconsRegular.caretUp : PhosphorIconsRegular.caretDown),
                   onTap: () => setState(() => _settingsExpanded = !_settingsExpanded),
                 ),
                 if (_settingsExpanded)
@@ -194,16 +203,31 @@ class _SidebarState extends State<Sidebar> {
                           item: item,
                           selected: currentRoute == item.route,
                           onTap: () => _navigate(item.route),
-                          indent: true,
+                          indent: !collapsed,
+                          collapsed: collapsed,
                         ),
                       ),
               ],
             ),
           ),
           const AppDivider(height: 1),
+          if (widget.onToggle != null)
+            InkWell(
+              onTap: widget.onToggle,
+              child: Container(
+                height: 40,
+                alignment: Alignment.center,
+                child: PhosphorIcon(
+                  collapsed ? PhosphorIconsRegular.caretRight : PhosphorIconsRegular.caretLeft,
+                  size: 18,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+            ),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+            padding: EdgeInsets.fromLTRB(collapsed ? 8 : 16, 8, collapsed ? 8 : 16, 4),
             child: Row(
+              mainAxisAlignment: collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
               children: [
                 AppAvatar(
                   radius: 18,
@@ -212,35 +236,37 @@ class _SidebarState extends State<Sidebar> {
                     style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                   ),
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        authVm.user?.name ?? 'User',
-                        style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      Text(
-                        authVm.user?.role ?? '',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                if (!collapsed) ...[
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          authVm.user?.name ?? 'User',
+                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                        Text(
+                          authVm.user?.role ?? '',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                AppIconButton(
-                  icon: const PhosphorIcon(PhosphorIconsRegular.signOut, size: 18),
-                  tooltip: 'Logout',
-                  onPressed: () async {
-                    await authVm.logout();
-                    if (context.mounted) context.go('/login');
-                  },
-                ),
+                  AppIconButton(
+                    icon: const PhosphorIcon(PhosphorIconsRegular.signOut, size: 18),
+                    tooltip: 'Logout',
+                    onPressed: () async {
+                      await authVm.logout();
+                      if (context.mounted) context.go('/login');
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -260,19 +286,20 @@ class _NavTile extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final bool indent;
+  final bool collapsed;
 
-  const _NavTile({required this.item, required this.selected, required this.onTap, this.indent = false});
+  const _NavTile({required this.item, required this.selected, required this.onTap, this.indent = false, this.collapsed = false});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: AppListTile(
-        leading: Icon(item.icon, color: selected ? Theme.of(context).colorScheme.primary : null),
-        title: Text(item.label),
+        leading: Icon(item.icon, size: 32.0, color: selected ? Theme.of(context).colorScheme.primary : null),
+        title: collapsed ? null : Text(item.label),
         selected: selected,
         selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-        padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16, top: 10, bottom: 10),
+        padding: EdgeInsets.only(left: collapsed ? 0 : (indent ? 32 : 16), right: collapsed ? 0 : 16, top: 10, bottom: 10),
         onTap: onTap,
       ),
     );
@@ -283,17 +310,64 @@ class _WabaSwitcher extends StatelessWidget {
   final List<WabaAccount> accounts;
   final WabaAccount? selected;
   final ValueChanged<String?> onSelect;
+  final bool collapsed;
 
   const _WabaSwitcher({
     required this.accounts,
     required this.selected,
     required this.onSelect,
+    this.collapsed = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isActive = selected?.isActive ?? false;
+
+    if (collapsed) {
+      return PopupMenuButton<String>(
+        tooltip: selected?.name ?? 'Switch WABA account',
+        onSelected: onSelect,
+        offset: const Offset(60, 0),
+        itemBuilder: (_) => accounts.map((a) {
+          final isSelected = a.id == selected?.id;
+          return PopupMenuItem<String>(
+            value: a.id,
+            child: Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isSelected ? Colors.green : Colors.transparent,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isSelected ? Colors.green : theme.colorScheme.outline,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(a.name),
+              ],
+            ),
+          );
+        }).toList(),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: isActive ? const Color(0xFF25D366) : Colors.grey,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.phone_android,
+            color: Colors.white,
+            size: 20,
+          ),
+        ),
+      );
+    }
 
     return PopupMenuButton<String>(
       tooltip: 'Switch WABA account',
