@@ -14,7 +14,13 @@ BizlInbox is a production-ready, multi-tenant WhatsApp inbox platform built on t
 # Backend
 NODE_ENV=production
 PORT=4000
-DATABASE_URL=postgres://bizlinbox:bizlinbox@localhost:5432/bizlinbox
+
+# Database (set strong credentials in production)
+POSTGRES_USER=bizlinbox
+POSTGRES_PASSWORD=change-me-in-production
+POSTGRES_DB=bizlinbox
+DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@localhost:5432/${POSTGRES_DB}
+
 REDIS_URL=redis://localhost:6379
 
 # Auth secrets (generate strong random values in production)
@@ -80,15 +86,15 @@ services:
     container_name: bizlinbox-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: bizlinbox
-      POSTGRES_PASSWORD: bizlinbox
-      POSTGRES_DB: bizlinbox
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
       - bizlinbox
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U bizlinbox -d bizlinbox"]
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -124,7 +130,7 @@ services:
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://bizlinbox:bizlinbox@postgres:5432/bizlinbox
+      DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-in-production}
