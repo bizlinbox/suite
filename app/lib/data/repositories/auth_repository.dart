@@ -118,3 +118,4 @@ class AuthRepository {
     return const Success(null);
   }
 }
+

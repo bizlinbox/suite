@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class AppChip extends StatelessWidget {
   final String label;
@@ -85,3 +85,4 @@ class AppChip extends StatelessWidget {
     return chip;
   }
 }
+

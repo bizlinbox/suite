@@ -74,3 +74,4 @@ class AuthViewModel extends BaseViewModel {
     notifyListeners();
   }
 }
+

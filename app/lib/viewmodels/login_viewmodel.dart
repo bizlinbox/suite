@@ -32,3 +32,4 @@ class LoginViewModel extends BaseViewModel {
     return result;
   }
 }
+

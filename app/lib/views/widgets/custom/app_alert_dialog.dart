@@ -99,3 +99,4 @@ Future<T?> showAppDialog<T>({
     ),
   );
 }
+

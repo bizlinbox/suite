@@ -31,3 +31,4 @@ class DomainViewModel extends BaseViewModel {
     }
   }
 }
+

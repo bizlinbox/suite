@@ -5,7 +5,7 @@ import '../../core/di.dart';
 import '../../core/services/api_service.dart';
 import '../../data/models/quick_reply_model.dart';
 import 'custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class QuickReplyDialog extends StatefulWidget {
   final QuickReply? quickReply;

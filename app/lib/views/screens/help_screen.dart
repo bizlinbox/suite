@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});

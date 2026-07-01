@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 /// Supported input kinds for the unified [AppInput] widget.
 enum AppInputType {
@@ -823,3 +823,4 @@ class _AppInputState<T> extends State<AppInput<T>> {
     return effectiveError != null && effectiveError.isNotEmpty;
   }
 }
+

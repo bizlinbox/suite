@@ -96,3 +96,4 @@ GoRouter createRouter() {
     ],
   );
 }
+

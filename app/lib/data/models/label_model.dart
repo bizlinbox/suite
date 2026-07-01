@@ -15,3 +15,4 @@ class Label {
 
   Map<String, dynamic> toJson() => {'id': id, 'name': name, 'color': color};
 }
+

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class AppIconButton extends StatelessWidget {
   final Widget? icon;
@@ -64,3 +64,4 @@ class AppIconButton extends StatelessWidget {
     return button;
   }
 }
+

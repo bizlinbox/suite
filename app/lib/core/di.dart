@@ -48,3 +48,4 @@ Future<void> setupDependencies() async {
   await authVm.init();
   locator.registerSingleton<AuthViewModel>(authVm);
 }
+

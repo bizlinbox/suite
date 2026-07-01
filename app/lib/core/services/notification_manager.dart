@@ -79,3 +79,4 @@ class NotificationManager {
     // Conversation updates are handled by the InboxViewModel directly
   }
 }
+

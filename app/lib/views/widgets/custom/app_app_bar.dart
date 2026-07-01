@@ -32,7 +32,6 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
     final borderColor = theme.dividerTheme.color ?? theme.colorScheme.outlineVariant;
 
     return Container(
-      color: bgColor,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: bgColor,
@@ -78,3 +77,4 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 }
+

@@ -5,7 +5,7 @@ import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class ContactProfileSheet extends StatefulWidget {
   final Contact contact;

@@ -50,3 +50,4 @@ class BaseViewModel extends ChangeNotifier {
     }
   }
 }
+

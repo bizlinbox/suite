@@ -24,7 +24,7 @@ import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/quick_reply_picker.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 sealed class ChatItem {}
 

@@ -6,7 +6,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../viewmodels/domain_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class DomainScreen extends StatelessWidget {
   const DomainScreen({super.key});

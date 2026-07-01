@@ -10,7 +10,7 @@ import 'register_screen.dart';
 import 'setup_screen.dart';
 import 'accept_invite_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});

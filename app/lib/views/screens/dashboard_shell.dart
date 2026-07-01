@@ -8,7 +8,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/mobile_bottom_nav.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class DashboardShell extends StatelessWidget {
   final Widget child;

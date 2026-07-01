@@ -110,3 +110,4 @@ class AppListTile extends StatelessWidget {
     return tile;
   }
 }
+

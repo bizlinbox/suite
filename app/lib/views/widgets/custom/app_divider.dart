@@ -30,3 +30,4 @@ class AppDivider extends StatelessWidget {
     );
   }
 }
+

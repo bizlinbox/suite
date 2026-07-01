@@ -4,7 +4,7 @@ import '../../../core/di.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class NotificationsSettingsScreen extends StatelessWidget {
   const NotificationsSettingsScreen({super.key});

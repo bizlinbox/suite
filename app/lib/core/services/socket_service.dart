@@ -101,3 +101,4 @@ class SocketService {
     _connectionStateController.close();
   }
 }
+

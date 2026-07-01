@@ -68,3 +68,4 @@ String extractApiError(Object? error, {String fallback = 'Something went wrong. 
   }
   return raw;
 }
+

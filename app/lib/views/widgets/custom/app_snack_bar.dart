@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_button.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 enum AppSnackType { info, success, error }
 
@@ -124,3 +124,4 @@ void showAppSnackBar(
     if (entry.mounted) entry.remove();
   });
 }
+

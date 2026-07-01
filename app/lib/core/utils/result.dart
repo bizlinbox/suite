@@ -33,3 +33,4 @@ final class Error<T> extends Result<T> {
     return error(message, exception);
   }
 }
+

@@ -7,7 +7,7 @@ import '../../data/repositories/automation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../../core/responsive.dart';
 import '../widgets/custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class AutomationFormViewModel extends BaseViewModel {
   final AutomationRepository _repo;

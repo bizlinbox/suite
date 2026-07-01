@@ -7,7 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
-import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
 class NavItem {
   final String label;
@@ -246,3 +246,4 @@ class _NavTile extends StatelessWidget {
     );
   }
 }
+
