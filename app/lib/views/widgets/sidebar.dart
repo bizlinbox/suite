@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
-import '../../core/services/theme_service.dart';
 import '../../core/theme/app_theme.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
@@ -212,8 +211,6 @@ class _SidebarState extends State<Sidebar> {
               if (context.mounted) context.go('/login');
             },
           ),
-          const AppDivider(height: 1),
-          _ThemeToggleTile(),
         ],
       ),
     );
@@ -242,28 +239,6 @@ class _NavTile extends StatelessWidget {
       selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
       padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
       onTap: onTap,
-    );
-  }
-}
-
-class _ThemeToggleTile extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final themeService = locator<ThemeService>();
-    final icon = switch (themeService.themeMode) {
-      ThemeMode.light => Icons.wb_sunny,
-      ThemeMode.dark => Icons.nights_stay,
-      ThemeMode.system => Icons.brightness_auto,
-    };
-    final label = switch (themeService.themeMode) {
-      ThemeMode.light => 'Light',
-      ThemeMode.dark => 'Dark',
-      ThemeMode.system => 'System',
-    };
-    return AppListTile(
-      leading: Icon(icon),
-      title: Text('Theme: $label'),
-      onTap: () => themeService.toggleTheme(),
     );
   }
 }

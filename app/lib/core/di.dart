@@ -2,7 +2,6 @@ import 'package:get_it/get_it.dart';
 import 'services/local_storage_service.dart';
 import 'services/api_service.dart';
 import 'services/socket_service.dart';
-import 'services/theme_service.dart';
 import 'services/notification_manager.dart';
 import '../data/repositories/auth_repository.dart';
 import '../data/repositories/conversation_repository.dart';
@@ -24,7 +23,6 @@ Future<void> setupDependencies() async {
 
   locator.registerLazySingleton<ApiService>(() => ApiService(locator<LocalStorageService>()));
   locator.registerLazySingleton<SocketService>(() => SocketService(locator<LocalStorageService>()));
-  locator.registerLazySingleton<ThemeService>(() => ThemeService(locator<LocalStorageService>()));
   locator.registerLazySingleton<NotificationManager>(() => NotificationManager(
         locator<SocketService>(),
         locator<LocalStorageService>(),

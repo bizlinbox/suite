@@ -4,8 +4,6 @@ import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../core/services/notification_manager.dart';
 import '../../core/services/socket_service.dart';
-import '../../core/services/theme_service.dart';
-import '../../core/theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/mobile_bottom_nav.dart';
@@ -65,44 +63,29 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    final themeService = locator<ThemeService>();
-    return ListenableBuilder(
-      listenable: themeService,
-      builder: (context, _) {
-        final brightness = switch (themeService.themeMode) {
-          ThemeMode.light => Brightness.light,
-          ThemeMode.dark => Brightness.dark,
-          ThemeMode.system => MediaQuery.of(context).platformBrightness,
-        };
-        final themeData = brightness == Brightness.dark ? AppTheme.darkTheme : AppTheme.lightTheme;
-        return Theme(
-          data: themeData,
-          child: Scaffold(
-            appBar: isMobile
-                ? AppAppBar(
-                    title: const Text('BizlInbox'),
-                    actions: [
-                      AppIconButton(
-                        icon: const Icon(Icons.logout),
-                        onPressed: () async {
-                          await authVm.logout();
-                          if (context.mounted) context.go('/login');
-                        },
-                      ),
-                    ],
-                  )
-                : null,
-            drawer: isMobile ? Drawer(child: Sidebar(onItemSelected: () => Navigator.of(context).pop())) : null,
-            body: Row(
-              children: [
-                if (!isMobile) const Sidebar(),
-                Expanded(child: widget.child),
+    return Scaffold(
+      appBar: isMobile
+          ? AppAppBar(
+              title: const Text('BizlInbox'),
+              actions: [
+                AppIconButton(
+                  icon: const Icon(Icons.logout),
+                  onPressed: () async {
+                    await authVm.logout();
+                    if (context.mounted) context.go('/login');
+                  },
+                ),
               ],
-            ),
-            bottomNavigationBar: isMobile ? const MobileBottomNav() : null,
-          ),
-        );
-      },
+            )
+          : null,
+      drawer: isMobile ? Drawer(child: Sidebar(onItemSelected: () => Navigator.of(context).pop())) : null,
+      body: Row(
+        children: [
+          if (!isMobile) const Sidebar(),
+          Expanded(child: widget.child),
+        ],
+      ),
+      bottomNavigationBar: isMobile ? const MobileBottomNav() : null,
     );
   }
 }
