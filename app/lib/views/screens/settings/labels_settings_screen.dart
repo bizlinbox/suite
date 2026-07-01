@@ -121,9 +121,9 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      AppTextField(
+                      AppInput(
                         controller: _nameController,
-                        decoration: const InputDecoration(labelText: 'Label Name', border: OutlineInputBorder()),
+                        label: 'Label Name',
                       ),
                       const SizedBox(height: 12),
                       const Text('Color'),
@@ -246,25 +246,22 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  AppTextField(
+                  AppInput(
                     controller: nameController,
-                    decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                    label: 'Name',
                   ),
                   const SizedBox(height: 12),
-                  AppTextField(
+                  AppInput(
                     controller: colorController,
-                    decoration: InputDecoration(
-                      labelText: 'Color (hex)',
-                      border: const OutlineInputBorder(),
-                      errorText: isValid || colorController.text.isEmpty ? null : 'Invalid hex color',
-                      prefixIcon: Container(
-                        width: 24,
-                        height: 24,
-                        margin: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: isValid ? _parseColor(colorController.text) : Colors.grey,
-                          borderRadius: BorderRadius.circular(4),
-                        ),
+                    label: 'Color (hex)',
+                    errorText: isValid || colorController.text.isEmpty ? null : 'Invalid hex color',
+                    prefix: Container(
+                      width: 24,
+                      height: 24,
+                      margin: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isValid ? _parseColor(colorController.text) : Colors.grey,
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     onChanged: (_) => setDialogState(() {}),

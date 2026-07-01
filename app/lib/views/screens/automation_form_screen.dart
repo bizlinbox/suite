@@ -178,28 +178,28 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                 ),
               ],
             ),
-            AppDropdown<String>(
-              initialValue: condition.field,
-              decoration: const InputDecoration(labelText: 'Field'),
-              items: ['message'].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
-              onChanged: (v) => setState(() => condition.field = v ?? 'message'),
+            AppInput<String>.dropdown(
+              value: condition.field,
+              label: 'Field',
+              options: ['message'].map((f) => AppInputOption(value: f, label: f)).toList(),
+              onSelected: (v) => setState(() => condition.field = v ?? 'message'),
             ),
             const SizedBox(height: 8),
-            AppDropdown<String>(
-              initialValue: condition.operator,
-              decoration: const InputDecoration(labelText: 'Operator'),
-              items: _operators
-                  .map((op) => DropdownMenuItem(
+            AppInput<String>.dropdown(
+              value: condition.operator,
+              label: 'Operator',
+              options: _operators
+                  .map((op) => AppInputOption(
                         value: op,
-                        child: Text(op.replaceAll('_', ' ')),
+                        label: op.replaceAll('_', ' '),
                       ))
                   .toList(),
-              onChanged: (v) => setState(() => condition.operator = v ?? 'contains'),
+              onSelected: (v) => setState(() => condition.operator = v ?? 'contains'),
             ),
             const SizedBox(height: 8),
-            TextFormField(
+            AppInput(
               initialValue: condition.value,
-              decoration: const InputDecoration(labelText: 'Value'),
+              label: 'Value',
               onChanged: (v) => condition.value = v,
               validator: (v) => v == null || v.isEmpty ? 'Required' : null,
             ),
@@ -226,57 +226,56 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                 ),
               ],
             ),
-            AppDropdown<String>(
-              initialValue: action.type,
-              decoration: const InputDecoration(labelText: 'Action Type'),
-              items: _actionTypes
-                  .map((t) => DropdownMenuItem(
+            AppInput<String>.dropdown(
+              value: action.type,
+              label: 'Action Type',
+              options: _actionTypes
+                  .map((t) => AppInputOption(
                         value: t,
-                        child: Text(t.replaceAll('_', ' ')),
+                        label: t.replaceAll('_', ' '),
                       ))
                   .toList(),
-              onChanged: (v) => setState(() => action.type = v ?? 'send_text'),
+              onSelected: (v) => setState(() => action.type = v ?? 'send_text'),
             ),
             const SizedBox(height: 8),
             if (action.type == 'send_text')
-              TextFormField(
+              AppInput(
                 initialValue: action.text,
-                decoration: const InputDecoration(labelText: 'Text'),
+                label: 'Text',
                 onChanged: (v) => action.text = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
             if (action.type == 'send_template')
-              TextFormField(
+              AppInput(
                 initialValue: action.templateName,
-                decoration: const InputDecoration(labelText: 'Template Name'),
+                label: 'Template Name',
                 onChanged: (v) => action.templateName = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
             if (action.type == 'send_media')
-              TextFormField(
+              AppInput(
                 initialValue: action.mediaUrl,
-                decoration: const InputDecoration(labelText: 'Media URL'),
+                label: 'Media URL',
                 onChanged: (v) => action.mediaUrl = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
             if (action.type == 'delay')
-              TextFormField(
+              AppInput.number(
                 initialValue: '${action.delaySeconds}',
-                decoration: const InputDecoration(labelText: 'Delay (seconds)'),
-                keyboardType: TextInputType.number,
+                label: 'Delay (seconds)',
                 onChanged: (v) => action.delaySeconds = int.tryParse(v) ?? 5,
               ),
             if (action.type == 'tag_contact')
-              TextFormField(
+              AppInput(
                 initialValue: action.tag,
-                decoration: const InputDecoration(labelText: 'Tag'),
+                label: 'Tag',
                 onChanged: (v) => action.tag = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
             if (action.type == 'assign_agent')
-              TextFormField(
+              AppInput(
                 initialValue: action.assignTo,
-                decoration: const InputDecoration(labelText: 'Assign To (agent ID or email)'),
+                label: 'Assign To (agent ID or email)',
                 onChanged: (v) => action.assignTo = v,
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
@@ -302,25 +301,25 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              TextFormField(
+              AppInput(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Name'),
+                label: 'Name',
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              AppSwitch(
-                title: const Text('Active'),
+              AppInput.switchInput(
+                label: 'Active',
                 value: _isActive,
-                onChanged: (v) => setState(() => _isActive = v),
+                onToggled: (v) => setState(() => _isActive = v),
               ),
               const SizedBox(height: 12),
-              AppDropdown<String>(
-                initialValue: _triggerType,
-                decoration: const InputDecoration(labelText: 'Trigger Type'),
-                items: _triggerTypes
-                    .map((t) => DropdownMenuItem(value: t, child: Text(t.replaceAll('_', ' '))))
+              AppInput<String>.dropdown(
+                value: _triggerType,
+                label: 'Trigger Type',
+                options: _triggerTypes
+                    .map((t) => AppInputOption(value: t, label: t.replaceAll('_', ' ')))
                     .toList(),
-                onChanged: (v) => setState(() => _triggerType = v ?? 'new_chat'),
+                onSelected: (v) => setState(() => _triggerType = v ?? 'new_chat'),
               ),
               const SizedBox(height: 24),
               Row(

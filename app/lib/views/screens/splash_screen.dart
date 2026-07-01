@@ -4,6 +4,7 @@ import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -51,7 +52,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.message, size: 64, color: Color(0xFF2563EB)),
+            PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 64, color: Color(0xFF2563EB)),
             SizedBox(height: 24),
             Text(
               'BizlInbox',

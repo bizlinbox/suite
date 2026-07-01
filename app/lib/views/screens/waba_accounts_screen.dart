@@ -7,6 +7,7 @@ import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class WabaAccountsViewModel extends BaseViewModel {
   final WabaAccountRepository _repo;
@@ -132,7 +133,7 @@ class _WabaAccountsBody extends StatelessWidget {
         title: const Text('WABA Accounts'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadAccounts(),
           ),
         ],
@@ -140,7 +141,7 @@ class _WabaAccountsBody extends StatelessWidget {
       floatingActionButton: canManage
           ? AppFloatingActionButton(
               onPressed: () => _showCreateDialog(context, vm),
-              child: const Icon(Icons.add),
+              child: const PhosphorIcon(PhosphorIconsRegular.plus),
             )
           : null,
       body: vm.isBusy && vm.accounts.isEmpty
@@ -155,7 +156,7 @@ class _WabaAccountsBody extends StatelessWidget {
                     final config = vm.webhookConfigs[a.id];
                     return AppCard(
                       child: ExpansionTile(
-                        leading: const Icon(Icons.phone_android),
+                        leading: const PhosphorIcon(PhosphorIconsRegular.deviceMobile),
                         title: Text(a.name),
                         subtitle: Text(a.phoneNumberId ?? 'No phone number ID'),
                         children: [
@@ -209,11 +210,11 @@ class _WabaAccountsBody extends StatelessWidget {
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       AppIconButton(
-                                        icon: const Icon(Icons.edit_outlined),
+                                        icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
                                         onPressed: () => _showEditDialog(context, vm, a),
                                       ),
                                       AppIconButton(
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                        icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                         onPressed: () => _confirmDelete(context, vm, a),
                                       ),
                                     ],
@@ -234,7 +235,7 @@ class _WabaAccountsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
@@ -269,34 +270,30 @@ class _WabaAccountsBody extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppTextField(
+                    AppInput(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      label: 'Name',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: phoneController,
-                      decoration: const InputDecoration(labelText: 'Phone Number ID', border: OutlineInputBorder()),
+                      label: 'Phone Number ID',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: businessController,
-                      decoration: const InputDecoration(labelText: 'Business Account ID', border: OutlineInputBorder()),
+                      label: 'Business Account ID',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.password(
                       controller: tokenController,
-                      decoration: const InputDecoration(
-                        labelText: 'Access Token',
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
+                      label: 'Access Token',
                     ),
                     const SizedBox(height: 12),
-                    AppSwitch(
-                      title: const Text('Active'),
+                    AppInput.switchInput(
+                      label: 'Active',
                       value: isActive,
-                      onChanged: (v) => setDialogState(() => isActive = v),
+                      onToggled: (v) => setDialogState(() => isActive = v),
                     ),
                   ],
                 ),
@@ -381,7 +378,7 @@ class _CopyRow extends StatelessWidget {
           ),
         ),
         AppIconButton(
-          icon: const Icon(Icons.copy, size: 18),
+          icon: const PhosphorIcon(PhosphorIconsRegular.copy, size: 18),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: value));
             ScaffoldMessenger.of(context).showSnackBar(

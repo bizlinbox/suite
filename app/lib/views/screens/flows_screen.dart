@@ -11,6 +11,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class FlowsViewModel extends BaseViewModel {
   final SettingsRepository _settingsRepo;
@@ -101,7 +102,7 @@ class FlowsViewModel extends BaseViewModel {
         error: (message, exception) => setError(message),
       );
     } catch (e) {
-      setError('Invalid JSON: $e');
+      setError('Invalid JSON. Please check the format and try again.');
     }
   }
 
@@ -115,7 +116,7 @@ class FlowsViewModel extends BaseViewModel {
         error: (message, exception) => setError(message),
       );
     } catch (e) {
-      setError('Invalid JSON: $e');
+      setError('Invalid JSON. Please check the format and try again.');
     }
   }
 
@@ -253,7 +254,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
           AppIconButton(
             icon: vm.isBusy && vm.flows.isNotEmpty
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Icon(Icons.sync),
+                : const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             tooltip: 'Sync from Meta',
             onPressed: vm.isBusy || vm.wabaId == null ? null : () => _handleSync(context, vm),
           ),
@@ -268,7 +269,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
       ),
       floatingActionButton: canManage && _tabController.index == 0 ? AppFloatingActionButton(
         onPressed: vm.wabaId == null ? null : () => _showCreateEditDialog(context, vm),
-        child: const Icon(Icons.add),
+        child: const PhosphorIcon(PhosphorIconsRegular.plus),
       ) : null,
     );
   }
@@ -278,7 +279,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
@@ -318,47 +319,37 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppTextField(
+                    AppInput(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      label: 'Name',
                     ),
                     const SizedBox(height: 12),
-                    InputDecorator(
-                      decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-                      child: DropdownButtonHideUnderline(
-                        child: AppDropdown<String>(
-                          value: category,
-                          isExpanded: true,
-                          isDense: true,
-                          items: const [
-                            DropdownMenuItem(value: 'OTHER', child: Text('Other')),
-                            DropdownMenuItem(value: 'SIGN_UP', child: Text('Sign Up')),
-                            DropdownMenuItem(value: 'SIGN_IN', child: Text('Sign In')),
-                            DropdownMenuItem(value: 'LEAD_GENERATION', child: Text('Lead Generation')),
-                            DropdownMenuItem(value: 'BOOKING', child: Text('Booking')),
-                            DropdownMenuItem(value: 'APPOINTMENT', child: Text('Appointment')),
-                            DropdownMenuItem(value: 'FEEDBACK', child: Text('Feedback')),
-                            DropdownMenuItem(value: 'SURVEY', child: Text('Survey')),
-                            DropdownMenuItem(value: 'QUIZ', child: Text('Quiz')),
-                            DropdownMenuItem(value: 'RESERVATION', child: Text('Reservation')),
-                            DropdownMenuItem(value: 'ORDER', child: Text('Order')),
-                            DropdownMenuItem(value: 'REGISTRATION', child: Text('Registration')),
-                            DropdownMenuItem(value: 'TICKETING', child: Text('Ticketing')),
-                          ],
-                          onChanged: (v) {
-                            if (v != null) setDialogState(() => category = v);
-                          },
-                        ),
-                      ),
+                    AppInput.dropdown(
+                      value: category,
+                      label: 'Category',
+                      options: const [
+                        AppInputOption(value: 'OTHER', label: 'Other'),
+                        AppInputOption(value: 'SIGN_UP', label: 'Sign Up'),
+                        AppInputOption(value: 'SIGN_IN', label: 'Sign In'),
+                        AppInputOption(value: 'LEAD_GENERATION', label: 'Lead Generation'),
+                        AppInputOption(value: 'BOOKING', label: 'Booking'),
+                        AppInputOption(value: 'APPOINTMENT', label: 'Appointment'),
+                        AppInputOption(value: 'FEEDBACK', label: 'Feedback'),
+                        AppInputOption(value: 'SURVEY', label: 'Survey'),
+                        AppInputOption(value: 'QUIZ', label: 'Quiz'),
+                        AppInputOption(value: 'RESERVATION', label: 'Reservation'),
+                        AppInputOption(value: 'ORDER', label: 'Order'),
+                        AppInputOption(value: 'REGISTRATION', label: 'Registration'),
+                        AppInputOption(value: 'TICKETING', label: 'Ticketing'),
+                      ],
+                      onSelected: (v) {
+                        if (v != null) setDialogState(() => category = v);
+                      },
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.multiline(
                       controller: flowJsonController,
-                      decoration: const InputDecoration(
-                        labelText: 'Flow JSON Definition',
-                        border: OutlineInputBorder(),
-                        alignLabelWithHint: true,
-                      ),
+                      label: 'Flow JSON Definition',
                       maxLines: 12,
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
@@ -406,7 +397,7 @@ class _FlowsTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.business, size: 48, color: Colors.grey),
+            PhosphorIcon(PhosphorIconsRegular.buildings, size: 48, color: Colors.grey),
             SizedBox(height: 16),
             Text('Please select a WABA account', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
             SizedBox(height: 8),
@@ -460,31 +451,31 @@ class _FlowsTab extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     AppIconButton(
-                      icon: const Icon(Icons.visibility_outlined, size: 20),
+                      icon: const PhosphorIcon(PhosphorIconsRegular.eye, size: 20),
                       tooltip: 'Preview JSON',
                       onPressed: () => _showPreviewDialog(context, flow),
                     ),
                     if (canManage)
                       AppIconButton(
-                        icon: const Icon(Icons.send_outlined, size: 20, color: Colors.blue),
+                        icon: const PhosphorIcon(PhosphorIconsRegular.paperPlaneRight, size: 20, color: Colors.blue),
                         tooltip: 'Send',
                         onPressed: () => _showSendDialog(context, vm, flow),
                       ),
                     if (canManage && flow.status != 'PUBLISHED')
                       AppIconButton(
-                        icon: const Icon(Icons.play_arrow_outlined, size: 20, color: Colors.green),
+                        icon: const PhosphorIcon(PhosphorIconsRegular.play, size: 20, color: Colors.green),
                         tooltip: 'Publish',
                         onPressed: () => vm.publishFlow(flow.id),
                       ),
                     if (canManage)
                       AppIconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple, size: 20),
                         tooltip: 'Edit',
                         onPressed: () => _showEditDialog(context, vm, flow),
                       ),
                     if (canManage)
                       AppIconButton(
-                        icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                        icon: const PhosphorIcon(PhosphorIconsRegular.trash, size: 20, color: Colors.red),
                         tooltip: 'Delete',
                         onPressed: () => _confirmDeleteFlow(context, vm, flow),
                       ),
@@ -550,59 +541,51 @@ class _FlowsTab extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    InputDecorator(
-                      decoration: const InputDecoration(labelText: 'Conversation', border: OutlineInputBorder()),
-                      child: DropdownButtonHideUnderline(
-                        child: AppDropdown<String?>(
-                          value: selectedConversationId,
-                          isExpanded: true,
-                          isDense: true,
-                          hint: const Text('Select conversation...'),
-                          items: [
-                            const DropdownMenuItem(value: null, child: Text('Select conversation...')),
-                            ...vm.conversations.map((c) => DropdownMenuItem(
-                              value: c.id,
-                              child: Text(c.contactName),
-                            )),
-                          ],
-                          onChanged: (v) => setDialogState(() => selectedConversationId = v),
-                        ),
-                      ),
+                    AppInput.dropdown(
+                      value: selectedConversationId,
+                      label: 'Conversation',
+                      hint: 'Select conversation...',
+                      options: [
+                        const AppInputOption(value: null, label: 'Select conversation...'),
+                        ...vm.conversations.map((c) => AppInputOption(
+                          value: c.id,
+                          label: c.contactName,
+                        )),
+                      ],
+                      onSelected: (v) => setDialogState(() => selectedConversationId = v),
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: headerController,
-                      decoration: const InputDecoration(labelText: 'Header (optional)', border: OutlineInputBorder()),
+                      label: 'Header (optional)',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.multiline(
                       controller: bodyController,
-                      decoration: const InputDecoration(labelText: 'Body', border: OutlineInputBorder()),
+                      label: 'Body',
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: footerController,
-                      decoration: const InputDecoration(labelText: 'Footer (optional)', border: OutlineInputBorder()),
+                      label: 'Footer (optional)',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: flowTokenController,
-                      decoration: const InputDecoration(labelText: 'Flow Token', border: OutlineInputBorder()),
+                      label: 'Flow Token',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput(
                       controller: screenController,
-                      decoration: const InputDecoration(labelText: 'Screen (optional)', border: OutlineInputBorder(), hintText: 'e.g. SIGN_UP'),
+                      label: 'Screen (optional)',
+                      hint: 'e.g. SIGN_UP',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.multiline(
                       controller: dataController,
-                      decoration: const InputDecoration(
-                        labelText: 'Screen Data (optional)',
-                        border: OutlineInputBorder(),
-                        hintText: '{"key": "value"}',
-                      ),
+                      label: 'Screen Data (optional)',
+                      hint: '{"key": "value"}',
                       maxLines: 3,
                       style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
                     ),
@@ -700,12 +683,12 @@ class _SubmissionsTab extends StatelessWidget {
                 _SubmissionStatusBadge(status: s.status),
                 const SizedBox(width: 8),
                 AppIconButton(
-                  icon: const Icon(Icons.visibility_outlined, size: 20),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.eye, size: 20),
                   onPressed: () => _showSubmissionDetail(context, vm, s),
                 ),
                 if (canManage)
                   AppIconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, size: 20, color: Colors.red),
                     onPressed: () => _confirmDeleteSubmission(context, vm, s),
                   ),
               ],

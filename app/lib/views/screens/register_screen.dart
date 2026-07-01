@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class RegisterViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -44,7 +45,6 @@ class _RegisterBodyState extends State<_RegisterBody> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _orgNameController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +63,7 @@ class _RegisterBodyState extends State<_RegisterBody> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.message, size: 48, color: Color(0xFF2563EB)),
+                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: Color(0xFF2563EB)),
                     const SizedBox(height: 16),
                     const Text(
                       'Create Account',
@@ -88,46 +88,33 @@ class _RegisterBodyState extends State<_RegisterBody> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput(
                       controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Name',
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Name',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.user, size: 20),
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput.email(
                       controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
+                      label: 'Email',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.envelope, size: 20),
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput.password(
                       controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: AppIconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Password',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput(
                       controller: _orgNameController,
-                      decoration: InputDecoration(
-                        labelText: 'Organization Name',
-                        prefixIcon: const Icon(Icons.business_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Organization Name',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.buildings, size: 20),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _register(context, vm),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(

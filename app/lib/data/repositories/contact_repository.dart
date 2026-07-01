@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../../core/services/api_service.dart';
+import '../../core/utils/api_error.dart';
 import '../../core/utils/result.dart';
 import '../models/contact_model.dart';
 
@@ -16,7 +17,7 @@ class ContactRepository {
           .toList();
       return Success(list);
     } catch (e) {
-      return Error('Failed to load contacts: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load contacts'));
     }
   }
 
@@ -25,7 +26,7 @@ class ContactRepository {
       final res = await _api.post('/contacts', data: payload);
       return Success(Contact.fromJson(res.data['contact'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to create contact: $e');
+      return Error(extractApiError(e, fallback: 'Failed to create contact'));
     }
   }
 
@@ -34,7 +35,7 @@ class ContactRepository {
       final res = await _api.put('/contacts/$id', data: payload);
       return Success(Contact.fromJson(res.data['contact'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to update contact: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update contact'));
     }
   }
 
@@ -43,7 +44,7 @@ class ContactRepository {
       await _api.delete('/contacts/$id');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to delete contact: $e');
+      return Error(extractApiError(e, fallback: 'Failed to delete contact'));
     }
   }
 
@@ -55,7 +56,7 @@ class ContactRepository {
       final res = await _api.client.post('/contacts/import', data: formData);
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Failed to import contacts: $e');
+      return Error(extractApiError(e, fallback: 'Failed to import contacts'));
     }
   }
 
@@ -67,7 +68,7 @@ class ContactRepository {
       final res = await _api.client.post('/contacts/import', data: formData);
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Failed to import contacts: $e');
+      return Error(extractApiError(e, fallback: 'Failed to import contacts'));
     }
   }
 
@@ -76,7 +77,7 @@ class ContactRepository {
       final res = await _api.get('/contacts/$id');
       return Success(Contact.fromJson(res.data['contact'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to load contact: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load contact'));
     }
   }
 }

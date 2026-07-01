@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'app_button.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 enum AppSnackType { info, success, error }
 
@@ -77,8 +78,7 @@ class AppSnackBar extends StatelessWidget {
             const SizedBox(width: 8),
             GestureDetector(
               onTap: onDismiss,
-              child: Icon(
-                Icons.close,
+              child: PhosphorIcon(PhosphorIconsRegular.x,
                 size: 18,
                 color: _textColor,
               ),

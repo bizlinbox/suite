@@ -6,6 +6,7 @@ import '../../core/services/api_service.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../viewmodels/domain_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class DomainScreen extends StatelessWidget {
   const DomainScreen({super.key});
@@ -55,7 +56,7 @@ class _DomainBodyState extends State<_DomainBody> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.message, size: 48, color: Color(0xFF2563EB)),
+                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: Color(0xFF2563EB)),
                     const SizedBox(height: 16),
                     const Text(
                       'BizlInbox',
@@ -68,15 +69,11 @@ class _DomainBodyState extends State<_DomainBody> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 24),
-                    AppTextField(
+                    AppInput(
                       controller: _controller,
-                      decoration: InputDecoration(
-                        labelText: 'Domain URL',
-                        hintText: 'https://your-domain.com',
-                        prefixIcon: const Icon(Icons.language),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      keyboardType: TextInputType.url,
+                      label: 'Domain URL',
+                      hint: 'https://your-domain.com',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.globe, size: 20),
                       textInputAction: TextInputAction.done,
                       onSubmitted: (_) => _save(context, vm),
                     ),

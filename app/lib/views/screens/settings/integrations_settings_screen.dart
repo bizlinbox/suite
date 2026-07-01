@@ -6,6 +6,7 @@ import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class IntegrationsSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -104,7 +105,7 @@ class _IntegrationsBody extends StatelessWidget {
         actions: [
           if (canManage)
             AppIconButton(
-              icon: const Icon(Icons.add),
+              icon: const PhosphorIcon(PhosphorIconsRegular.plus),
               onPressed: () => _showCreateDialog(context, vm),
             ),
         ],
@@ -121,30 +122,30 @@ class _IntegrationsBody extends StatelessWidget {
                     final urls = (i.config['urls'] as List<dynamic>?)?.cast<String>() ?? [];
                     return AppCard(
                       child: AppListTile(
-                        leading: const Icon(Icons.webhook),
+                        leading: const PhosphorIcon(PhosphorIconsRegular.plugs),
                         title: Text(i.name),
                         subtitle: Text('${i.type} \u2022 ${urls.length} URL(s)'),
                         trailing: canManage
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Switch(
+                                  AppInput.switchInput(
                                     value: i.isActive,
-                                    onChanged: (v) => vm.toggleIntegration(i.id, v),
+                                    onToggled: (v) => vm.toggleIntegration(i.id, v),
                                   ),
                                   AppIconButton(
-                                    icon: const Icon(Icons.edit_outlined),
+                                    icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
                                     onPressed: () => _showEditDialog(context, vm, i),
                                   ),
                                   AppIconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                     onPressed: () => _confirmDelete(context, vm, i),
                                   ),
                                 ],
                               )
-                            : Switch(
+                            : AppInput.switchInput(
                                 value: i.isActive,
-                                onChanged: null,
+                                onToggled: null,
                               ),
                       ),
                     );
@@ -158,7 +159,7 @@ class _IntegrationsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
@@ -199,26 +200,26 @@ class _IntegrationsBody extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppTextField(
+                    AppInput(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      label: 'Name',
                     ),
                     const SizedBox(height: 12),
-                    AppDropdown<String>(
-                      initialValue: type,
-                      decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
-                      items: const [
-                        DropdownMenuItem(value: 'webhook_forward', child: Text('Webhook Forward')),
+                    AppInput.dropdown(
+                      value: type,
+                      label: 'Type',
+                      options: const [
+                        AppInputOption(value: 'webhook_forward', label: 'Webhook Forward'),
                       ],
-                      onChanged: (v) {
+                      onSelected: (v) {
                         if (v != null) setDialogState(() => type = v);
                       },
                     ),
                     const SizedBox(height: 12),
-                    AppSwitch(
-                      title: const Text('Active'),
+                    AppInput.switchInput(
+                      label: 'Active',
                       value: isActive,
-                      onChanged: (v) => setDialogState(() => isActive = v),
+                      onToggled: (v) => setDialogState(() => isActive = v),
                     ),
                     const SizedBox(height: 12),
                     const Align(
@@ -234,16 +235,13 @@ class _IntegrationsBody extends StatelessWidget {
                         child: Row(
                           children: [
                             Expanded(
-                              child: AppTextField(
+                              child: AppInput(
                                 controller: ctrl,
-                                decoration: InputDecoration(
-                                  hintText: 'URL ${idx + 1}',
-                                  border: const OutlineInputBorder(),
-                                ),
+                                hint: 'URL ${idx + 1}',
                               ),
                             ),
                             AppIconButton(
-                              icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
+                              icon: const PhosphorIcon(PhosphorIconsRegular.minusCircle, color: Colors.red),
                               onPressed: () {
                                 if (urlControllers.length > 1) {
                                   setDialogState(() => urlControllers.removeAt(idx));
@@ -258,7 +256,7 @@ class _IntegrationsBody extends StatelessWidget {
                       alignment: Alignment.centerLeft,
                       child: TextButton.icon(
                         onPressed: () => setDialogState(() => urlControllers.add(TextEditingController())),
-                        icon: const Icon(Icons.add),
+                        icon: const PhosphorIcon(PhosphorIconsRegular.plus),
                         label: const Text('Add URL'),
                       ),
                     ),

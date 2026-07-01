@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/di.dart';
+import '../../core/utils/api_error.dart';
 import '../../core/utils/result.dart';
 import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ContactsViewModel extends BaseViewModel {
   final ContactRepository _repo;
@@ -105,7 +107,7 @@ class ContactsViewModel extends BaseViewModel {
       return message;
     } catch (e) {
       setIdle();
-      return 'Import failed: $e';
+      return extractApiError(e, fallback: 'Import failed. Please try again.');
     }
   }
 }
@@ -144,12 +146,12 @@ class _ContactsBody extends StatelessWidget {
         title: const Text('Contacts'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadContacts(),
           ),
           if (canManage)
             AppIconButton(
-              icon: const Icon(Icons.upload_file),
+              icon: const PhosphorIcon(PhosphorIconsRegular.uploadSimple),
               tooltip: 'Import Contacts',
               onPressed: vm.isBusy ? null : () async {
                 final message = await vm.importContacts();
@@ -172,7 +174,7 @@ class _ContactsBody extends StatelessWidget {
                   vm.loadContacts();
                 }
               },
-              icon: const Icon(Icons.add),
+              icon: const PhosphorIcon(PhosphorIconsRegular.plus),
               label: const Text('Add Contact'),
             )
           : null,
@@ -180,12 +182,9 @@ class _ContactsBody extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: AppTextField(
-              decoration: InputDecoration(
-                hintText: 'Search contacts...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            child: AppInput.search(
+              hint: 'Search contacts...',
+              prefix: const PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
               onChanged: vm.setSearch,
             ),
           ),
@@ -242,7 +241,7 @@ class _ContactsBody extends StatelessWidget {
                                     ),
                                     if (canManage)
                                       AppIconButton(
-                                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                        icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                         onPressed: () => _confirmDelete(context, vm, c.id),
                                       ),
                                   ],
@@ -286,7 +285,7 @@ class _ContactsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
@@ -439,90 +438,86 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TextFormField(
+                AppInput(
                   controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Name *'),
+                  label: 'Name *',
                   validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput.phone(
                   controller: _phoneController,
-                  decoration: const InputDecoration(labelText: 'Phone *'),
-                  keyboardType: TextInputType.phone,
+                  label: 'Phone *',
                   validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput.email(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email'),
-                  keyboardType: TextInputType.emailAddress,
+                  label: 'Email',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _companyController,
-                  decoration: const InputDecoration(labelText: 'Company'),
+                  label: 'Company',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _jobTitleController,
-                  decoration: const InputDecoration(labelText: 'Job Title'),
+                  label: 'Job Title',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput.multiline(
                   controller: _notesController,
-                  decoration: const InputDecoration(labelText: 'Notes'),
+                  label: 'Notes',
                   maxLines: 2,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput.multiline(
                   controller: _remarksController,
-                  decoration: const InputDecoration(labelText: 'Remarks'),
+                  label: 'Remarks',
                   maxLines: 2,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _birthdayController,
-                  decoration: const InputDecoration(
-                    labelText: 'Birthday',
-                    suffixIcon: Icon(Icons.calendar_today),
-                  ),
+                  label: 'Birthday',
                   readOnly: true,
+                  suffix: const PhosphorIcon(PhosphorIconsRegular.calendarBlank, size: 20),
                   onTap: _pickBirthday,
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _languageController,
-                  decoration: const InputDecoration(labelText: 'Language'),
+                  label: 'Language',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _tagsController,
-                  decoration: const InputDecoration(labelText: 'Tags (comma-separated)'),
+                  label: 'Tags (comma-separated)',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _addressController,
-                  decoration: const InputDecoration(labelText: 'Address'),
+                  label: 'Address',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _cityController,
-                  decoration: const InputDecoration(labelText: 'City'),
+                  label: 'City',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _stateController,
-                  decoration: const InputDecoration(labelText: 'State'),
+                  label: 'State',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _countryController,
-                  decoration: const InputDecoration(labelText: 'Country'),
+                  label: 'Country',
                 ),
                 const SizedBox(height: 8),
-                TextFormField(
+                AppInput(
                   controller: _zipCodeController,
-                  decoration: const InputDecoration(labelText: 'Zip Code'),
+                  label: 'Zip Code',
                 ),
               ],
             ),

@@ -7,6 +7,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'campaign_form_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class CampaignsViewModel extends BaseViewModel {
   final CampaignRepository _repo;
@@ -92,7 +93,7 @@ class _CampaignsBody extends StatelessWidget {
         title: const Text('Campaigns'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadCampaigns(),
           ),
         ],
@@ -108,7 +109,7 @@ class _CampaignsBody extends StatelessWidget {
                   vm.loadCampaigns();
                 }
               },
-              icon: const Icon(Icons.add),
+              icon: const PhosphorIcon(PhosphorIconsRegular.plus),
               label: const Text('New Campaign'),
             )
           : null,
@@ -161,24 +162,24 @@ class _CampaignsBody extends StatelessWidget {
                                 children: [
                                   if (c.status == 'draft' || c.status == 'paused')
                                     AppIconButton(
-                                      icon: const Icon(Icons.play_arrow, color: Colors.green),
+                                      icon: const PhosphorIcon(PhosphorIconsRegular.play, color: Colors.green),
                                       tooltip: 'Start',
                                       onPressed: () => vm.actionCampaign(c.id, 'start'),
                                     ),
                                   if (c.status == 'running')
                                     AppIconButton(
-                                      icon: const Icon(Icons.pause, color: Colors.orange),
+                                      icon: const PhosphorIcon(PhosphorIconsRegular.pause, color: Colors.orange),
                                       tooltip: 'Pause',
                                       onPressed: () => vm.actionCampaign(c.id, 'pause'),
                                     ),
                                   if (c.status == 'draft' || c.status == 'scheduled' || c.status == 'running' || c.status == 'paused')
                                     AppIconButton(
-                                      icon: const Icon(Icons.cancel, color: Colors.red),
+                                      icon: const PhosphorIcon(PhosphorIconsRegular.xCircle, color: Colors.red),
                                       tooltip: 'Cancel',
                                       onPressed: () => vm.actionCampaign(c.id, 'cancel'),
                                     ),
                                   AppIconButton(
-                                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                    icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                     tooltip: 'Delete',
                                     onPressed: () => _confirmDelete(context, vm, c.id),
                                   ),
@@ -222,7 +223,7 @@ class _CampaignsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],

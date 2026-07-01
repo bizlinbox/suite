@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../core/services/api_service.dart';
 import '../../data/models/quick_reply_model.dart';
 import 'custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class QuickReplyDialog extends StatefulWidget {
   final QuickReply? quickReply;
@@ -325,30 +326,24 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
+                AppInput(
                   controller: _shortcutController,
-                  decoration: const InputDecoration(
-                    labelText: 'Shortcut',
-                    hintText: '/welcome',
-                    border: OutlineInputBorder(),
-                  ),
+                  label: 'Shortcut',
+                  hint: '/welcome',
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
-                AppDropdown<String>(
-                  initialValue: _messageType,
-                  decoration: const InputDecoration(
-                    labelText: 'Message Type',
-                    border: OutlineInputBorder(),
-                  ),
-                  items: _messageTypes
-                      .map((t) => DropdownMenuItem(
+                AppInput.dropdown(
+                  value: _messageType,
+                  label: 'Message Type',
+                  options: _messageTypes
+                      .map((t) => AppInputOption(
                             value: t,
-                            child: Text(_messageTypeLabels[t] ?? t),
+                            label: _messageTypeLabels[t] ?? t,
                           ))
                       .toList(),
-                  onChanged: (v) {
+                  onSelected: (v) {
                     if (v != null && v != _messageType) {
                       setState(() {
                         _messageType = v;
@@ -363,13 +358,9 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                   },
                 ),
                 const SizedBox(height: 12),
-                TextFormField(
+                AppInput.multiline(
                   controller: _contentController,
-                  decoration: InputDecoration(
-                    labelText: _getContentLabel(),
-                    border: const OutlineInputBorder(),
-                  ),
-                  maxLines: 3,
+                  label: _getContentLabel(),
                   validator: (v) =>
                       v == null || v.trim().isEmpty ? 'Required' : null,
                 ),
@@ -419,8 +410,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
               ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.upload_file,
+                  PhosphorIcon(PhosphorIconsRegular.uploadSimple,
                     color: Theme.of(context).colorScheme.primary,
                   ),
                   const SizedBox(height: 4),
@@ -458,7 +448,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                   ),
                 ),
                 AppIconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                   onPressed: _clearMedia,
                   tooltip: 'Remove file',
                 ),
@@ -498,22 +488,19 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextFormField(
+                  child: AppInput(
                     initialValue: btn.title,
-                    decoration: InputDecoration(
-                      hintText: 'Button ${index + 1}',
-                      border: const OutlineInputBorder(),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
-                      ),
-                    ),
+                    hint: 'Button ${index + 1}',
                     onChanged: (v) => btn.title = v,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 AppIconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                   onPressed: () => _removeButton(index),
                 ),
               ],
@@ -522,7 +509,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
         }),
         OutlinedButton.icon(
           onPressed: _addButton,
-          icon: const Icon(Icons.add),
+          icon: const PhosphorIcon(PhosphorIconsRegular.plus),
           label: const Text('Add Button'),
         ),
         const SizedBox(height: 12),
@@ -539,13 +526,10 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: 8),
-        TextFormField(
+        AppInput(
           controller: _listButtonController,
-          decoration: const InputDecoration(
-            labelText: 'Button Label',
-            hintText: 'Options',
-            border: OutlineInputBorder(),
-          ),
+          label: 'Button Label',
+          hint: 'Options',
         ),
         const SizedBox(height: 12),
         ..._listSections.asMap().entries.map((sEntry) {
@@ -561,22 +545,19 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextFormField(
+                        child: AppInput(
                           initialValue: section.title,
-                          decoration: const InputDecoration(
-                            hintText: 'Section Title',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 12,
-                            ),
-                          ),
+                          hint: 'Section Title',
                           onChanged: (v) => section.title = v,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 12,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       AppIconButton(
-                        icon: const Icon(Icons.delete_outline,
+                        icon: const PhosphorIcon(PhosphorIconsRegular.trash,
                             color: Colors.red),
                         onPressed: () => _removeListSection(sIndex),
                       ),
@@ -591,37 +572,31 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                       child: Row(
                         children: [
                           Expanded(
-                            child: TextFormField(
+                            child: AppInput(
                               initialValue: row.title,
-                              decoration: const InputDecoration(
-                                hintText: 'Row Title',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                              ),
+                              hint: 'Row Title',
                               onChanged: (v) => row.title = v,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: TextFormField(
+                            child: AppInput(
                               initialValue: row.description,
-                              decoration: const InputDecoration(
-                                hintText: 'Description',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 12,
-                                ),
-                              ),
+                              hint: 'Description',
                               onChanged: (v) => row.description = v,
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
                           AppIconButton(
-                            icon: const Icon(Icons.delete_outline,
+                            icon: const PhosphorIcon(PhosphorIconsRegular.trash,
                                 color: Colors.red),
                             onPressed: () => _removeListRow(sIndex, rIndex),
                           ),
@@ -633,7 +608,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                     padding: const EdgeInsets.only(left: 8),
                     child: OutlinedButton.icon(
                       onPressed: () => _addListRow(sIndex),
-                      icon: const Icon(Icons.add),
+                      icon: const PhosphorIcon(PhosphorIconsRegular.plus),
                       label: const Text('Add Row'),
                     ),
                   ),
@@ -644,7 +619,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
         }),
         OutlinedButton.icon(
           onPressed: _addListSection,
-          icon: const Icon(Icons.add),
+          icon: const PhosphorIcon(PhosphorIconsRegular.plus),
           label: const Text('Add Section'),
         ),
         const SizedBox(height: 12),

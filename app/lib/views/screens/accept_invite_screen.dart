@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class AcceptInviteViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -45,7 +46,6 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
   late final _tokenController = TextEditingController(text: widget.initialToken ?? '');
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +64,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.message, size: 48, color: Color(0xFF2563EB)),
+                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: Color(0xFF2563EB)),
                     const SizedBox(height: 16),
                     const Text(
                       'Accept Invitation',
@@ -89,36 +89,26 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput(
                       controller: _tokenController,
-                      decoration: InputDecoration(
-                        labelText: 'Invitation Token',
-                        prefixIcon: const Icon(Icons.vpn_key_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Invitation Token',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.key, size: 20),
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput(
                       controller: _nameController,
-                      decoration: InputDecoration(
-                        labelText: 'Name',
-                        prefixIcon: const Icon(Icons.person_outline),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Name',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.user, size: 20),
+                      textInputAction: TextInputAction.next,
                     ),
                     const SizedBox(height: 16),
-                    AppTextField(
+                    AppInput.password(
                       controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: AppIconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
+                      label: 'Password',
+                      prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _accept(context, vm),
                     ),
                     const SizedBox(height: 24),
                     SizedBox(

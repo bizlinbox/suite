@@ -6,6 +6,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class TemplatesViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -57,7 +58,7 @@ class _TemplatesBody extends StatelessWidget {
         title: const Text('Templates'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadTemplates(),
           ),
         ],
@@ -91,7 +92,7 @@ class _TemplatesBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],

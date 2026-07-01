@@ -260,32 +260,30 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                       const SizedBox(height: 24),
                       const Text('Organization Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      AppInput(
                         controller: _nameController,
                         enabled: canManage,
-                        decoration: const InputDecoration(labelText: 'Organization Name', border: OutlineInputBorder()),
+                        label: 'Organization Name',
                       ),
                       const SizedBox(height: 16),
-                      AppTextField(
+                      AppInput(
                         controller: _platformNameController,
                         enabled: canManage,
-                        decoration: const InputDecoration(labelText: 'Platform Name', border: OutlineInputBorder()),
+                        label: 'Platform Name',
                       ),
                       const SizedBox(height: 16),
-                      AppDropdown<String>(
-                        initialValue: _timezone,
-                        decoration: const InputDecoration(labelText: 'Timezone', border: OutlineInputBorder()),
-                        items: _timezones.map((tz) {
-                          return DropdownMenuItem(value: tz, child: Text(tz));
-                        }).toList(),
-                        onChanged: canManage ? (v) => setState(() => _timezone = v ?? 'UTC') : null,
+                      AppInput<String>.dropdown(
+                        value: _timezone,
+                        label: 'Timezone',
+                        options: _timezones.map((tz) => AppInputOption(value: tz, label: tz)).toList(),
+                        onSelected: canManage ? (v) => setState(() => _timezone = v ?? 'UTC') : null,
                       ),
                       const SizedBox(height: 16),
-                      AppSwitch(
-                        title: const Text('Public Registration'),
-                        subtitle: const Text('Allow anyone to create an account'),
+                      AppInput.switchInput(
+                        label: 'Public Registration',
+                        helperText: 'Allow anyone to create an account',
                         value: _enablePublicRegistration,
-                        onChanged: canManage ? (v) => setState(() => _enablePublicRegistration = v) : null,
+                        onToggled: canManage ? (v) => setState(() => _enablePublicRegistration = v) : null,
                       ),
                       const SizedBox(height: 24),
                       if (canManage)

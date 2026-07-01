@@ -7,6 +7,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'automation_form_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class AutomationsViewModel extends BaseViewModel {
   final AutomationRepository _repo;
@@ -76,7 +77,7 @@ class _AutomationsBody extends StatelessWidget {
         title: const Text('Automations'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadAutomations(),
           ),
         ],
@@ -92,7 +93,7 @@ class _AutomationsBody extends StatelessWidget {
                   vm.loadAutomations();
                 }
               },
-              icon: const Icon(Icons.add),
+              icon: const PhosphorIcon(PhosphorIconsRegular.plus),
               label: const Text('New Automation'),
             )
           : null,
@@ -122,12 +123,12 @@ class _AutomationsBody extends StatelessWidget {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Switch(
+                              AppInput.switchInput(
                                 value: a.isActive,
-                                onChanged: (_) => vm.toggle(a.id),
+                                onToggled: (_) => vm.toggle(a.id),
                               ),
                               AppIconButton(
-                                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                 onPressed: () => _confirmDelete(context, vm, a.id),
                               ),
                             ],
@@ -168,7 +169,7 @@ class _AutomationsBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],

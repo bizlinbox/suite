@@ -1,4 +1,5 @@
 import '../core/services/local_storage_service.dart';
+import '../core/utils/api_error.dart';
 import '../core/utils/result.dart';
 import 'base_viewmodel.dart';
 
@@ -24,8 +25,9 @@ class DomainViewModel extends BaseViewModel {
       setSuccess();
       return const Success(null);
     } catch (e) {
-      setError(e.toString());
-      return Error(e.toString());
+      final msg = extractApiError(e, fallback: 'Failed to save domain');
+      setError(msg);
+      return Error(msg);
     }
   }
 }

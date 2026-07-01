@@ -72,9 +72,9 @@ class _NotificationsBody extends StatelessWidget {
                     leading: Icon(vm.enabled ? PhosphorIconsRegular.bell : PhosphorIconsRegular.bellSlash, color: Colors.blue),
                     title: const Text('Push Notifications'),
                     subtitle: Text(vm.enabled ? 'Notifications are enabled' : 'Notifications are disabled'),
-                    trailing: Switch(
+                    trailing: AppInput.switchInput(
                       value: vm.enabled,
-                      onChanged: (_) => vm.toggle(),
+                      onToggled: (_) => vm.toggle(),
                     ),
                   ),
                   const Padding(

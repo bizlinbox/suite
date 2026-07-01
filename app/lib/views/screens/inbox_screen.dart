@@ -332,8 +332,8 @@ class _InboxBodyState extends State<_InboxBody> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: AppTextField(
-              hintText: 'Search conversations...',
+            child: AppInput.search(
+              hint: 'Search conversations...',
               prefix: const PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
               onChanged: vm.setSearch,
             ),
@@ -434,9 +434,9 @@ class _ConversationTile extends StatelessWidget {
     return AppListTile(
       selected: selected,
       leading: vm.isSelectionMode
-          ? AppCheckbox(
+          ? AppInput.checkbox(
               value: vm.isSelected(conversation.id),
-              onChanged: (_) => vm.toggleSelection(conversation.id),
+              onToggled: (_) => vm.toggleSelection(conversation.id),
             )
           : GestureDetector(
               onTap: () => _showContactProfile(context),

@@ -409,13 +409,11 @@ class _ChatBodyState extends State<_ChatBody> {
                     onPressed: vm.isBusy ? null : () => _pickAndUploadFile(vm),
                   ),
                   Expanded(
-                    child: AppTextField(
+                    child: AppInput(
                       controller: _textController,
-                      decoration: InputDecoration(
-                        hintText: 'Type a message...',
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                      ),
+                      hint: 'Type a message...',
+                      borderRadius: 24,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(vm),
                     ),

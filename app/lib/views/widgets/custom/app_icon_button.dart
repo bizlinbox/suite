@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class AppIconButton extends StatelessWidget {
   final Widget? icon;
@@ -44,7 +45,7 @@ class AppIconButton extends StatelessWidget {
           child: Center(
             child: icon ??
                 Icon(
-                  iconData ?? Icons.help,
+                  iconData ?? PhosphorIconsRegular.question,
                   size: size * 0.5,
                   color: enabled ? iconColor : iconColor.withValues(alpha: 0.4),
                 ),

@@ -1,6 +1,7 @@
 import '../../core/services/api_service.dart';
 import '../../core/utils/result.dart';
 import '../models/campaign_model.dart';
+import '../../core/utils/api_error.dart';
 
 class CampaignRepository {
   final ApiService _api;
@@ -15,7 +16,7 @@ class CampaignRepository {
           .toList();
       return Success(list);
     } catch (e) {
-      return Error('Failed to load campaigns: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load campaigns'));
     }
   }
 
@@ -24,7 +25,7 @@ class CampaignRepository {
       final res = await _api.get('/campaigns/$id');
       return Success(Campaign.fromJson(res.data['campaign'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to load campaign: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load campaign'));
     }
   }
 
@@ -33,7 +34,7 @@ class CampaignRepository {
       final res = await _api.post('/campaigns', data: payload);
       return Success(Campaign.fromJson(res.data['campaign'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to create campaign: $e');
+      return Error(extractApiError(e, fallback: 'Failed to create campaign'));
     }
   }
 
@@ -42,7 +43,7 @@ class CampaignRepository {
       final res = await _api.put('/campaigns/$id', data: payload);
       return Success(Campaign.fromJson(res.data['campaign'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to update campaign: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update campaign'));
     }
   }
 
@@ -51,7 +52,7 @@ class CampaignRepository {
       await _api.delete('/campaigns/$id');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to delete campaign: $e');
+      return Error(extractApiError(e, fallback: 'Failed to delete campaign'));
     }
   }
 
@@ -60,7 +61,7 @@ class CampaignRepository {
       await _api.post('/campaigns/$id/$action');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to $action campaign: $e');
+      return Error(extractApiError(e, fallback: 'Failed to $action campaign'));
     }
   }
 }

@@ -8,6 +8,16 @@ class ApiService {
   bool _isRefreshing = false;
   final List<Function(String? error)> _refreshSubscribers = [];
 
+  /// Paths that should NOT trigger token refresh on 401.
+  static const _publicPaths = {
+    '/auth/login',
+    '/auth/register',
+    '/auth/setup',
+    '/auth/setup-required',
+    '/auth/public-settings',
+    '/agents/accept-invite',
+  };
+
   /// Called when token refresh fails and the user should be logged out.
   void Function()? onAuthFailure;
 
@@ -46,7 +56,8 @@ class ApiService {
         },
         onError: (error, handler) async {
           if (error.response?.statusCode == 401 &&
-              error.requestOptions.path != '/auth/refresh') {
+              error.requestOptions.path != '/auth/refresh' &&
+              !_publicPaths.contains(error.requestOptions.path)) {
             if (!_isRefreshing) {
               _isRefreshing = true;
               try {

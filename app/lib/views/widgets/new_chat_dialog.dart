@@ -9,6 +9,7 @@ import '../../data/repositories/contact_repository.dart';
 import '../../data/repositories/conversation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class NewChatViewModel extends BaseViewModel {
   final ContactRepository _contactRepo;
@@ -130,12 +131,9 @@ class _NewChatDialogBody extends StatelessWidget {
         height: 500,
         child: Column(
           children: [
-            AppTextField(
-              decoration: InputDecoration(
-                hintText: 'Search by name or phone...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
+            AppInput.search(
+              hint: 'Search by name or phone...',
+              prefix: const PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
               onChanged: vm.setSearch,
             ),
             const SizedBox(height: 12),

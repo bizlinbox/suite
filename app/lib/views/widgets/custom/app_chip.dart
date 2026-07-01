@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class AppChip extends StatelessWidget {
   final String label;
@@ -56,8 +57,7 @@ class AppChip extends StatelessWidget {
               onTap: onDeleted,
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
-                child: Icon(
-                  Icons.close,
+                child: PhosphorIcon(PhosphorIconsRegular.x,
                   size: 14,
                   color: fg,
                 ),

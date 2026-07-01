@@ -310,13 +310,13 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
-                    AppDropdown<String>(
-                      initialValue: _messageType,
-                      decoration: const InputDecoration(labelText: 'Message Type'),
-                      items: _messageTypes
-                          .map((t) => DropdownMenuItem(value: t, child: Text(t[0].toUpperCase() + t.substring(1))))
+                    AppInput<String>.dropdown(
+                      value: _messageType,
+                      label: 'Message Type',
+                      options: _messageTypes
+                          .map((t) => AppInputOption(value: t, label: t[0].toUpperCase() + t.substring(1)))
                           .toList(),
-                      onChanged: (v) => setState(() => _messageType = v),
+                      onSelected: (v) => setState(() => _messageType = v),
                     ),
                     const SizedBox(height: 12),
                     AppInput.multiline(
@@ -330,17 +330,17 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                         final validTemplate = _selectedTemplateName != null &&
                             vm.templates.any((t) => t.templateName == _selectedTemplateName);
                         final templateValue = validTemplate ? _selectedTemplateName : null;
-                        return AppDropdown<String>(
-                          initialValue: templateValue,
-                          decoration: const InputDecoration(labelText: 'Template (optional)'),
-                          items: [
-                            const DropdownMenuItem(value: null, child: Text('None')),
-                            ...vm.templates.map((t) => DropdownMenuItem(
+                        return AppInput<String?>.dropdown(
+                          value: templateValue,
+                          label: 'Template (optional)',
+                          options: [
+                            const AppInputOption(value: null, label: 'None'),
+                            ...vm.templates.map((t) => AppInputOption(
                                   value: t.templateName,
-                                  child: Text(t.templateName),
+                                  label: t.templateName,
                                 )),
                           ],
-                          onChanged: (v) => _onTemplateChanged(v, vm),
+                          onSelected: (v) => _onTemplateChanged(v, vm),
                         );
                       },
                     ),
@@ -351,30 +351,28 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       ..._variableControllers.asMap().entries.map((entry) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 8),
-                          child: TextFormField(
+                          child: AppInput(
                             controller: entry.value,
-                            decoration: InputDecoration(labelText: 'Variable {{${entry.key + 1}}}'),
+                            label: 'Variable {{${entry.key + 1}}}',
                           ),
                         );
                       }),
                     ],
                     const SizedBox(height: 12),
-                    AppDropdown<String>(
-                      initialValue: _status,
-                      decoration: const InputDecoration(labelText: 'Status'),
-                      items: _statuses
-                          .map((s) => DropdownMenuItem(value: s, child: Text(s[0].toUpperCase() + s.substring(1))))
+                    AppInput<String>.dropdown(
+                      value: _status,
+                      label: 'Status',
+                      options: _statuses
+                          .map((s) => AppInputOption(value: s, label: s[0].toUpperCase() + s.substring(1)))
                           .toList(),
-                      onChanged: (v) => setState(() => _status = v),
+                      onSelected: (v) => setState(() => _status = v),
                     ),
                     const SizedBox(height: 12),
-                    TextFormField(
+                    AppInput(
                       controller: _scheduledDateController,
-                      decoration: const InputDecoration(
-                        labelText: 'Scheduled At (optional)',
-                        suffixIcon: PhosphorIcon(PhosphorIconsRegular.calendarBlank),
-                      ),
+                      label: 'Scheduled At (optional)',
                       readOnly: true,
+                      suffix: const PhosphorIcon(PhosphorIconsRegular.calendarBlank, size: 20),
                       onTap: _pickScheduledAt,
                     ),
                     const SizedBox(height: 12),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class MobileBottomNav extends StatelessWidget {
   const MobileBottomNav({super.key});
@@ -45,11 +46,11 @@ class MobileBottomNav extends StatelessWidget {
         }
       },
       destinations: const [
-        NavigationDestination(icon: Icon(Icons.message), label: 'Inbox'),
-        NavigationDestination(icon: Icon(Icons.people), label: 'Contacts'),
-        NavigationDestination(icon: Icon(Icons.campaign), label: 'Campaigns'),
-        NavigationDestination(icon: Icon(Icons.bar_chart), label: 'Analytics'),
-        NavigationDestination(icon: Icon(Icons.settings), label: 'Settings'),
+        NavigationDestination(icon: PhosphorIcon(PhosphorIconsRegular.chatTeardropText), label: 'Inbox'),
+        NavigationDestination(icon: PhosphorIcon(PhosphorIconsRegular.users), label: 'Contacts'),
+        NavigationDestination(icon: PhosphorIcon(PhosphorIconsRegular.megaphone), label: 'Campaigns'),
+        NavigationDestination(icon: PhosphorIcon(PhosphorIconsRegular.chartBar), label: 'Analytics'),
+        NavigationDestination(icon: PhosphorIcon(PhosphorIconsRegular.gear), label: 'Settings'),
       ],
     );
   }

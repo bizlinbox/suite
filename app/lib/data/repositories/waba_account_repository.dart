@@ -1,6 +1,7 @@
 import '../../core/services/api_service.dart';
 import '../../core/utils/result.dart';
 import '../models/user_model.dart';
+import '../../core/utils/api_error.dart';
 
 class WabaAccountRepository {
   final ApiService _api;
@@ -15,7 +16,7 @@ class WabaAccountRepository {
           .toList();
       return Success(list);
     } catch (e) {
-      return Error('Failed to load WABA accounts: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load WABA accounts'));
     }
   }
 
@@ -24,7 +25,7 @@ class WabaAccountRepository {
       final res = await _api.post('/waba-accounts', data: payload);
       return Success(WabaAccount.fromJson(res.data['wabaAccount'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to create WABA account: $e');
+      return Error(extractApiError(e, fallback: 'Failed to create WABA account'));
     }
   }
 
@@ -33,7 +34,7 @@ class WabaAccountRepository {
       final res = await _api.put('/waba-accounts/$id', data: payload);
       return Success(WabaAccount.fromJson(res.data['wabaAccount'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to update WABA account: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update WABA account'));
     }
   }
 
@@ -42,7 +43,7 @@ class WabaAccountRepository {
       await _api.delete('/waba-accounts/$id');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to delete WABA account: $e');
+      return Error(extractApiError(e, fallback: 'Failed to delete WABA account'));
     }
   }
 
@@ -51,7 +52,7 @@ class WabaAccountRepository {
       final res = await _api.post('/waba-accounts/$id/test');
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Connection test failed: $e');
+      return Error(extractApiError(e, fallback: 'Connection test failed'));
     }
   }
 
@@ -60,7 +61,7 @@ class WabaAccountRepository {
       final res = await _api.post('/waba-accounts/$id/subscribe');
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Subscription failed: $e');
+      return Error(extractApiError(e, fallback: 'Subscription failed'));
     }
   }
 
@@ -69,7 +70,7 @@ class WabaAccountRepository {
       final res = await _api.get('/waba-accounts/$id/webhook-config');
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Failed to load webhook config: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load webhook config'));
     }
   }
 
@@ -78,7 +79,7 @@ class WabaAccountRepository {
       await _api.post('/waba-accounts/$wabaId/agents', data: {'agent_ids': [agentId]});
       return const Success(null);
     } catch (e) {
-      return Error('Failed to assign agent: $e');
+      return Error(extractApiError(e, fallback: 'Failed to assign agent'));
     }
   }
 
@@ -87,7 +88,7 @@ class WabaAccountRepository {
       await _api.delete('/waba-accounts/$wabaId/agents/$agentId');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to remove agent: $e');
+      return Error(extractApiError(e, fallback: 'Failed to remove agent'));
     }
   }
 }

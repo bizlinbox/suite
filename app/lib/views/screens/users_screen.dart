@@ -11,6 +11,7 @@ import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class UsersViewModel extends BaseViewModel {
   final UserRepository _userRepo;
@@ -181,7 +182,7 @@ class _UsersBody extends StatelessWidget {
         title: const Text('Users'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadUsers(),
           ),
         ],
@@ -189,7 +190,7 @@ class _UsersBody extends StatelessWidget {
       floatingActionButton: canManage
           ? AppFloatingActionButton(
               onPressed: () => _showAddDialog(context, vm),
-              child: const Icon(Icons.add),
+              child: const PhosphorIcon(PhosphorIconsRegular.plus),
             )
           : null,
       body: vm.isBusy && vm.users.isEmpty
@@ -216,11 +217,11 @@ class _UsersBody extends StatelessWidget {
                                       children: [
                                         Chip(label: Text(u.role)),
                                         AppIconButton(
-                                          icon: const Icon(Icons.edit_outlined),
+                                          icon: const PhosphorIcon(PhosphorIconsRegular.pencilSimple),
                                           onPressed: () => _showEditDialog(context, vm, u),
                                         ),
                                         AppIconButton(
-                                          icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                          icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                           onPressed: () => _confirmDelete(context, vm, u),
                                         ),
                                       ],
@@ -273,7 +274,6 @@ class _UsersBody extends StatelessWidget {
     final passwordController = TextEditingController();
     String selectedRole = vm.roles.isNotEmpty ? vm.roles.first.name : '';
     bool sendInvitation = false;
-    bool obscurePassword = true;
 
     await showDialog(
       context: context,
@@ -310,7 +310,7 @@ class _UsersBody extends StatelessWidget {
                                       const SnackBar(content: Text('Copied to clipboard')),
                                     );
                                   },
-                                  icon: const Icon(Icons.copy),
+                                  icon: const PhosphorIcon(PhosphorIconsRegular.copy),
                                   label: const Text('Copy'),
                                 ),
                                 TextButton.icon(
@@ -320,7 +320,7 @@ class _UsersBody extends StatelessWidget {
                                       await launchUrl(uri, mode: LaunchMode.externalApplication);
                                     }
                                   },
-                                  icon: const Icon(Icons.open_in_new),
+                                  icon: const PhosphorIcon(PhosphorIconsRegular.arrowSquareOut),
                                   label: const Text('Open'),
                                 ),
                               ],
@@ -330,47 +330,38 @@ class _UsersBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    AppTextField(
+                    AppInput(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      label: 'Name',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.email(
                       controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.emailAddress,
+                      label: 'Email',
                     ),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
-                      AppDropdown<String>(
-                        initialValue: selectedRole,
-                        decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
-                        items: vm.roles.map((r) {
-                          return DropdownMenuItem(value: r.name, child: Text(r.name));
+                      AppInput.dropdown(
+                        value: selectedRole,
+                        label: 'Role',
+                        options: vm.roles.map((r) {
+                          return AppInputOption(value: r.name, label: r.name);
                         }).toList(),
-                        onChanged: (v) {
+                        onSelected: (v) {
                           if (v != null) setDialogState(() => selectedRole = v);
                         },
                       ),
                     const SizedBox(height: 12),
-                    AppSwitch(
-                      title: const Text('Send invitation link'),
+                    AppInput.switchInput(
+                      label: 'Send invitation link',
                       value: sendInvitation,
-                      onChanged: (v) => setDialogState(() => sendInvitation = v),
+                      onToggled: (v) => setDialogState(() => sendInvitation = v),
                     ),
                     if (!sendInvitation) ...[
                       const SizedBox(height: 8),
-                      AppTextField(
+                      AppInput.password(
                         controller: passwordController,
-                        obscureText: obscurePassword,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          border: const OutlineInputBorder(),
-                          suffixIcon: AppIconButton(
-                            icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
-                            onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
-                          ),
-                        ),
+                        label: 'Password',
                       ),
                     ],
                   ],
@@ -426,25 +417,24 @@ class _UsersBody extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    AppTextField(
+                    AppInput(
                       controller: nameController,
-                      decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
+                      label: 'Name',
                     ),
                     const SizedBox(height: 12),
-                    AppTextField(
+                    AppInput.email(
                       controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
-                      keyboardType: TextInputType.emailAddress,
+                      label: 'Email',
                     ),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
-                      AppDropdown<String>(
-                        initialValue: selectedRole,
-                        decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
-                        items: vm.roles.map((r) {
-                          return DropdownMenuItem(value: r.name, child: Text(r.name));
+                      AppInput.dropdown(
+                        value: selectedRole,
+                        label: 'Role',
+                        options: vm.roles.map((r) {
+                          return AppInputOption(value: r.name, label: r.name);
                         }).toList(),
-                        onChanged: (v) {
+                        onSelected: (v) {
                           if (v != null) setDialogState(() => selectedRole = v);
                         },
                       ),
@@ -509,7 +499,7 @@ class _UsersBody extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],

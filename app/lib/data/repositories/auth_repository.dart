@@ -1,5 +1,6 @@
 import '../../core/services/api_service.dart';
 import '../../core/services/local_storage_service.dart';
+import '../../core/utils/api_error.dart';
 import '../../core/utils/result.dart';
 import '../models/user_model.dart';
 
@@ -14,7 +15,7 @@ class AuthRepository {
       final res = await _api.get('/auth/setup-required');
       return Success(res.data['needsSetup'] as bool? ?? false);
     } catch (e) {
-      return Error('Failed to check setup: $e');
+      return Error(extractApiError(e, fallback: 'Failed to check setup'));
     }
   }
 
@@ -23,7 +24,7 @@ class AuthRepository {
       final res = await _api.get('/auth/public-settings');
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Failed to load settings: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load settings'));
     }
   }
 
@@ -34,7 +35,7 @@ class AuthRepository {
       await _storage.setUser(user.toJson());
       return Success(user);
     } catch (e) {
-      return Error('Login failed: $e');
+      return Error(extractApiError(e, fallback: 'Login failed'));
     }
   }
 
@@ -45,7 +46,7 @@ class AuthRepository {
       await _storage.setUser(user.toJson());
       return Success(user);
     } catch (e) {
-      return Error('Failed to fetch user: $e');
+      return Error(extractApiError(e, fallback: 'Failed to fetch user'));
     }
   }
 
@@ -61,7 +62,7 @@ class AuthRepository {
       await _storage.setUser(user.toJson());
       return Success(user);
     } catch (e) {
-      return Error('Failed to update profile: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update profile'));
     }
   }
 
@@ -75,7 +76,7 @@ class AuthRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Error('Registration failed: $e');
+      return Error(extractApiError(e, fallback: 'Registration failed'));
     }
   }
 
@@ -89,7 +90,7 @@ class AuthRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Error('Setup failed: $e');
+      return Error(extractApiError(e, fallback: 'Setup failed'));
     }
   }
 
@@ -102,7 +103,7 @@ class AuthRepository {
       });
       return const Success(null);
     } catch (e) {
-      return Error('Failed to accept invite: $e');
+      return Error(extractApiError(e, fallback: 'Failed to accept invite'));
     }
   }
 

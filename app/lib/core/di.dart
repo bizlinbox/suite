@@ -44,6 +44,7 @@ Future<void> setupDependencies() async {
 
   // ViewModels
   final authVm = AuthViewModel(locator<AuthRepository>(), locator<LocalStorageService>());
+  locator<ApiService>().onAuthFailure = authVm.forceLogout;
   await authVm.init();
   locator.registerSingleton<AuthViewModel>(authVm);
 }

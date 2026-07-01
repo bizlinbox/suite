@@ -8,6 +8,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ApiLogsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -166,12 +167,12 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
         title: const Text('API Logs'),
         actions: [
           AppIconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const PhosphorIcon(PhosphorIconsRegular.arrowsClockwise),
             onPressed: vm.isBusy ? null : () => vm.loadLogs(),
           ),
           if (canClear)
             AppIconButton(
-              icon: const Icon(Icons.delete_outline),
+              icon: const PhosphorIcon(PhosphorIconsRegular.trash),
               onPressed: vm.isBusy ? null : () => vm.clearLogs(),
             ),
         ],
@@ -183,46 +184,28 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
             child: Row(
               children: [
                 Expanded(
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Direction',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: AppDropdown<String>(
-                        value: vm.direction,
-                        isDense: true,
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All')),
-                          DropdownMenuItem(value: 'outgoing', child: Text('Outgoing')),
-                          DropdownMenuItem(value: 'incoming', child: Text('Incoming')),
-                        ],
-                        onChanged: (v) => vm.setDirection(v!),
-                      ),
-                    ),
+                  child: AppInput.dropdown(
+                    value: vm.direction,
+                    label: 'Direction',
+                    options: const [
+                      AppInputOption(value: 'all', label: 'All'),
+                      AppInputOption(value: 'outgoing', label: 'Outgoing'),
+                      AppInputOption(value: 'incoming', label: 'Incoming'),
+                    ],
+                    onSelected: (v) => vm.setDirection(v!),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Provider',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: AppDropdown<String>(
-                        value: vm.provider,
-                        isDense: true,
-                        items: const [
-                          DropdownMenuItem(value: 'all', child: Text('All')),
-                          DropdownMenuItem(value: 'WhatsApp', child: Text('WhatsApp')),
-                          DropdownMenuItem(value: 'Meta', child: Text('Meta')),
-                        ],
-                        onChanged: (v) => vm.setProvider(v!),
-                      ),
-                    ),
+                  child: AppInput.dropdown(
+                    value: vm.provider,
+                    label: 'Provider',
+                    options: const [
+                      AppInputOption(value: 'all', label: 'All'),
+                      AppInputOption(value: 'WhatsApp', label: 'WhatsApp'),
+                      AppInputOption(value: 'Meta', label: 'Meta'),
+                    ],
+                    onSelected: (v) => vm.setProvider(v!),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -282,7 +265,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
               children: [
                 ElevatedButton.icon(
                   onPressed: vm.page > 1 ? vm.previousPage : null,
-                  icon: const Icon(Icons.chevron_left),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.caretLeft),
                   label: const Text('Previous'),
                 ),
                 const SizedBox(width: 16),
@@ -290,7 +273,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                 const SizedBox(width: 16),
                 ElevatedButton.icon(
                   onPressed: vm.page < vm.totalPages ? vm.nextPage : null,
-                  icon: const Icon(Icons.chevron_right),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.caretRight),
                   label: const Text('Next'),
                 ),
               ],
@@ -371,7 +354,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
@@ -389,7 +372,7 @@ class _DirectionBadge extends StatelessWidget {
     final isOutgoing = direction == 'outgoing';
     return Chip(
       avatar: Icon(
-        isOutgoing ? Icons.arrow_upward : Icons.arrow_downward,
+        isOutgoing ? PhosphorIconsRegular.arrowUp : PhosphorIconsRegular.arrowDown,
         size: 16,
       ),
       label: Text(

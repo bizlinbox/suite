@@ -1,6 +1,7 @@
 import '../../core/services/api_service.dart';
 import '../../core/utils/result.dart';
 import '../models/automation_model.dart';
+import '../../core/utils/api_error.dart';
 
 class AutomationRepository {
   final ApiService _api;
@@ -15,7 +16,7 @@ class AutomationRepository {
           .toList();
       return Success(list);
     } catch (e) {
-      return Error('Failed to load automations: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load automations'));
     }
   }
 
@@ -24,7 +25,7 @@ class AutomationRepository {
       final res = await _api.post('/automations', data: payload);
       return Success(Automation.fromJson(res.data['automation'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to create automation: $e');
+      return Error(extractApiError(e, fallback: 'Failed to create automation'));
     }
   }
 
@@ -33,7 +34,7 @@ class AutomationRepository {
       final res = await _api.put('/automations/$id', data: payload);
       return Success(Automation.fromJson(res.data['automation'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to update automation: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update automation'));
     }
   }
 
@@ -42,7 +43,7 @@ class AutomationRepository {
       await _api.delete('/automations/$id');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to delete automation: $e');
+      return Error(extractApiError(e, fallback: 'Failed to delete automation'));
     }
   }
 
@@ -51,7 +52,7 @@ class AutomationRepository {
       await _api.post('/automations/$id/toggle');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to toggle automation: $e');
+      return Error(extractApiError(e, fallback: 'Failed to toggle automation'));
     }
   }
 }

@@ -131,22 +131,17 @@ class _SidebarState extends State<Sidebar> {
           const AppDivider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: AppDropdown<String>(
-              initialValue: selectedAccount?.id,
-              isExpanded: true,
-              decoration: const InputDecoration(
-                labelText: 'WABA Account',
-                border: OutlineInputBorder(),
-                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              ),
-              hint: const Text('Select WABA'),
-              items: activeAccounts.map((account) {
-                return DropdownMenuItem<String>(
+            child: AppInput<String>.dropdown(
+              value: selectedAccount?.id,
+              label: 'WABA Account',
+              hint: 'Select WABA',
+              options: activeAccounts.map((account) {
+                return AppInputOption<String>(
                   value: account.id,
-                  child: Text(account.name, overflow: TextOverflow.ellipsis),
+                  label: account.name,
                 );
               }).toList(),
-              onChanged: (value) {
+              onSelected: (value) {
                 if (value != null) _selectWaba(value);
               },
             ),

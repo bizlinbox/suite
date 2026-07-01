@@ -1,6 +1,7 @@
 import '../../core/services/api_service.dart';
 import '../../core/utils/result.dart';
 import '../models/user_model.dart';
+import '../../core/utils/api_error.dart';
 
 class UserRepository {
   final ApiService _api;
@@ -15,7 +16,7 @@ class UserRepository {
           .toList();
       return Success(list);
     } catch (e) {
-      return Error('Failed to load users: $e');
+      return Error(extractApiError(e, fallback: 'Failed to load users'));
     }
   }
 
@@ -24,7 +25,7 @@ class UserRepository {
       final res = await _api.post('/agents', data: payload);
       return Success(res.data as Map<String, dynamic>);
     } catch (e) {
-      return Error('Failed to create user: $e');
+      return Error(extractApiError(e, fallback: 'Failed to create user'));
     }
   }
 
@@ -33,7 +34,7 @@ class UserRepository {
       final res = await _api.put('/agents/$id', data: payload);
       return Success(User.fromJson(res.data['agent'] as Map<String, dynamic>));
     } catch (e) {
-      return Error('Failed to update user: $e');
+      return Error(extractApiError(e, fallback: 'Failed to update user'));
     }
   }
 
@@ -42,7 +43,7 @@ class UserRepository {
       await _api.delete('/agents/$id');
       return const Success(null);
     } catch (e) {
-      return Error('Failed to delete user: $e');
+      return Error(extractApiError(e, fallback: 'Failed to delete user'));
     }
   }
 }

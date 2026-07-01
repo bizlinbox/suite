@@ -10,6 +10,7 @@ import 'register_screen.dart';
 import 'setup_screen.dart';
 import 'accept_invite_screen.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -35,7 +36,6 @@ class _LoginBody extends StatefulWidget {
 class _LoginBodyState extends State<_LoginBody> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +63,7 @@ class _LoginBodyState extends State<_LoginBody> {
                       color: AppColors.primary,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(Icons.message_rounded, size: 28, color: Colors.white),
+                    child: const PhosphorIcon(PhosphorIconsRegular.chatTeardrop, size: 28, color: Colors.white),
                   ),
                   const SizedBox(height: 20),
                   Text(
@@ -90,7 +90,7 @@ class _LoginBodyState extends State<_LoginBody> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
+                          const PhosphorIcon(PhosphorIconsRegular.warningCircle, color: AppColors.danger, size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -101,23 +101,19 @@ class _LoginBodyState extends State<_LoginBody> {
                         ],
                       ),
                     ),
-                  AppTextField(
+                  AppInput.email(
                     controller: _emailController,
-                    labelText: 'Email',
-                    prefix: const Icon(Icons.email_outlined, size: 20),
-                    keyboardType: TextInputType.emailAddress,
+                    label: 'Email',
+                    prefix: const PhosphorIcon(PhosphorIconsRegular.envelope, size: 20),
+                    textInputAction: TextInputAction.next,
                   ),
                   const SizedBox(height: 16),
-                  AppTextField(
+                  AppInput.password(
                     controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    labelText: 'Password',
-                    prefix: const Icon(Icons.lock_outline, size: 20),
-                    suffix: AppIconButton(
-                      size: 32,
-                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                    ),
+                    label: 'Password',
+                    prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _login(context, loginVm),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/api_error.dart';
 
 enum ViewState { idle, busy, error, success }
 
@@ -45,7 +46,7 @@ class BaseViewModel extends ChangeNotifier {
       await action();
       setSuccess();
     } catch (e) {
-      setError(e.toString());
+      setError(extractApiError(e));
     }
   }
 }

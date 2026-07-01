@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/models/quick_reply_model.dart';
 import 'custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class QuickReplyPicker extends StatelessWidget {
   final List<QuickReply> quickReplies;
@@ -36,7 +37,7 @@ class QuickReplyPicker extends StatelessWidget {
                     ),
                   ),
                   AppIconButton(
-                    icon: const Icon(Icons.close),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.x),
                     onPressed: onDismiss,
                   ),
                 ],

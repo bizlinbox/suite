@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class HelpScreen extends StatelessWidget {
   const HelpScreen({super.key});
@@ -19,7 +20,7 @@ class HelpScreen extends StatelessWidget {
             SizedBox(height: 16),
             AppCard(
               child: AppListTile(
-                leading: Icon(Icons.email),
+                leading: PhosphorIcon(PhosphorIconsRegular.envelope),
                 title: Text('Contact Support'),
                 subtitle: Text('support@bizlinbox.com'),
               ),

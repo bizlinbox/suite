@@ -63,9 +63,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  bool _obscureCurrent = true;
-  bool _obscureNew = true;
-  bool _obscureConfirm = true;
+
 
   @override
   void didChangeDependencies() {
@@ -187,24 +185,16 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          AppTextField(
+                          AppInput(
                             controller: _nameController,
-                            decoration: const InputDecoration(
-                              labelText: 'Full Name',
-                              prefixIcon: PhosphorIcon(PhosphorIconsRegular.user),
-                              border: OutlineInputBorder(),
-                            ),
+                            label: 'Full Name',
+                            prefix: const PhosphorIcon(PhosphorIconsRegular.user, size: 20),
                           ),
                           const SizedBox(height: 12),
-                          AppTextField(
+                          AppInput(
                             enabled: false,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.envelope),
-                              border: const OutlineInputBorder(),
-                              filled: true,
-                              fillColor: Colors.grey.shade100,
-                            ),
+                            label: 'Email',
+                            prefix: const PhosphorIcon(PhosphorIconsRegular.envelope, size: 20),
                             controller: TextEditingController(text: user.email),
                           ),
                           const SizedBox(height: 16),
@@ -238,46 +228,22 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          AppTextField(
+                          AppInput.password(
                             controller: _currentPasswordController,
-                            obscureText: _obscureCurrent,
-                            decoration: InputDecoration(
-                              labelText: 'Current Password',
-                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
-                              suffixIcon: AppIconButton(
-                                icon: Icon(_obscureCurrent ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
-                                onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
+                            label: 'Current Password',
+                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
                           ),
                           const SizedBox(height: 12),
-                          AppTextField(
+                          AppInput.password(
                             controller: _newPasswordController,
-                            obscureText: _obscureNew,
-                            decoration: InputDecoration(
-                              labelText: 'New Password',
-                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
-                              suffixIcon: AppIconButton(
-                                icon: Icon(_obscureNew ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
-                                onPressed: () => setState(() => _obscureNew = !_obscureNew),
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
+                            label: 'New Password',
+                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
                           ),
                           const SizedBox(height: 12),
-                          AppTextField(
+                          AppInput.password(
                             controller: _confirmPasswordController,
-                            obscureText: _obscureConfirm,
-                            decoration: InputDecoration(
-                              labelText: 'Confirm New Password',
-                              prefixIcon: const PhosphorIcon(PhosphorIconsRegular.lockKey),
-                              suffixIcon: AppIconButton(
-                                icon: Icon(_obscureConfirm ? PhosphorIconsRegular.eyeSlash : PhosphorIconsRegular.eye),
-                                onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                              ),
-                              border: const OutlineInputBorder(),
-                            ),
+                            label: 'Confirm New Password',
+                            prefix: const PhosphorIcon(PhosphorIconsRegular.lockKey, size: 20),
                           ),
                           const SizedBox(height: 16),
                           Align(

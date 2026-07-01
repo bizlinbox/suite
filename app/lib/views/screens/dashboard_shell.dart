@@ -8,6 +8,7 @@ import '../../viewmodels/auth_viewmodel.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/mobile_bottom_nav.dart';
 import '../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class DashboardShell extends StatelessWidget {
   final Widget child;
@@ -69,7 +70,7 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
               title: const Text('BizlInbox'),
               actions: [
                 AppIconButton(
-                  icon: const Icon(Icons.logout),
+                  icon: const PhosphorIcon(PhosphorIconsRegular.signOut),
                   onPressed: () async {
                     await authVm.logout();
                     if (context.mounted) context.go('/login');

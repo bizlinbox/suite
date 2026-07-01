@@ -5,6 +5,7 @@ import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ContactProfileSheet extends StatefulWidget {
   final Contact contact;
@@ -197,15 +198,12 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                       const SizedBox(height: 8),
                       const Text('Birthday', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      GestureDetector(
+                      AppInput(
+                        readOnly: true,
+                        label: 'Birthday',
+                        hint: _birthday ?? 'Select date',
                         onTap: _pickBirthday,
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          ),
-                          child: Text(_birthday ?? 'Select date'),
-                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
                       const SizedBox(height: 16),
                       Row(
@@ -245,29 +243,29 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                 const SizedBox(height: 16),
               ],
               if (widget.contact.notes != null && widget.contact.notes!.isNotEmpty)
-                _InfoRow(icon: Icons.notes, label: 'Notes', value: widget.contact.notes!),
+                _InfoRow(icon: PhosphorIconsRegular.notebook, label: 'Notes', value: widget.contact.notes!),
               if (widget.contact.remarks != null && widget.contact.remarks!.isNotEmpty)
-                _InfoRow(icon: Icons.comment, label: 'Remarks', value: widget.contact.remarks!),
+                _InfoRow(icon: PhosphorIconsRegular.chatCenteredText, label: 'Remarks', value: widget.contact.remarks!),
               if (widget.contact.email != null && widget.contact.email!.isNotEmpty)
-                _InfoRow(icon: Icons.email, label: 'Email', value: widget.contact.email!),
+                _InfoRow(icon: PhosphorIconsRegular.envelope, label: 'Email', value: widget.contact.email!),
               if (widget.contact.company != null && widget.contact.company!.isNotEmpty)
-                _InfoRow(icon: Icons.business, label: 'Company', value: widget.contact.company!),
+                _InfoRow(icon: PhosphorIconsRegular.buildings, label: 'Company', value: widget.contact.company!),
               if (widget.contact.jobTitle != null && widget.contact.jobTitle!.isNotEmpty)
-                _InfoRow(icon: Icons.work, label: 'Job Title', value: widget.contact.jobTitle!),
+                _InfoRow(icon: PhosphorIconsRegular.briefcase, label: 'Job Title', value: widget.contact.jobTitle!),
               if (widget.contact.language != null && widget.contact.language!.isNotEmpty)
-                _InfoRow(icon: Icons.language, label: 'Language', value: widget.contact.language!),
+                _InfoRow(icon: PhosphorIconsRegular.globe, label: 'Language', value: widget.contact.language!),
               if (widget.contact.birthday != null && widget.contact.birthday!.isNotEmpty)
-                _InfoRow(icon: Icons.cake, label: 'Birthday', value: widget.contact.birthday!),
+                _InfoRow(icon: PhosphorIconsRegular.cake, label: 'Birthday', value: widget.contact.birthday!),
               if (widget.contact.address != null && widget.contact.address!.isNotEmpty)
-                _InfoRow(icon: Icons.location_on, label: 'Address', value: widget.contact.address!),
+                _InfoRow(icon: PhosphorIconsRegular.mapPin, label: 'Address', value: widget.contact.address!),
               if (widget.contact.city != null && widget.contact.city!.isNotEmpty)
-                _InfoRow(icon: Icons.location_city, label: 'City', value: widget.contact.city!),
+                _InfoRow(icon: PhosphorIconsRegular.buildings, label: 'City', value: widget.contact.city!),
               if (widget.contact.state != null && widget.contact.state!.isNotEmpty)
-                _InfoRow(icon: Icons.map, label: 'State', value: widget.contact.state!),
+                _InfoRow(icon: PhosphorIconsRegular.mapTrifold, label: 'State', value: widget.contact.state!),
               if (widget.contact.country != null && widget.contact.country!.isNotEmpty)
-                _InfoRow(icon: Icons.public, label: 'Country', value: widget.contact.country!),
+                _InfoRow(icon: PhosphorIconsRegular.globe, label: 'Country', value: widget.contact.country!),
               if (widget.contact.zipCode != null && widget.contact.zipCode!.isNotEmpty)
-                _InfoRow(icon: Icons.markunread_mailbox, label: 'Zip Code', value: widget.contact.zipCode!),
+                _InfoRow(icon: PhosphorIconsRegular.mailbox, label: 'Zip Code', value: widget.contact.zipCode!),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -335,15 +333,12 @@ class _EditField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: AppTextField(
+      child: AppInput(
         controller: controller,
+        label: label,
         keyboardType: keyboardType,
         maxLines: maxLines ?? 1,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       ),
     );
   }

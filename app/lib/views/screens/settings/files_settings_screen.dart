@@ -8,6 +8,7 @@ import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
 import '../../widgets/custom/custom_widgets.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class FilesSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -102,17 +103,17 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
   }
 
   IconData _mimeIcon(String mimeType) {
-    if (mimeType.startsWith('image/')) return Icons.image;
-    if (mimeType.startsWith('video/')) return Icons.videocam;
-    if (mimeType.startsWith('audio/')) return Icons.audiotrack;
+    if (mimeType.startsWith('image/')) return PhosphorIconsRegular.image;
+    if (mimeType.startsWith('video/')) return PhosphorIconsRegular.videoCamera;
+    if (mimeType.startsWith('audio/')) return PhosphorIconsRegular.speakerHigh;
     if (mimeType.contains('pdf') ||
         mimeType.contains('document') ||
         mimeType.contains('word') ||
         mimeType.contains('excel') ||
         mimeType.contains('presentation')) {
-      return Icons.description;
+      return PhosphorIconsRegular.fileText;
     }
-    return Icons.insert_drive_file;
+    return PhosphorIconsRegular.file;
   }
 
   @override
@@ -138,14 +139,11 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
             child: Row(
               children: [
                 Expanded(
-                  child: AppTextField(
+                  child: AppInput.search(
                     controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search files...',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    ),
+                    hint: 'Search files...',
+                    prefix: const PhosphorIcon(PhosphorIconsRegular.magnifyingGlass, size: 20),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                     onSubmitted: (v) => vm.search(v),
                   ),
                 ),
@@ -209,7 +207,7 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   AppIconButton(
-                                    icon: const Icon(Icons.download_outlined, color: Color(0xFF2563EB)),
+                                    icon: const PhosphorIcon(PhosphorIconsRegular.downloadSimple, color: Color(0xFF2563EB)),
                                     onPressed: () async {
                                       final uri = Uri.parse(f.url);
                                       if (await canLaunchUrl(uri)) {
@@ -219,7 +217,7 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
                                   ),
                                   if (canManage)
                                     AppIconButton(
-                                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                                      icon: const PhosphorIcon(PhosphorIconsRegular.trash, color: Colors.red),
                                       onPressed: () => vm.deleteFile(f.id),
                                     ),
                                 ],
@@ -256,7 +254,7 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.lock_outline, size: 48, color: Colors.grey),
+          PhosphorIcon(PhosphorIconsRegular.lockKey, size: 48, color: Colors.grey),
           SizedBox(height: 16),
           Text('You do not have permission to view this page.', textAlign: TextAlign.center),
         ],
