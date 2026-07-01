@@ -156,7 +156,7 @@ class _WabaAccountsBody extends StatelessWidget {
                       child: ExpansionTile(
                         leading: const Icon(Icons.phone_android),
                         title: Text(a.name),
-                        subtitle: Text(a.phoneNumberId),
+                        subtitle: Text(a.phoneNumberId ?? 'No phone number ID'),
                         children: [
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

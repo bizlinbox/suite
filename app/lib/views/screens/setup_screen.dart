@@ -46,6 +46,25 @@ class _SetupBodyState extends State<_SetupBody> {
   bool _obscurePassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    _guardIfAlreadySetup();
+  }
+
+  Future<void> _guardIfAlreadySetup() async {
+    final repo = locator<AuthRepository>();
+    final result = await repo.checkSetupRequired();
+    final needsSetup = result.when(
+      success: (data) => data,
+      error: (message, exception) => false,
+    );
+    if (!mounted) return;
+    if (!needsSetup) {
+      context.go('/login');
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final vm = context.watch<SetupViewModel>();
 

@@ -1,14 +1,14 @@
 class WabaAccount {
   final String id;
   final String name;
-  final String phoneNumberId;
+  final String? phoneNumberId;
   final String businessAccountId;
   final bool isActive;
 
   WabaAccount({
     required this.id,
     required this.name,
-    required this.phoneNumberId,
+    this.phoneNumberId,
     required this.businessAccountId,
     required this.isActive,
   });
@@ -17,7 +17,7 @@ class WabaAccount {
     return WabaAccount(
       id: json['id'] as String,
       name: json['name'] as String,
-      phoneNumberId: json['phoneNumberId'] as String,
+      phoneNumberId: json['phoneNumberId'] as String?,
       businessAccountId: json['businessAccountId'] as String,
       isActive: json['isActive'] as bool,
     );

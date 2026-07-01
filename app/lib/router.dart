@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'core/di.dart';
-import 'core/services/local_storage_service.dart';
+import 'views/screens/splash_screen.dart';
 import 'views/screens/domain_screen.dart';
 import 'views/screens/login_screen.dart';
 import 'views/screens/dashboard_shell.dart';
@@ -32,13 +31,14 @@ import 'views/screens/settings/integrations_settings_screen.dart';
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 GoRouter createRouter() {
-  final storage = locator<LocalStorageService>();
-  final hasDomain = storage.getDomain() != null && storage.getDomain()!.isNotEmpty;
-
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: hasDomain ? '/login' : '/domain',
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/domain',
         builder: (context, state) => const DomainScreen(),

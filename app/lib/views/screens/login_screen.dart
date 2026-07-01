@@ -156,7 +156,13 @@ class _LoginBodyState extends State<_LoginBody> {
         authVm.setUser(user);
         if (context.mounted) context.go('/dashboard/inbox');
       },
-      error: (message, exception) {},
+      error: (message, exception) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(message), backgroundColor: Colors.red),
+          );
+        }
+      },
     );
   }
 }
