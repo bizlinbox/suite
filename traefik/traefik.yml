@@ -19,7 +19,7 @@ providers:
     exposedByDefault: false
     network: bizlinbox
   file:
-    filename: /etc/traefik/dynamic.yml
+    filename: dynamic.yml
     watch: true
 
 certificatesResolvers:

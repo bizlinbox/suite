@@ -60,8 +60,7 @@ services:
       - "443:443"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik:/etc/traefik:ro
       - ./traefik/acme:/letsencrypt
     networks:
       - bizlinbox
