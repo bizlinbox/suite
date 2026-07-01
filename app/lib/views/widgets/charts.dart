@@ -132,8 +132,8 @@ class LineChart extends StatelessWidget {
                 painter: LineChartPainter(
                   values: values,
                   labels: labels,
-                  lineColor: const Color(0xFF2563EB),
-                  fillColor: const Color(0xFF2563EB),
+                  lineColor: Theme.of(context).colorScheme.primary,
+                  fillColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -251,7 +251,7 @@ class BarChart extends StatelessWidget {
                 painter: BarChartPainter(
                   values: values,
                   labels: labels,
-                  barColor: const Color(0xFF2563EB),
+                  barColor: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -327,18 +327,17 @@ class DonutChart extends StatelessWidget {
     this.height = 220,
   });
 
-  final List<Color> _colors = [
-    const Color(0xFF2563EB),
-    const Color(0xFF3B82F6),
-    const Color(0xFF60A5FA),
-    const Color(0xFF93C5FD),
-    const Color(0xFF1D4ED8),
-    const Color(0xFF1E40AF),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final total = values.isEmpty ? 0 : values.reduce((a, b) => a + b);
+    final colors = [
+      Theme.of(context).colorScheme.primary,
+      const Color(0xFF1AAD9F),
+      const Color(0xFF4DBFAF),
+      const Color(0xFF80D3C9),
+      const Color(0xFF002E6A),
+      const Color(0xFF001A3D),
+    ];
 
     return AppCard(
       child: Padding(
@@ -358,7 +357,7 @@ class DonutChart extends StatelessWidget {
                     painter: DonutChartPainter(
                       values: values,
                       labels: labels,
-                      colors: _colors,
+                      colors: colors,
                     ),
                   ),
                 ),
@@ -379,7 +378,7 @@ class DonutChart extends StatelessWidget {
                               width: 12,
                               height: 12,
                               decoration: BoxDecoration(
-                                color: _colors[i % _colors.length],
+                                color: colors[i % colors.length],
                                 borderRadius: BorderRadius.circular(3),
                               ),
                             ),

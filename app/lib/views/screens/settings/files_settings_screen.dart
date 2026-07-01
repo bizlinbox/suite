@@ -7,6 +7,7 @@ import '../../../data/models/file_item_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -207,7 +208,7 @@ class _FilesSettingsBodyState extends State<_FilesSettingsBody> {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   AppIconButton(
-                                    icon: const PhosphorIcon(PhosphorIconsRegular.downloadSimple, color: Color(0xFF2563EB)),
+                                    icon: const PhosphorIcon(PhosphorIconsRegular.downloadSimple, color: AppColors.primary),
                                     onPressed: () async {
                                       final uri = Uri.parse(f.url);
                                       if (await canLaunchUrl(uri)) {

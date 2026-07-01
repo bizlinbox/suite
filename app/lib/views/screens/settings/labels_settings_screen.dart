@@ -76,10 +76,10 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
   final _nameController = TextEditingController();
   final List<String> _presetColors = [
     '#EF4444', '#F97316', '#F59E0B', '#84CC16', '#22C55E',
-    '#06B6D4', '#3B82F6', '#6366F1', '#A855F7', '#EC4899',
+    '#06B6D4', '#128C7E', '#6366F1', '#A855F7', '#EC4899',
     '#6B7280', '#1F2937',
   ];
-  String _selectedColor = '#3B82F6';
+  String _selectedColor = '#128C7E';
 
   final _hexPattern = RegExp(r'^#[0-9A-Fa-f]{6}$');
 

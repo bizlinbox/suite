@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../../core/theme/app_theme.dart';
 import '../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -52,7 +53,7 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 64, color: Color(0xFF2563EB)),
+            PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 64, color: AppColors.primary),
             SizedBox(height: 24),
             Text(
               'BizlInbox',

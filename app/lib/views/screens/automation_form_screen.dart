@@ -6,6 +6,7 @@ import '../../data/models/automation_model.dart';
 import '../../data/repositories/automation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../../core/responsive.dart';
+import '../../core/theme/app_theme.dart';
 import '../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -328,7 +329,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                     child: Text('Conditions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   AppIconButton(
-                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: Color(0xFF2563EB)),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: AppColors.primary),
                     onPressed: _addCondition,
                   ),
                 ],
@@ -347,7 +348,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                     child: Text('Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
                   AppIconButton(
-                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: Color(0xFF2563EB)),
+                    icon: const PhosphorIcon(PhosphorIconsRegular.plusCircle, color: AppColors.primary),
                     onPressed: _addAction,
                   ),
                 ],

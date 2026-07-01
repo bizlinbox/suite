@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../viewmodels/domain_viewmodel.dart';
+import '../../core/theme/app_theme.dart';
 import '../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -56,7 +57,7 @@ class _DomainBodyState extends State<_DomainBody> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: Color(0xFF2563EB)),
+                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: AppColors.primary),
                     const SizedBox(height: 16),
                     const Text(
                       'BizlInbox',

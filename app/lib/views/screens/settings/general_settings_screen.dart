@@ -7,6 +7,7 @@ import '../../../core/services/api_service.dart';
 import '../../../core/utils/api_error.dart';
 import '../../../data/models/organization_model.dart';
 import '../../../data/repositories/settings_repository.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
 import '../../../core/responsive.dart';
@@ -204,7 +205,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           gradient: const LinearGradient(
-                            colors: [Color(0xFF2563EB), Color(0xFF3B82F6)],
+                            colors: [AppColors.primary, AppColors.primaryDark],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),

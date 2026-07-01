@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../../core/theme/app_theme.dart';
 import '../widgets/custom/custom_widgets.dart';
 import 'package:phosphoricons_flutter/phosphoricons_flutter.dart';
 
@@ -63,7 +64,7 @@ class _RegisterBodyState extends State<_RegisterBody> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: Color(0xFF2563EB)),
+                    const PhosphorIcon(PhosphorIconsRegular.chatTeardropText, size: 48, color: AppColors.primary),
                     const SizedBox(height: 16),
                     const Text(
                       'Create Account',

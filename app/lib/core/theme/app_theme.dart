@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 /// Central design tokens shared across the app so every screen uses the
 /// same spacing scale, radii and brand colors instead of ad-hoc values.
 class AppColors {
-  static const primary = Color(0xFF2563EB);
-  static const primaryDark = Color(0xFF1D4ED8);
-  static const primaryLight = Color(0xFF3B82F6);
+  static const primary = Color(0xFF128C7E);
+  static const primaryDark = Color(0xFF002E6A);
+  static const primaryLight = Color(0xFF1AAD9F);
 
   static const success = Color(0xFF16A34A);
   static const warning = Color(0xFFD97706);
   static const danger = Color(0xFFDC2626);
-  static const info = Color(0xFF2563EB);
+  static const info = Color(0xFF128C7E);
 
   // Light theme surfaces / text.
   static const lightBackground = Color(0xFFF8FAFC);
