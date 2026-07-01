@@ -54,7 +54,7 @@ GoRouter createRouter() {
         routes: [
           GoRoute(path: '/dashboard', redirect: (context, state) => '/dashboard/inbox'),
           ShellRoute(
-            builder: (context, state, child) => InboxScreen(detail: child),
+            builder: (context, state, child) => InboxScreen(key: ValueKey(state.uri.path), detail: child),
             routes: [
               GoRoute(path: '/dashboard/inbox', builder: (context, state) => const InboxEmptyDetail()),
               GoRoute(

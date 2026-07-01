@@ -90,15 +90,9 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    final activeAccounts = _getActiveWabaAccounts(authVm);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _autoSelectFirstWaba(authVm);
     });
-
-    final selectedAccount = activeAccounts.cast<WabaAccount?>().firstWhere(
-      (a) => a!.id == _selectedWabaId,
-      orElse: () => null,
-    );
 
     return Scaffold(
       appBar: isMobile
@@ -109,57 +103,21 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
                   onPressed: () => Scaffold.of(context).openDrawer(),
                 ),
               ),
-              title: activeAccounts.isNotEmpty
-                  ? Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            'assets/icon/icon.png',
-                            width: 28,
-                            height: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: DropdownButtonHideUnderline(
-                            child: DropdownButton<String>(
-                              value: selectedAccount?.id,
-                              isDense: true,
-                              icon: const PhosphorIcon(PhosphorIconsRegular.caretDown, size: 14),
-                              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                              items: activeAccounts.map((account) {
-                                return DropdownMenuItem<String>(
-                                  value: account.id,
-                                  child: Text(
-                                    account.name,
-                                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                );
-                              }).toList(),
-                              onChanged: (value) => _selectWaba(value),
-                            ),
-                          ),
-                        ),
-                      ],
-                    )
-                  : Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: Image.asset(
-                            'assets/icon/icon.png',
-                            width: 28,
-                            height: 28,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        const Text('BizlInbox'),
-                      ],
+              title: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: Image.asset(
+                      'assets/icon/icon.png',
+                      width: 28,
+                      height: 28,
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text('BizlInbox'),
+                ],
+              ),
               actions: [
                 PopupMenuButton<String>(
                   offset: const Offset(0, 40),
@@ -205,7 +163,16 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
               ],
             )
           : null,
-      drawer: isMobile ? Drawer(child: Sidebar(onItemSelected: () => Navigator.of(context).pop())) : null,
+      drawer: isMobile
+          ? Drawer(
+              backgroundColor: Colors.white,
+              child: SafeArea(
+                top: true,
+                bottom: true,
+                child: Sidebar(onItemSelected: () => Navigator.of(context).pop()),
+              ),
+            )
+          : null,
       body: Row(
         children: [
           if (!isMobile) const Sidebar(),
