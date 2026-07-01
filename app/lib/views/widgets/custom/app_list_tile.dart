@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppListTile extends StatelessWidget {
   final Widget? leading;
@@ -31,24 +32,32 @@ class AppListTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    final defaultSelectedColor = isDark ? const Color(0xFF334155) : const Color(0xFFEEF2FF);
-    final bgColor = selected
-        ? (selectedTileColor ?? defaultSelectedColor)
-        : Colors.transparent;
+    final defaultSelectedColor = isDark
+        ? AppColors.primary.withValues(alpha: 0.16)
+        : AppColors.primary.withValues(alpha: 0.08);
+    final bgColor = selected ? (selectedTileColor ?? defaultSelectedColor) : Colors.transparent;
 
-    final titleColor = isDark ? Colors.white : const Color(0xFF1E293B);
-    final subtitleColor = isDark ? const Color(0xFF94A3B8) : const Color(0xFF64748B);
+    final titleColor = selected
+        ? (isDark ? AppColors.primaryLight : AppColors.primaryDark)
+        : (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary);
+    final subtitleColor = isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary;
 
     Widget tile = Container(
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(borderRadius),
+        border: selected
+            ? Border(left: BorderSide(color: AppColors.primary, width: 3))
+            : const Border(left: BorderSide(color: Colors.transparent, width: 3)),
       ),
       padding: padding,
       child: Row(
         children: [
           if (leading != null) ...[
-            leading!,
+            IconTheme(
+              data: IconThemeData(color: selected ? AppColors.primary : theme.iconTheme.color),
+              child: leading!,
+            ),
             const SizedBox(width: 12),
           ],
           Expanded(
@@ -60,7 +69,7 @@ class AppListTile extends StatelessWidget {
                   DefaultTextStyle(
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: titleColor,
                     ),
                     child: title!,
@@ -85,11 +94,16 @@ class AppListTile extends StatelessWidget {
     );
 
     if (onTap != null || onLongPress != null) {
-      tile = GestureDetector(
-        onTap: onTap,
-        onLongPress: onLongPress,
-        behavior: HitTestBehavior.opaque,
-        child: tile,
+      tile = Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(borderRadius),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          borderRadius: BorderRadius.circular(borderRadius),
+          mouseCursor: SystemMouseCursors.click,
+          child: tile,
+        ),
       );
     }
 

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../core/services/theme_service.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import 'custom/custom_widgets.dart';
@@ -97,20 +98,32 @@ class _SidebarState extends State<Sidebar> {
       orElse: () => null,
     );
 
+    final theme = Theme.of(context);
     return Container(
       width: 260,
-      color: Theme.of(context).colorScheme.surface,
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(right: BorderSide(color: theme.dividerTheme.color ?? theme.colorScheme.outlineVariant)),
+      ),
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
             child: Row(
               children: [
-                const Icon(Icons.message, color: Color(0xFF2563EB)),
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.message_rounded, color: Colors.white, size: 18),
+                ),
                 const SizedBox(width: 12),
                 Text(
                   'BizlInbox',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ],
             ),

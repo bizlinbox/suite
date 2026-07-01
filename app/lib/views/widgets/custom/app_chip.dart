@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppChip extends StatelessWidget {
   final String label;
@@ -26,13 +27,13 @@ class AppChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bg = selected
-        ? (selectedColor ?? const Color(0xFF2563EB))
+        ? (selectedColor ?? AppColors.primary)
         : (backgroundColor ?? (isDark ? const Color(0xFF334155) : const Color(0xFFF1F5F9)));
     final fg = selected
         ? (selectedLabelColor ?? Colors.white)
-        : (labelColor ?? (isDark ? Colors.white70 : const Color(0xFF475569)));
+        : (labelColor ?? (isDark ? AppColors.darkTextSecondary : const Color(0xFF475569)));
 
-    Widget chip = Container(
+    Widget content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: bg,
@@ -53,10 +54,13 @@ class AppChip extends StatelessWidget {
             const SizedBox(width: 4),
             GestureDetector(
               onTap: onDeleted,
-              child: Icon(
-                Icons.close,
-                size: 14,
-                color: fg,
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: Icon(
+                  Icons.close,
+                  size: 14,
+                  color: fg,
+                ),
               ),
             ),
           ],
@@ -64,10 +68,17 @@ class AppChip extends StatelessWidget {
       ),
     );
 
+    Widget chip = content;
     if (onSelected != null) {
-      chip = GestureDetector(
-        onTap: () => onSelected!(!selected),
-        child: chip,
+      chip = Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        child: InkWell(
+          onTap: () => onSelected!(!selected),
+          borderRadius: BorderRadius.circular(20),
+          mouseCursor: SystemMouseCursors.click,
+          child: content,
+        ),
       );
     }
 

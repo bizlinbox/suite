@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppFloatingActionButton extends StatelessWidget {
   final Widget? icon;
@@ -26,20 +27,20 @@ class AppFloatingActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = backgroundColor ?? const Color(0xFF2563EB);
+    final bgColor = backgroundColor ?? AppColors.primary;
     final fgColor = iconColor ?? Colors.white;
 
     final effectiveLabel = label ?? (labelText != null ? Text(labelText!) : null);
     final effectiveIcon = icon ?? (iconData != null ? Icon(iconData!) : null);
+    final borderRadius = BorderRadius.circular(size / 2);
 
-    return GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: effectiveLabel != null ? null : size,
-        height: size,
+    return Material(
+      color: Colors.transparent,
+      borderRadius: borderRadius,
+      child: Ink(
         decoration: BoxDecoration(
           color: bgColor,
-          borderRadius: BorderRadius.circular(size / 2),
+          borderRadius: borderRadius,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.2),
@@ -48,23 +49,33 @@ class AppFloatingActionButton extends StatelessWidget {
             ),
           ],
         ),
-        padding: effectiveLabel != null ? const EdgeInsets.symmetric(horizontal: 16) : null,
-        child: child ?? Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (effectiveIcon != null) ...[
-              effectiveIcon,
-              if (effectiveLabel != null) const SizedBox(width: 8),
-            ],
-            if (effectiveLabel != null)
-              DefaultTextStyle(
-                style: TextStyle(
-                  color: onPressed == null ? fgColor.withValues(alpha: 0.5) : fgColor,
-                  fontWeight: FontWeight.w500,
-                ),
-                child: effectiveLabel,
-              ),
-          ],
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: borderRadius,
+          mouseCursor: onPressed != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          child: Container(
+            width: effectiveLabel != null ? null : size,
+            height: size,
+            alignment: Alignment.center,
+            padding: effectiveLabel != null ? const EdgeInsets.symmetric(horizontal: 16) : null,
+            child: child ?? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (effectiveIcon != null) ...[
+                  IconTheme(data: IconThemeData(color: fgColor), child: effectiveIcon),
+                  if (effectiveLabel != null) const SizedBox(width: 8),
+                ],
+                if (effectiveLabel != null)
+                  DefaultTextStyle(
+                    style: TextStyle(
+                      color: onPressed == null ? fgColor.withValues(alpha: 0.5) : fgColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    child: effectiveLabel,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
     );

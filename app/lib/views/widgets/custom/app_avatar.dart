@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppAvatar extends StatelessWidget {
   final String? text;
@@ -24,9 +25,9 @@ class AppAvatar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final bgColor = backgroundColor ??
-        (isDark ? const Color(0xFF334155) : const Color(0xFFDBEAFE));
+        (isDark ? AppColors.darkBorder : const Color(0xFFDBEAFE));
     final fgColor = textColor ??
-        (isDark ? Colors.white : const Color(0xFF2563EB));
+        (isDark ? Colors.white : AppColors.primary);
 
     final effectiveSize = radius != null ? radius! * 2 : size;
 

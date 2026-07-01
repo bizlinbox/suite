@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppCard extends StatelessWidget {
   final Widget child;
@@ -26,39 +27,40 @@ class AppCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+    final fill = color ?? backgroundColor ?? (isDark ? AppColors.darkSurface : AppColors.lightSurface);
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
-    Widget content = Container(
-      decoration: BoxDecoration(
-        color: color ?? backgroundColor ?? (isDark ? const Color(0xFF1E293B) : Colors.white),
-        borderRadius: BorderRadius.circular(borderRadius),
-        border: elevation == 0
-            ? Border.all(
-                color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
-              )
-            : null,
-        boxShadow: elevation > 0
-            ? [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.08 * elevation),
-                  blurRadius: 8 * elevation,
-                  offset: Offset(0, 2 * elevation),
-                ),
-              ]
-            : null,
-      ),
-      child: Padding(
-        padding: padding ?? const EdgeInsets.all(16),
-        child: child,
-      ),
+    final decoration = BoxDecoration(
+      color: fill,
+      borderRadius: BorderRadius.circular(borderRadius),
+      border: elevation == 0 ? Border.all(color: borderColor) : null,
+      boxShadow: elevation > 0
+          ? [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.06 * elevation),
+                blurRadius: 10 * elevation,
+                offset: Offset(0, 2 * elevation),
+              ),
+            ]
+          : null,
     );
 
-    if (onTap != null) {
-      content = GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: content,
-      );
-    }
+    Widget content = Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: Ink(
+        decoration: decoration,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(borderRadius),
+          mouseCursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          child: Padding(
+            padding: padding ?? const EdgeInsets.all(16),
+            child: child,
+          ),
+        ),
+      ),
+    );
 
     if (margin != null) {
       content = Padding(

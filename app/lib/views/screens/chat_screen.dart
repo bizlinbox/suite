@@ -579,6 +579,14 @@ class _MessageBubble extends StatelessWidget {
     final isMe = message.senderType == 'agent';
     final hasMedia = message.mediaUrl != null && message.mediaUrl!.isNotEmpty;
     final isMediaMessage = hasMedia || (message.messageType != null && message.messageType != 'text');
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    final bubbleColor = isMe
+        ? (isDark ? const Color(0xFF14532D) : const Color(0xFFDCF8C6))
+        : Theme.of(context).colorScheme.surfaceContainerHighest;
+    final textColor = isMe
+        ? (isDark ? Colors.white : Colors.black87)
+        : Theme.of(context).colorScheme.onSurface;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -586,7 +594,7 @@ class _MessageBubble extends StatelessWidget {
         margin: const EdgeInsets.symmetric(vertical: 4),
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isMe ? const Color(0xFFDCF8C6) : Theme.of(context).colorScheme.surfaceContainerHighest,
+          color: bubbleColor,
           borderRadius: BorderRadius.circular(12),
           boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4)],
         ),
@@ -598,7 +606,7 @@ class _MessageBubble extends StatelessWidget {
             if (message.content.isNotEmpty)
               SelectableText(
                 message.content,
-                style: TextStyle(color: isMe ? Colors.black87 : Theme.of(context).colorScheme.onSurface),
+                style: TextStyle(color: textColor),
               ),
             const SizedBox(height: 4),
             Row(
@@ -606,7 +614,7 @@ class _MessageBubble extends StatelessWidget {
               children: [
                 Text(
                   _formatTime(message.createdAt),
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  style: TextStyle(fontSize: 11, color: textColor.withValues(alpha: 0.6)),
                 ),
                 if (isMe) ...[
                   const SizedBox(width: 4),

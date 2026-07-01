@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppSwitch extends StatelessWidget {
   final bool value;
@@ -21,39 +22,41 @@ class AppSwitch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final activeColor = const Color(0xFF2563EB);
-    final trackColor = value
-        ? activeColor.withValues(alpha: 0.4)
-        : (isDark ? const Color(0xFF475569) : const Color(0xFFD1D5DB));
-    final thumbColor = value ? activeColor : (isDark ? const Color(0xFF94A3B8) : Colors.white);
+    final activeColor = AppColors.primary;
+    final trackColor = value ? activeColor : (isDark ? const Color(0xFF475569) : const Color(0xFFD1D5DB));
+    final thumbColor = Colors.white;
 
-    Widget switchWidget = GestureDetector(
-      onTap: onChanged != null ? () => onChanged!(!value) : null,
-      child: Container(
-        width: 48,
-        height: 28,
-        decoration: BoxDecoration(
-          color: trackColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        padding: const EdgeInsets.all(4),
-        child: AnimatedAlign(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeInOut,
-          alignment: value ? Alignment.centerRight : Alignment.centerLeft,
-          child: Container(
-            width: 20,
-            height: 20,
-            decoration: BoxDecoration(
-              color: thumbColor,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.1),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ],
+    Widget switchWidget = MouseRegion(
+      cursor: onChanged != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+      child: GestureDetector(
+        onTap: onChanged != null ? () => onChanged!(!value) : null,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          width: 44,
+          height: 26,
+          decoration: BoxDecoration(
+            color: trackColor,
+            borderRadius: BorderRadius.circular(13),
+          ),
+          padding: const EdgeInsets.all(3),
+          child: AnimatedAlign(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: thumbColor,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 2,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

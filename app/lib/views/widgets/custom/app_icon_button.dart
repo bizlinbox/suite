@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppIconButton extends StatelessWidget {
   final Widget? icon;
@@ -26,22 +27,28 @@ class AppIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final iconColor = color ?? (isDark ? Colors.white70 : const Color(0xFF64748B));
+    final iconColor = color ?? (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary);
     final bgColor = backgroundColor ?? Colors.transparent;
+    final enabled = onPressed != null;
 
-    Widget button = GestureDetector(
-      onTap: onPressed,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(borderRadius),
-        ),
-        child: icon ?? Icon(
-          iconData ?? Icons.help,
-          size: size * 0.5,
-          color: onPressed == null ? iconColor.withValues(alpha: 0.4) : iconColor,
+    Widget button = Material(
+      color: bgColor,
+      borderRadius: BorderRadius.circular(borderRadius),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(borderRadius),
+        mouseCursor: enabled ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        child: SizedBox(
+          width: size,
+          height: size,
+          child: Center(
+            child: icon ??
+                Icon(
+                  iconData ?? Icons.help,
+                  size: size * 0.5,
+                  color: enabled ? iconColor : iconColor.withValues(alpha: 0.4),
+                ),
+          ),
         ),
       ),
     );

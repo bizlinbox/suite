@@ -25,14 +25,19 @@ class AppAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = backgroundColor ??
-        (isDark ? const Color(0xFF1E293B) : const Color(0xFF2563EB));
-    final fgColor = foregroundColor ?? Colors.white;
+    final theme = Theme.of(context);
+    final appBarTheme = theme.appBarTheme;
+    final bgColor = backgroundColor ?? appBarTheme.backgroundColor ?? theme.colorScheme.surface;
+    final fgColor = foregroundColor ?? appBarTheme.foregroundColor ?? theme.colorScheme.onSurface;
+    final borderColor = theme.dividerTheme.color ?? theme.colorScheme.outlineVariant;
 
     return Container(
       color: bgColor,
       padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: bgColor,
+        border: Border(bottom: BorderSide(color: borderColor)),
+      ),
       child: SafeArea(
         bottom: false,
         child: Column(

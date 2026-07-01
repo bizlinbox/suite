@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_theme.dart';
 
 class AppDropdownItem<T> {
   final T value;
@@ -59,10 +60,10 @@ class AppDropdown<T> extends StatelessWidget {
         ],
         Container(
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+            color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: isDark ? const Color(0xFF334155) : const Color(0xFFE2E8F0),
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
             ),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -71,6 +72,7 @@ class AppDropdown<T> extends StatelessWidget {
               value: effectiveValue,
               isExpanded: isExpanded,
               isDense: isDense,
+              borderRadius: BorderRadius.circular(borderRadius),
               hint: hint ?? (hintText != null
                   ? Text(
                       hintText!,
@@ -81,11 +83,11 @@ class AppDropdown<T> extends StatelessWidget {
                   : null),
               icon: Icon(
                 Icons.keyboard_arrow_down,
-                color: isDark ? Colors.white70 : const Color(0xFF64748B),
+                color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
               ),
-              dropdownColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+              dropdownColor: isDark ? AppColors.darkSurface : Colors.white,
               style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                color: isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary,
                 fontSize: 14,
               ),
               items: items,

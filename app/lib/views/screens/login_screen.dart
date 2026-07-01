@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../core/di.dart';
+import '../../core/theme/app_theme.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
@@ -39,108 +40,124 @@ class _LoginBodyState extends State<_LoginBody> {
   @override
   Widget build(BuildContext context) {
     final loginVm = context.watch<LoginViewModel>();
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.lightBackground,
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
             child: AppCard(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.message, size: 48, color: Color(0xFF2563EB)),
-                    const SizedBox(height: 16),
-                    Text(
-                      loginVm.platformName,
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              elevation: 3,
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: BorderRadius.circular(14),
                     ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Sign in to your account',
-                      style: TextStyle(color: Colors.grey),
+                    child: const Icon(Icons.message_rounded, size: 28, color: Colors.white),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    loginVm.platformName,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Sign in to your account',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary,
                     ),
-                    const SizedBox(height: 24),
-                    if (loginVm.isError)
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          loginVm.errorMessage,
-                          style: TextStyle(color: Colors.red.shade700),
-                        ),
-                      ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: const Icon(Icons.email_outlined),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                    ),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: AppIconButton(
-                          icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                          onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                        ),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    SizedBox(
+                  ),
+                  const SizedBox(height: 28),
+                  if (loginVm.isError)
+                    Container(
                       width: double.infinity,
-                      child: AppButton(variant: AppButtonVariant.primary, 
-                        onPressed: loginVm.isBusy ? null : () => _login(context, loginVm),
-                        child: loginVm.isBusy
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Text('Sign In'),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: isDark ? 0.15 : 0.08),
+                        borderRadius: BorderRadius.circular(AppRadius.sm),
+                        border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.error_outline, color: AppColors.danger, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              loginVm.errorMessage,
+                              style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    AppButton(variant: AppButtonVariant.ghost, 
-                      onPressed: () => context.go('/domain'),
-                      child: const Text('Change domain'),
+                  AppTextField(
+                    controller: _emailController,
+                    labelText: 'Email',
+                    prefix: const Icon(Icons.email_outlined, size: 20),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  AppTextField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    labelText: 'Password',
+                    prefix: const Icon(Icons.lock_outline, size: 20),
+                    suffix: AppIconButton(
+                      size: 32,
+                      icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined, size: 20),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                    if (loginVm.enableRegistration)
-                      AppButton(variant: AppButtonVariant.ghost, 
-                        onPressed: () => Navigator.of(context).push(
-                          MaterialPageRoute(builder: (_) => const RegisterScreen()),
-                        ),
-                        child: const Text('Create an account'),
-                      ),
-                    AppButton(variant: AppButtonVariant.ghost, 
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: AppButton(
+                      variant: AppButtonVariant.primary,
+                      isLoading: loginVm.isBusy,
+                      onPressed: loginVm.isBusy ? null : () => _login(context, loginVm),
+                      child: const Text('Sign In'),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  AppButton(
+                    variant: AppButtonVariant.ghost,
+                    onPressed: () => context.go('/domain'),
+                    child: const Text('Change domain'),
+                  ),
+                  if (loginVm.enableRegistration)
+                    AppButton(
+                      variant: AppButtonVariant.ghost,
                       onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const SetupScreen()),
+                        MaterialPageRoute(builder: (_) => const RegisterScreen()),
                       ),
-                      child: const Text('Initial setup'),
+                      child: const Text('Create an account'),
                     ),
-                    AppButton(variant: AppButtonVariant.ghost, 
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const AcceptInviteScreen()),
-                      ),
-                      child: const Text('Have an invite?'),
+                  AppButton(
+                    variant: AppButtonVariant.ghost,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const SetupScreen()),
                     ),
-                  ],
-                ),
+                    child: const Text('Initial setup'),
+                  ),
+                  AppButton(
+                    variant: AppButtonVariant.ghost,
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const AcceptInviteScreen()),
+                    ),
+                    child: const Text('Have an invite?'),
+                  ),
+                ],
               ),
             ),
           ),
