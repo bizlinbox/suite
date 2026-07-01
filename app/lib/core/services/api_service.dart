@@ -8,6 +8,9 @@ class ApiService {
   bool _isRefreshing = false;
   final List<Function(String? error)> _refreshSubscribers = [];
 
+  /// Called when token refresh fails and the user should be logged out.
+  void Function()? onAuthFailure;
+
   ApiService(this._localStorage) {
     _initDio();
   }
@@ -27,6 +30,8 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        // Required for cookie-based auth in Flutter web
+        extra: {'withCredentials': true},
       ),
     );
 
@@ -52,6 +57,11 @@ class ApiService {
               } catch (refreshError) {
                 _isRefreshing = false;
                 _onTokenRefreshed(refreshError.toString());
+                // Notify app about auth failure and clear local state
+                try {
+                  await _localStorage.clearAll();
+                } catch (_) {}
+                onAuthFailure?.call();
                 return handler.reject(error);
               }
             }

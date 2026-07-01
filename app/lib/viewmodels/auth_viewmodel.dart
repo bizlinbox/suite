@@ -58,6 +58,14 @@ class AuthViewModel extends BaseViewModel {
     notifyListeners();
   }
 
+  /// Clears local auth state without calling the backend logout endpoint.
+  /// Used when the API interceptor detects an unrecoverable 401.
+  Future<void> forceLogout() async {
+    await _storage.clearAll();
+    _user = null;
+    notifyListeners();
+  }
+
   void setUser(User? user) {
     _user = user;
     if (user != null) {

@@ -6,6 +6,7 @@ import '../../data/repositories/automation_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'automation_form_screen.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class AutomationsViewModel extends BaseViewModel {
   final AutomationRepository _repo;
@@ -63,7 +64,7 @@ class _AutomationsBody extends StatelessWidget {
 
     if (!authVm.can('automations.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Automations')),
+        appBar: AppAppBar(title: const Text('Automations')),
         body: _buildNoPermission(),
       );
     }
@@ -71,17 +72,17 @@ class _AutomationsBody extends StatelessWidget {
     final canManage = authVm.can('automations.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Automations'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadAutomations(),
           ),
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton.extended(
+          ? AppFloatingActionButton(
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
@@ -96,7 +97,7 @@ class _AutomationsBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.automations.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.automations.isEmpty
               ? const Center(child: Text('No automations found'))
               : ListView.builder(
@@ -104,9 +105,8 @@ class _AutomationsBody extends StatelessWidget {
                   itemCount: vm.automations.length,
                   itemBuilder: (context, index) {
                     final a = vm.automations[index];
-                    return Card(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                    return AppCard(
+                      child: GestureDetector(
                         onTap: () async {
                           final result = await Navigator.push(
                             context,
@@ -116,7 +116,7 @@ class _AutomationsBody extends StatelessWidget {
                             vm.loadAutomations();
                           }
                         },
-                        child: ListTile(
+                        child: AppListTile(
                           title: Text(a.name),
                           subtitle: Text('${a.stepCount} steps | ${a.executionCount} runs'),
                           trailing: Row(
@@ -126,7 +126,7 @@ class _AutomationsBody extends StatelessWidget {
                                 value: a.isActive,
                                 onChanged: (_) => vm.toggle(a.id),
                               ),
-                              IconButton(
+                              AppIconButton(
                                 icon: const Icon(Icons.delete_outline, color: Colors.red),
                                 onPressed: () => _confirmDelete(context, vm, a.id),
                               ),
@@ -143,15 +143,15 @@ class _AutomationsBody extends StatelessWidget {
   void _confirmDelete(BuildContext context, AutomationsViewModel vm, String id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppAlertDialog(
         title: const Text('Delete Automation?'),
         content: const Text('This action cannot be undone.'),
         actions: [
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.primary, 
             onPressed: () {
               Navigator.pop(context);
               vm.deleteAutomation(id);

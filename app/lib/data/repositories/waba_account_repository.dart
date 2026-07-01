@@ -75,7 +75,7 @@ class WabaAccountRepository {
 
   Future<Result<void>> assignAgent(String wabaId, String agentId) async {
     try {
-      await _api.post('/waba-accounts/$wabaId/agents', data: {'agentId': agentId});
+      await _api.post('/waba-accounts/$wabaId/agents', data: {'agent_ids': [agentId]});
       return const Success(null);
     } catch (e) {
       return Error('Failed to assign agent: $e');

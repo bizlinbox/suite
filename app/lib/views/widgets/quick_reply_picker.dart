@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/models/quick_reply_model.dart';
+import 'custom/custom_widgets.dart';
 
 class QuickReplyPicker extends StatelessWidget {
   final List<QuickReply> quickReplies;
@@ -34,14 +35,14 @@ class QuickReplyPicker extends StatelessWidget {
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  IconButton(
+                  AppIconButton(
                     icon: const Icon(Icons.close),
                     onPressed: onDismiss,
                   ),
                 ],
               ),
             ),
-            const Divider(height: 1),
+            const AppDivider(height: 1),
             if (quickReplies.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(24),
@@ -54,7 +55,7 @@ class QuickReplyPicker extends StatelessWidget {
                   itemCount: quickReplies.length,
                   itemBuilder: (context, index) {
                     final qr = quickReplies[index];
-                    return ListTile(
+                    return AppListTile(
                       title: Text(qr.shortcut),
                       subtitle: Text(
                         qr.content,

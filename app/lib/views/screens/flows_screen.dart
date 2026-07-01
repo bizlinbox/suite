@@ -10,6 +10,7 @@ import '../../data/repositories/conversation_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class FlowsViewModel extends BaseViewModel {
   final SettingsRepository _settingsRepo;
@@ -231,7 +232,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('WhatsApp Forms')),
+        appBar: AppAppBar(title: const Text('WhatsApp Forms')),
         body: _buildNoPermission(),
       );
     }
@@ -239,7 +240,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
     final canManage = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('WhatsApp Forms'),
         bottom: TabBar(
           controller: _tabController,
@@ -249,7 +250,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
           ],
         ),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: vm.isBusy && vm.flows.isNotEmpty
                 ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
                 : const Icon(Icons.sync),
@@ -265,7 +266,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
           _SubmissionsTab(vm: vm, canManage: canManage),
         ],
       ),
-      floatingActionButton: canManage && _tabController.index == 0 ? FloatingActionButton(
+      floatingActionButton: canManage && _tabController.index == 0 ? AppFloatingActionButton(
         onPressed: vm.wabaId == null ? null : () => _showCreateEditDialog(context, vm),
         child: const Icon(Icons.add),
       ) : null,
@@ -311,13 +312,13 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
-            return AlertDialog(
+            return AppAlertDialog(
               title: Text(flow == null ? 'Create Flow' : 'Edit Flow'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                     ),
@@ -325,7 +326,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                     InputDecorator(
                       decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
+                        child: AppDropdown<String>(
                           value: category,
                           isExpanded: true,
                           isDense: true,
@@ -351,7 +352,7 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: flowJsonController,
                       decoration: const InputDecoration(
                         labelText: 'Flow JSON Definition',
@@ -365,11 +366,11 @@ class _FlowsBodyState extends State<_FlowsBody> with SingleTickerProviderStateMi
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy
                       ? null
                       : () async {
@@ -416,7 +417,7 @@ class _FlowsTab extends StatelessWidget {
     }
 
     if (vm.isBusy && vm.flows.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppProgressIndicator());
     }
 
     if (vm.flows.isEmpty) {
@@ -428,7 +429,7 @@ class _FlowsTab extends StatelessWidget {
       itemCount: vm.flows.length,
       itemBuilder: (context, index) {
         final flow = vm.flows[index];
-        return Card(
+        return AppCard(
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
@@ -458,31 +459,31 @@ class _FlowsTab extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    IconButton(
+                    AppIconButton(
                       icon: const Icon(Icons.visibility_outlined, size: 20),
                       tooltip: 'Preview JSON',
                       onPressed: () => _showPreviewDialog(context, flow),
                     ),
                     if (canManage)
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.send_outlined, size: 20, color: Colors.blue),
                         tooltip: 'Send',
                         onPressed: () => _showSendDialog(context, vm, flow),
                       ),
                     if (canManage && flow.status != 'PUBLISHED')
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.play_arrow_outlined, size: 20, color: Colors.green),
                         tooltip: 'Publish',
                         onPressed: () => vm.publishFlow(flow.id),
                       ),
                     if (canManage)
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
                         tooltip: 'Edit',
                         onPressed: () => _showEditDialog(context, vm, flow),
                       ),
                     if (canManage)
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
                         tooltip: 'Delete',
                         onPressed: () => _confirmDeleteFlow(context, vm, flow),
@@ -503,7 +504,7 @@ class _FlowsTab extends StatelessWidget {
         : '{}';
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: Text('${flow.name} — JSON'),
         content: SingleChildScrollView(
           child: Container(
@@ -520,7 +521,7 @@ class _FlowsTab extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
           ),
@@ -543,7 +544,7 @@ class _FlowsTab extends StatelessWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
-            return AlertDialog(
+            return AppAlertDialog(
               title: Text('Send Flow: ${flow.name}'),
               content: SingleChildScrollView(
                 child: Column(
@@ -552,7 +553,7 @@ class _FlowsTab extends StatelessWidget {
                     InputDecorator(
                       decoration: const InputDecoration(labelText: 'Conversation', border: OutlineInputBorder()),
                       child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String?>(
+                        child: AppDropdown<String?>(
                           value: selectedConversationId,
                           isExpanded: true,
                           isDense: true,
@@ -569,33 +570,33 @@ class _FlowsTab extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: headerController,
                       decoration: const InputDecoration(labelText: 'Header (optional)', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: bodyController,
                       decoration: const InputDecoration(labelText: 'Body', border: OutlineInputBorder()),
                       maxLines: 2,
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: footerController,
                       decoration: const InputDecoration(labelText: 'Footer (optional)', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: flowTokenController,
                       decoration: const InputDecoration(labelText: 'Flow Token', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: screenController,
                       decoration: const InputDecoration(labelText: 'Screen (optional)', border: OutlineInputBorder(), hintText: 'e.g. SIGN_UP'),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: dataController,
                       decoration: const InputDecoration(
                         labelText: 'Screen Data (optional)',
@@ -609,11 +610,11 @@ class _FlowsTab extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.pop(ctx),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: selectedConversationId == null || vm.isBusy
                       ? null
                       : () async {
@@ -654,12 +655,12 @@ class _FlowsTab extends StatelessWidget {
   Future<void> _confirmDeleteFlow(BuildContext context, FlowsViewModel vm, Flow flow) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Flow'),
         content: Text('Are you sure you want to delete "${flow.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.primary, onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
         ],
       ),
     );
@@ -677,7 +678,7 @@ class _SubmissionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (vm.isBusy && vm.submissions.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: AppProgressIndicator());
     }
 
     if (vm.submissions.isEmpty) {
@@ -689,8 +690,8 @@ class _SubmissionsTab extends StatelessWidget {
       itemCount: vm.submissions.length,
       itemBuilder: (context, index) {
         final s = vm.submissions[index];
-        return Card(
-          child: ListTile(
+        return AppCard(
+          child: AppListTile(
             title: Text(s.flowName ?? 'Unknown Flow'),
             subtitle: Text(s.contactName ?? 'Unknown'),
             trailing: Row(
@@ -698,12 +699,12 @@ class _SubmissionsTab extends StatelessWidget {
               children: [
                 _SubmissionStatusBadge(status: s.status),
                 const SizedBox(width: 8),
-                IconButton(
+                AppIconButton(
                   icon: const Icon(Icons.visibility_outlined, size: 20),
                   onPressed: () => _showSubmissionDetail(context, vm, s),
                 ),
                 if (canManage)
-                  IconButton(
+                  AppIconButton(
                     icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
                     onPressed: () => _confirmDeleteSubmission(context, vm, s),
                   ),
@@ -720,7 +721,7 @@ class _SubmissionsTab extends StatelessWidget {
     final entries = _formatFlowResponseEntries(s.responseJson ?? {});
     await showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: Text('Submission from ${s.contactName ?? 'Unknown'}'),
         content: SingleChildScrollView(
           child: Column(
@@ -764,11 +765,11 @@ class _SubmissionsTab extends StatelessWidget {
           ),
         ),
         actions: [
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => vm.deleteSubmission(s.id),
             child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => Navigator.pop(ctx),
             child: const Text('Close'),
           ),
@@ -780,12 +781,12 @@ class _SubmissionsTab extends StatelessWidget {
   Future<void> _confirmDeleteSubmission(BuildContext context, FlowsViewModel vm, FlowSubmission s) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Submission'),
         content: const Text('Are you sure you want to delete this submission?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.primary, onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
         ],
       ),
     );

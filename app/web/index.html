@@ -31,8 +31,105 @@
 
   <title>BizlInbox</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #0f172a;
+    }
+
+    #flutter-loading {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      z-index: 9999;
+      transition: opacity 0.4s ease;
+    }
+
+    #flutter-loading.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-logo {
+      width: 64px;
+      height: 64px;
+      margin-bottom: 24px;
+      background: #2563eb;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .loading-text {
+      color: #94a3b8;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .progress-track {
+      width: 240px;
+      height: 4px;
+      background: #1e293b;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 100%;
+      height: 100%;
+      background: #2563eb;
+      border-radius: 2px;
+      animation: loading-slide 1.5s ease-in-out infinite;
+      transform-origin: left;
+    }
+
+    @keyframes loading-slide {
+      0% {
+        transform: translateX(-100%) scaleX(0.3);
+      }
+      50% {
+        transform: translateX(0%) scaleX(0.5);
+      }
+      100% {
+        transform: translateX(200%) scaleX(0.3);
+      }
+    }
+  </style>
 </head>
 <body>
+  <div id="flutter-loading">
+    <div class="loading-logo">B</div>
+    <div class="loading-text">Loading BizlInbox...</div>
+    <div class="progress-track">
+      <div class="progress-fill"></div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var loader = document.getElementById('flutter-loading');
+      if (loader) {
+        loader.classList.add('fade-out');
+        setTimeout(function () {
+          if (loader && loader.parentNode) {
+            loader.parentNode.removeChild(loader);
+          }
+        }, 400);
+      }
+    });
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

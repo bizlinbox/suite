@@ -71,7 +71,7 @@ class ConversationRepository {
 
   Future<Result<void>> assignAgent(String conversationId, String? agentId) async {
     try {
-      await _api.put('/conversations/$conversationId/assign', data: {'agentId': agentId});
+      await _api.patch('/conversations/$conversationId/assign', data: {'agent_id': agentId});
       return const Success(null);
     } catch (e) {
       return Error('Failed to assign agent: $e');
@@ -80,7 +80,7 @@ class ConversationRepository {
 
   Future<Result<void>> togglePrivacy(String conversationId, bool isPrivate) async {
     try {
-      await _api.put('/conversations/$conversationId/privacy', data: {'isPrivate': isPrivate});
+      await _api.patch('/conversations/$conversationId/private', data: {'is_private': isPrivate});
       return const Success(null);
     } catch (e) {
       return Error('Failed to toggle privacy: $e');

@@ -8,6 +8,7 @@ import '../../viewmodels/login_viewmodel.dart';
 import 'register_screen.dart';
 import 'setup_screen.dart';
 import 'accept_invite_screen.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({super.key});
@@ -45,7 +46,7 @@ class _LoginBodyState extends State<_LoginBody> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
+            child: AppCard(
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -77,7 +78,7 @@ class _LoginBodyState extends State<_LoginBody> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
@@ -87,13 +88,13 @@ class _LoginBodyState extends State<_LoginBody> {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
+                        suffixIcon: AppIconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
@@ -103,7 +104,7 @@ class _LoginBodyState extends State<_LoginBody> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: loginVm.isBusy ? null : () => _login(context, loginVm),
                         child: loginVm.isBusy
                             ? const SizedBox(
@@ -115,24 +116,24 @@ class _LoginBodyState extends State<_LoginBody> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
+                    AppButton(variant: AppButtonVariant.ghost, 
                       onPressed: () => context.go('/domain'),
                       child: const Text('Change domain'),
                     ),
                     if (loginVm.enableRegistration)
-                      TextButton(
+                      AppButton(variant: AppButtonVariant.ghost, 
                         onPressed: () => Navigator.of(context).push(
                           MaterialPageRoute(builder: (_) => const RegisterScreen()),
                         ),
                         child: const Text('Create an account'),
                       ),
-                    TextButton(
+                    AppButton(variant: AppButtonVariant.ghost, 
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const SetupScreen()),
                       ),
                       child: const Text('Initial setup'),
                     ),
-                    TextButton(
+                    AppButton(variant: AppButtonVariant.ghost, 
                       onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(builder: (_) => const AcceptInviteScreen()),
                       ),

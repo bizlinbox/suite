@@ -6,6 +6,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/quick_reply_dialog.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class QuickRepliesViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -89,7 +90,7 @@ class _QuickRepliesBody extends StatelessWidget {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quick Replies')),
+        appBar: AppAppBar(title: const Text('Quick Replies')),
         body: _buildNoPermission(),
       );
     }
@@ -97,24 +98,24 @@ class _QuickRepliesBody extends StatelessWidget {
     final canManage = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Quick Replies'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadQuickReplies(),
           ),
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton.extended(
+          ? AppFloatingActionButton(
               onPressed: vm.isBusy ? null : () => _showDialog(context, vm),
               icon: const Icon(Icons.add),
               label: const Text('Add Quick Reply'),
             )
           : null,
       body: vm.isBusy && vm.quickReplies.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.quickReplies.isEmpty
               ? const Center(child: Text('No quick replies found'))
               : ListView.builder(
@@ -122,8 +123,8 @@ class _QuickRepliesBody extends StatelessWidget {
                   itemCount: vm.quickReplies.length,
                   itemBuilder: (context, index) {
                     final q = vm.quickReplies[index];
-                    return Card(
-                      child: ListTile(
+                    return AppCard(
+                      child: AppListTile(
                         title: Text('/${q.shortcut}'),
                         subtitle: Text(q.content, maxLines: 2, overflow: TextOverflow.ellipsis),
                         onTap: canManage ? () => _showDialog(context, vm, quickReply: q) : null,
@@ -131,11 +132,11 @@ class _QuickRepliesBody extends StatelessWidget {
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  IconButton(
+                                  AppIconButton(
                                     icon: const Icon(Icons.edit_outlined),
                                     onPressed: () => _showDialog(context, vm, quickReply: q),
                                   ),
-                                  IconButton(
+                                  AppIconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                                     onPressed: () => vm.deleteQuickReply(q.id),
                                   ),

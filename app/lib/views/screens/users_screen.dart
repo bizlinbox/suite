@@ -10,6 +10,7 @@ import '../../data/repositories/user_repository.dart';
 import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class UsersViewModel extends BaseViewModel {
   final UserRepository _userRepo;
@@ -168,7 +169,7 @@ class _UsersBody extends StatelessWidget {
 
     if (!authVm.can('users.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Users')),
+        appBar: AppAppBar(title: const Text('Users')),
         body: _buildNoPermission(),
       );
     }
@@ -176,23 +177,23 @@ class _UsersBody extends StatelessWidget {
     final canManage = authVm.can('users.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Users'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadUsers(),
           ),
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton(
+          ? AppFloatingActionButton(
               onPressed: () => _showAddDialog(context, vm),
               child: const Icon(Icons.add),
             )
           : null,
       body: vm.isBusy && vm.users.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.users.isEmpty
               ? const Center(child: Text('No users found'))
               : ListView.builder(
@@ -200,13 +201,13 @@ class _UsersBody extends StatelessWidget {
                   itemCount: vm.users.length,
                   itemBuilder: (context, index) {
                     final u = vm.users[index];
-                    return Card(
+                    return AppCard(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
                           children: [
-                            ListTile(
-                              leading: CircleAvatar(child: Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?')),
+                            AppListTile(
+                              leading: AppAvatar(child: Text(u.name.isNotEmpty ? u.name[0].toUpperCase() : '?')),
                               title: Text(u.name),
                               subtitle: Text(u.email),
                               trailing: canManage
@@ -214,11 +215,11 @@ class _UsersBody extends StatelessWidget {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Chip(label: Text(u.role)),
-                                        IconButton(
+                                        AppIconButton(
                                           icon: const Icon(Icons.edit_outlined),
                                           onPressed: () => _showEditDialog(context, vm, u),
                                         ),
-                                        IconButton(
+                                        AppIconButton(
                                           icon: const Icon(Icons.delete_outline, color: Colors.red),
                                           onPressed: () => _confirmDelete(context, vm, u),
                                         ),
@@ -226,7 +227,7 @@ class _UsersBody extends StatelessWidget {
                                     )
                                   : Chip(label: Text(u.role)),
                             ),
-                            const Divider(height: 1),
+                            const AppDivider(height: 1),
                             Padding(
                               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                               child: Column(
@@ -280,7 +281,7 @@ class _UsersBody extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final vm = ctx.watch<UsersViewModel>();
-            return AlertDialog(
+            return AppAlertDialog(
               title: const Text('Add User'),
               content: SingleChildScrollView(
                 child: Column(
@@ -329,19 +330,19 @@ class _UsersBody extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                     ],
-                    TextField(
+                    AppTextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: emailController,
                       decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
-                      DropdownButtonFormField<String>(
+                      AppDropdown<String>(
                         initialValue: selectedRole,
                         decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
                         items: vm.roles.map((r) {
@@ -352,20 +353,20 @@ class _UsersBody extends StatelessWidget {
                         },
                       ),
                     const SizedBox(height: 12),
-                    SwitchListTile(
+                    AppSwitch(
                       title: const Text('Send invitation link'),
                       value: sendInvitation,
                       onChanged: (v) => setDialogState(() => sendInvitation = v),
                     ),
                     if (!sendInvitation) ...[
                       const SizedBox(height: 8),
-                      TextField(
+                      AppTextField(
                         controller: passwordController,
                         obscureText: obscurePassword,
                         decoration: InputDecoration(
                           labelText: 'Password',
                           border: const OutlineInputBorder(),
-                          suffixIcon: IconButton(
+                          suffixIcon: AppIconButton(
                             icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
                             onPressed: () => setDialogState(() => obscurePassword = !obscurePassword),
                           ),
@@ -376,11 +377,11 @@ class _UsersBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -419,25 +420,25 @@ class _UsersBody extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final vm = ctx.watch<UsersViewModel>();
-            return AlertDialog(
+            return AppAlertDialog(
               title: const Text('Edit User'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: emailController,
                       decoration: const InputDecoration(labelText: 'Email', border: OutlineInputBorder()),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     if (vm.roles.isNotEmpty)
-                      DropdownButtonFormField<String>(
+                      AppDropdown<String>(
                         initialValue: selectedRole,
                         decoration: const InputDecoration(labelText: 'Role', border: OutlineInputBorder()),
                         items: vm.roles.map((r) {
@@ -451,11 +452,11 @@ class _UsersBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -486,14 +487,13 @@ class _UsersBody extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, UsersViewModel vm, User user) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: const Text('Delete User'),
         content: Text('Are you sure you want to delete ${user.name}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

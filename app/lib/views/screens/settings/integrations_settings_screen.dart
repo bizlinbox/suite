@@ -5,6 +5,7 @@ import '../../../data/models/integration_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../widgets/custom/custom_widgets.dart';
 
 class IntegrationsSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -90,7 +91,7 @@ class _IntegrationsBody extends StatelessWidget {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Integrations')),
+        appBar: AppAppBar(title: const Text('Integrations')),
         body: _buildNoPermission(),
       );
     }
@@ -98,18 +99,18 @@ class _IntegrationsBody extends StatelessWidget {
     final canManage = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Integrations'),
         actions: [
           if (canManage)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.add),
               onPressed: () => _showCreateDialog(context, vm),
             ),
         ],
       ),
       body: vm.isBusy && vm.integrations.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.integrations.isEmpty
               ? const Center(child: Text('No integrations configured'))
               : ListView.builder(
@@ -118,8 +119,8 @@ class _IntegrationsBody extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final i = vm.integrations[index];
                     final urls = (i.config['urls'] as List<dynamic>?)?.cast<String>() ?? [];
-                    return Card(
-                      child: ListTile(
+                    return AppCard(
+                      child: AppListTile(
                         leading: const Icon(Icons.webhook),
                         title: Text(i.name),
                         subtitle: Text('${i.type} \u2022 ${urls.length} URL(s)'),
@@ -131,11 +132,11 @@ class _IntegrationsBody extends StatelessWidget {
                                     value: i.isActive,
                                     onChanged: (v) => vm.toggleIntegration(i.id, v),
                                   ),
-                                  IconButton(
+                                  AppIconButton(
                                     icon: const Icon(Icons.edit_outlined),
                                     onPressed: () => _showEditDialog(context, vm, i),
                                   ),
-                                  IconButton(
+                                  AppIconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                                     onPressed: () => _confirmDelete(context, vm, i),
                                   ),
@@ -192,18 +193,18 @@ class _IntegrationsBody extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final vm = ctx.watch<IntegrationsSettingsViewModel>();
-            return AlertDialog(
+            return AppAlertDialog(
               title: Text(existing == null ? 'Create Integration' : 'Edit Integration'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    AppDropdown<String>(
                       initialValue: type,
                       decoration: const InputDecoration(labelText: 'Type', border: OutlineInputBorder()),
                       items: const [
@@ -214,7 +215,7 @@ class _IntegrationsBody extends StatelessWidget {
                       },
                     ),
                     const SizedBox(height: 12),
-                    SwitchListTile(
+                    AppSwitch(
                       title: const Text('Active'),
                       value: isActive,
                       onChanged: (v) => setDialogState(() => isActive = v),
@@ -233,7 +234,7 @@ class _IntegrationsBody extends StatelessWidget {
                         child: Row(
                           children: [
                             Expanded(
-                              child: TextField(
+                              child: AppTextField(
                                 controller: ctrl,
                                 decoration: InputDecoration(
                                   hintText: 'URL ${idx + 1}',
@@ -241,7 +242,7 @@ class _IntegrationsBody extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            IconButton(
+                            AppIconButton(
                               icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
                               onPressed: () {
                                 if (urlControllers.length > 1) {
@@ -265,11 +266,11 @@ class _IntegrationsBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: nameController.text.trim().isNotEmpty
                       ? () {
                           final urls = urlControllers
@@ -297,14 +298,13 @@ class _IntegrationsBody extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, IntegrationsSettingsViewModel vm, Integration integration) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Integration'),
         content: Text('Are you sure you want to delete "${integration.name}"?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],

@@ -5,6 +5,7 @@ import '../../data/models/template_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class TemplatesViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -46,23 +47,23 @@ class _TemplatesBody extends StatelessWidget {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Templates')),
+        appBar: AppAppBar(title: const Text('Templates')),
         body: _buildNoPermission(),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Templates'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadTemplates(),
           ),
         ],
       ),
       body: vm.isBusy && vm.templates.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.templates.isEmpty
               ? const Center(child: Text('No templates found'))
               : ListView.builder(
@@ -70,8 +71,8 @@ class _TemplatesBody extends StatelessWidget {
                   itemCount: vm.templates.length,
                   itemBuilder: (context, index) {
                     final t = vm.templates[index];
-                    return Card(
-                      child: ListTile(
+                    return AppCard(
+                      child: AppListTile(
                         title: Text(t.templateName),
                         subtitle: Text('${t.category} | ${t.language}'),
                         trailing: Chip(

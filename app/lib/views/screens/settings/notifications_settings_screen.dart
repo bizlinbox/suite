@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/di.dart';
 import '../../../core/services/local_storage_service.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
+import '../../widgets/custom/custom_widgets.dart';
 
 class NotificationsSettingsScreen extends StatelessWidget {
   const NotificationsSettingsScreen({super.key});
@@ -42,7 +43,7 @@ class _NotificationsBody extends StatelessWidget {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Notifications')),
+        appBar: AppAppBar(title: const Text('Notifications')),
         body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -57,16 +58,16 @@ class _NotificationsBody extends StatelessWidget {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Notifications')),
+      appBar: AppAppBar(title: const Text('Notifications')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Card(
+            AppCard(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  ListTile(
+                  AppListTile(
                     leading: Icon(vm.enabled ? Icons.notifications_active : Icons.notifications_off, color: Colors.blue),
                     title: const Text('Push Notifications'),
                     subtitle: Text(vm.enabled ? 'Notifications are enabled' : 'Notifications are disabled'),
@@ -86,7 +87,7 @@ class _NotificationsBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Card(
+            AppCard(
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(

@@ -6,6 +6,7 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/waba_account_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class WabaAccountsViewModel extends BaseViewModel {
   final WabaAccountRepository _repo;
@@ -119,7 +120,7 @@ class _WabaAccountsBody extends StatelessWidget {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('WABA Accounts')),
+        appBar: AppAppBar(title: const Text('WABA Accounts')),
         body: _buildNoPermission(),
       );
     }
@@ -127,23 +128,23 @@ class _WabaAccountsBody extends StatelessWidget {
     final canManage = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('WABA Accounts'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadAccounts(),
           ),
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton(
+          ? AppFloatingActionButton(
               onPressed: () => _showCreateDialog(context, vm),
               child: const Icon(Icons.add),
             )
           : null,
       body: vm.isBusy && vm.accounts.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.accounts.isEmpty
               ? const Center(child: Text('No WABA accounts found'))
               : ListView.builder(
@@ -152,7 +153,7 @@ class _WabaAccountsBody extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final a = vm.accounts[index];
                     final config = vm.webhookConfigs[a.id];
-                    return Card(
+                    return AppCard(
                       child: ExpansionTile(
                         leading: const Icon(Icons.phone_android),
                         title: Text(a.name),
@@ -165,7 +166,7 @@ class _WabaAccountsBody extends StatelessWidget {
                               children: [
                                 Row(
                                   children: [
-                                    FilledButton.tonal(
+                                    AppButton(variant: AppButtonVariant.secondary, 
                                       onPressed: () async {
                                         final msg = await vm.testAccount(a.id);
                                         if (context.mounted) {
@@ -177,7 +178,7 @@ class _WabaAccountsBody extends StatelessWidget {
                                       child: const Text('Test Connection'),
                                     ),
                                     const SizedBox(width: 8),
-                                    FilledButton.tonal(
+                                    AppButton(variant: AppButtonVariant.secondary, 
                                       onPressed: () async {
                                         final msg = await vm.subscribeAccount(a.id);
                                         if (context.mounted) {
@@ -198,7 +199,7 @@ class _WabaAccountsBody extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   _CopyRow(label: 'Verify Token', value: config['verifyToken'] as String? ?? ''),
                                 ] else
-                                  TextButton(
+                                  AppButton(variant: AppButtonVariant.ghost, 
                                     onPressed: () => vm.loadWebhookConfig(a.id),
                                     child: const Text('Load Webhook Config'),
                                   ),
@@ -207,11 +208,11 @@ class _WabaAccountsBody extends StatelessWidget {
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
-                                      IconButton(
+                                      AppIconButton(
                                         icon: const Icon(Icons.edit_outlined),
                                         onPressed: () => _showEditDialog(context, vm, a),
                                       ),
-                                      IconButton(
+                                      AppIconButton(
                                         icon: const Icon(Icons.delete_outline, color: Colors.red),
                                         onPressed: () => _confirmDelete(context, vm, a),
                                       ),
@@ -262,28 +263,28 @@ class _WabaAccountsBody extends StatelessWidget {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final vm = ctx.watch<WabaAccountsViewModel>();
-            return AlertDialog(
+            return AppAlertDialog(
               title: Text(existing == null ? 'Add WA Business Account' : 'Edit Account'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
+                    AppTextField(
                       controller: nameController,
                       decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: phoneController,
                       decoration: const InputDecoration(labelText: 'Phone Number ID', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: businessController,
                       decoration: const InputDecoration(labelText: 'Business Account ID', border: OutlineInputBorder()),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
+                    AppTextField(
                       controller: tokenController,
                       decoration: const InputDecoration(
                         labelText: 'Access Token',
@@ -292,7 +293,7 @@ class _WabaAccountsBody extends StatelessWidget {
                       obscureText: true,
                     ),
                     const SizedBox(height: 12),
-                    SwitchListTile(
+                    AppSwitch(
                       title: const Text('Active'),
                       value: isActive,
                       onChanged: (v) => setDialogState(() => isActive = v),
@@ -301,11 +302,11 @@ class _WabaAccountsBody extends StatelessWidget {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy
                       ? null
                       : () {
@@ -342,14 +343,13 @@ class _WabaAccountsBody extends StatelessWidget {
   Future<void> _confirmDelete(BuildContext context, WabaAccountsViewModel vm, WabaAccount account) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
+      builder: (ctx) => AppAlertDialog(
         title: const Text('Delete Account'),
         content: Text('Are you sure you want to delete ${account.name}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.danger,
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -380,7 +380,7 @@ class _CopyRow extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(
+        AppIconButton(
           icon: const Icon(Icons.copy, size: 18),
           onPressed: () {
             Clipboard.setData(ClipboardData(text: value));

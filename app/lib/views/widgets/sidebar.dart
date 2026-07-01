@@ -6,6 +6,7 @@ import '../../core/services/local_storage_service.dart';
 import '../../core/services/theme_service.dart';
 import '../../data/models/user_model.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import 'custom/custom_widgets.dart';
 
 class NavItem {
   final String label;
@@ -114,10 +115,10 @@ class _SidebarState extends State<Sidebar> {
               ],
             ),
           ),
-          const Divider(height: 1),
+          const AppDivider(height: 1),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-            child: DropdownButtonFormField<String>(
+            child: AppDropdown<String>(
               initialValue: selectedAccount?.id,
               isExpanded: true,
               decoration: const InputDecoration(
@@ -140,7 +141,7 @@ class _SidebarState extends State<Sidebar> {
           if (activeAccounts.isEmpty && authVm.isAdmin)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Card(
+              child: AppCard(
                 color: Colors.amber.withValues(alpha: 0.1),
                 child: Padding(
                   padding: const EdgeInsets.all(12),
@@ -170,8 +171,8 @@ class _SidebarState extends State<Sidebar> {
                     onTap: () => _navigate(item.route),
                   ),
                 ),
-                const Divider(),
-                ListTile(
+                const AppDivider(),
+                AppListTile(
                   leading: const Icon(Icons.settings),
                   title: const Text('Settings'),
                   trailing: Icon(_settingsExpanded ? Icons.expand_less : Icons.expand_more),
@@ -189,8 +190,8 @@ class _SidebarState extends State<Sidebar> {
               ],
             ),
           ),
-          const Divider(height: 1),
-          ListTile(
+          const AppDivider(height: 1),
+          AppListTile(
             leading: const Icon(Icons.logout),
             title: const Text('Logout'),
             onTap: () async {
@@ -198,7 +199,7 @@ class _SidebarState extends State<Sidebar> {
               if (context.mounted) context.go('/login');
             },
           ),
-          const Divider(height: 1),
+          const AppDivider(height: 1),
           _ThemeToggleTile(),
         ],
       ),
@@ -221,13 +222,12 @@ class _NavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
+    return AppListTile(
       leading: Icon(item.icon, color: selected ? Theme.of(context).colorScheme.primary : null),
       title: Text(item.label),
       selected: selected,
       selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      contentPadding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
+      padding: EdgeInsets.only(left: indent ? 32 : 16, right: 16),
       onTap: onTap,
     );
   }
@@ -247,7 +247,7 @@ class _ThemeToggleTile extends StatelessWidget {
       ThemeMode.dark => 'Dark',
       ThemeMode.system => 'System',
     };
-    return ListTile(
+    return AppListTile(
       leading: Icon(icon),
       title: Text('Theme: $label'),
       onTap: () => themeService.toggleTheme(),

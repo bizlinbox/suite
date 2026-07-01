@@ -9,6 +9,7 @@ import '../../core/theme/app_theme.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../widgets/sidebar.dart';
 import '../widgets/mobile_bottom_nav.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class DashboardShell extends StatelessWidget {
   final Widget child;
@@ -53,7 +54,7 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
 
     if (authVm.isBusy) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: Center(child: AppProgressIndicator()),
       );
     }
 
@@ -78,10 +79,10 @@ class _DashboardShellBodyState extends State<_DashboardShellBody> {
           data: themeData,
           child: Scaffold(
             appBar: isMobile
-                ? AppBar(
+                ? AppAppBar(
                     title: const Text('BizlInbox'),
                     actions: [
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.logout),
                         onPressed: () async {
                           await authVm.logout();

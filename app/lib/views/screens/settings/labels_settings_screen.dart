@@ -5,6 +5,7 @@ import '../../../data/models/label_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../widgets/custom/custom_widgets.dart';
 
 class LabelsSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -96,7 +97,7 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Labels')),
+        appBar: AppAppBar(title: const Text('Labels')),
         body: _buildNoPermission(),
       );
     }
@@ -104,19 +105,19 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
     final canManage = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Labels')),
+      appBar: AppAppBar(title: const Text('Labels')),
       body: Column(
         children: [
           if (canManage)
             Padding(
               padding: const EdgeInsets.all(16),
-              child: Card(
+              child: AppCard(
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      TextField(
+                      AppTextField(
                         controller: _nameController,
                         decoration: const InputDecoration(labelText: 'Label Name', border: OutlineInputBorder()),
                       ),
@@ -144,7 +145,7 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                       const SizedBox(height: 16),
                       SizedBox(
                         width: double.infinity,
-                        child: FilledButton(
+                        child: AppButton(variant: AppButtonVariant.primary, 
                           onPressed: vm.isBusy
                               ? null
                               : () {
@@ -163,7 +164,7 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
             ),
           Expanded(
             child: vm.isBusy && vm.labels.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppProgressIndicator())
                 : vm.labels.isEmpty
                     ? const Center(child: Text('No labels yet'))
                     : ListView.builder(
@@ -173,8 +174,8 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                           final l = vm.labels[index];
                           final bg = _parseColor(l.color);
                           final textColor = _textColorForBackground(bg);
-                          return Card(
-                            child: ListTile(
+                          return AppCard(
+                            child: AppListTile(
                               leading: Container(
                                 width: 24,
                                 height: 24,
@@ -191,11 +192,11 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                                   ? Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        IconButton(
+                                        AppIconButton(
                                           icon: const Icon(Icons.edit_outlined),
                                           onPressed: () => _showEditDialog(context, vm, l),
                                         ),
-                                        IconButton(
+                                        AppIconButton(
                                           icon: const Icon(Icons.delete_outline, color: Colors.red),
                                           onPressed: () => vm.deleteLabel(l.id),
                                         ),
@@ -235,17 +236,17 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
         return StatefulBuilder(
           builder: (ctx, setDialogState) {
             final isValid = _hexPattern.hasMatch(colorController.text);
-            return AlertDialog(
+            return AppAlertDialog(
               title: const Text('Edit Label'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(
+                  AppTextField(
                     controller: nameController,
                     decoration: const InputDecoration(labelText: 'Name', border: OutlineInputBorder()),
                   ),
                   const SizedBox(height: 12),
-                  TextField(
+                  AppTextField(
                     controller: colorController,
                     decoration: InputDecoration(
                       labelText: 'Color (hex)',
@@ -289,11 +290,11 @@ class _LabelsSettingsBodyState extends State<_LabelsSettingsBody> {
                 ],
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.of(ctx).pop(),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: isValid && nameController.text.trim().isNotEmpty
                       ? () {
                           vm.updateLabel(label.id, nameController.text.trim(), colorController.text.trim());

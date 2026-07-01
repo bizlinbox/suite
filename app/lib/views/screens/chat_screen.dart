@@ -22,6 +22,7 @@ import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/quick_reply_picker.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 sealed class ChatItem {}
 
@@ -323,14 +324,14 @@ class _ChatBodyState extends State<_ChatBody> {
     final isMobile = MediaQuery.of(context).size.width < 768;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         leading: isMobile
-            ? IconButton(
+            ? AppIconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: () => context.go('/dashboard/inbox'),
               )
             : null,
-        title: InkWell(
+        title: GestureDetector(
           onTap: vm.contact != null
               ? () => _showContactProfile(context, vm.contact!)
               : null,
@@ -351,13 +352,13 @@ class _ChatBodyState extends State<_ChatBody> {
         ),
         actions: [
           if (vm.templates.isNotEmpty)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.description),
               tooltip: 'Send Template',
               onPressed: () => _showTemplatePicker(context, vm),
             ),
           if (vm.flows.isNotEmpty)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.input),
               tooltip: 'Send Flow',
               onPressed: () => _showFlowPicker(context, vm),
@@ -368,7 +369,7 @@ class _ChatBodyState extends State<_ChatBody> {
         children: [
           Expanded(
             child: vm.isBusy && vm.messages.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppProgressIndicator())
                 : ListView.builder(
                     controller: _scrollController,
                     padding: const EdgeInsets.all(12),
@@ -388,12 +389,12 @@ class _ChatBodyState extends State<_ChatBody> {
               padding: const EdgeInsets.all(8),
               child: Row(
                 children: [
-                  IconButton(
+                  AppIconButton(
                     icon: const Icon(Icons.attach_file),
                     onPressed: vm.isBusy ? null : () => _pickAndUploadFile(vm),
                   ),
                   Expanded(
-                    child: TextField(
+                    child: AppTextField(
                       controller: _textController,
                       decoration: InputDecoration(
                         hintText: 'Type a message...',
@@ -438,14 +439,14 @@ class _ChatBodyState extends State<_ChatBody> {
               padding: EdgeInsets.all(16),
               child: Text('Send Template', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            const Divider(height: 1),
+            const AppDivider(height: 1),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: vm.templates.length,
                 itemBuilder: (context, index) {
                   final t = vm.templates[index];
-                  return ListTile(
+                  return AppListTile(
                     title: Text(t.templateName),
                     subtitle: Text('${t.category} • ${t.language}'),
                     onTap: () {
@@ -474,14 +475,14 @@ class _ChatBodyState extends State<_ChatBody> {
               padding: EdgeInsets.all(16),
               child: Text('Send Flow', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            const Divider(height: 1),
+            const AppDivider(height: 1),
             Flexible(
               child: ListView.builder(
                 shrinkWrap: true,
                 itemCount: vm.flows.length,
                 itemBuilder: (context, index) {
                   final f = vm.flows[index];
-                  return ListTile(
+                  return AppListTile(
                     title: Text(f.name),
                     subtitle: Text(f.status),
                     onTap: () {
@@ -676,9 +677,8 @@ class _MediaContent extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 4),
-      child: InkWell(
+      child: GestureDetector(
         onTap: () => _openUrl(url),
-        borderRadius: BorderRadius.circular(8),
         child: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(

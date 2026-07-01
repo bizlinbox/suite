@@ -8,6 +8,7 @@ import '../../../data/models/organization_model.dart';
 import '../../../data/repositories/settings_repository.dart';
 import '../../../viewmodels/auth_viewmodel.dart';
 import '../../../viewmodels/base_viewmodel.dart';
+import '../../widgets/custom/custom_widgets.dart';
 
 class GeneralSettingsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -167,7 +168,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('General Settings')),
+        appBar: AppAppBar(title: const Text('General Settings')),
         body: _buildNoPermission(),
       );
     }
@@ -183,9 +184,9 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('General Settings')),
+      appBar: AppAppBar(title: const Text('General Settings')),
       body: vm.isBusy && org == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : org == null
               ? const Center(child: Text('No organization found'))
               : SingleChildScrollView(
@@ -244,7 +245,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                                   : null,
                             ),
                             child: _uploadingLogo
-                                ? const Center(child: CircularProgressIndicator())
+                                ? const Center(child: AppProgressIndicator())
                                 : _logoUrl == null
                                     ? const Center(child: Icon(Icons.add_photo_alternate, size: 40, color: Colors.grey))
                                     : null,
@@ -254,19 +255,19 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                       const SizedBox(height: 24),
                       const Text('Organization Details', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       const SizedBox(height: 16),
-                      TextField(
+                      AppTextField(
                         controller: _nameController,
                         enabled: canManage,
                         decoration: const InputDecoration(labelText: 'Organization Name', border: OutlineInputBorder()),
                       ),
                       const SizedBox(height: 16),
-                      TextField(
+                      AppTextField(
                         controller: _platformNameController,
                         enabled: canManage,
                         decoration: const InputDecoration(labelText: 'Platform Name', border: OutlineInputBorder()),
                       ),
                       const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
+                      AppDropdown<String>(
                         initialValue: _timezone,
                         decoration: const InputDecoration(labelText: 'Timezone', border: OutlineInputBorder()),
                         items: _timezones.map((tz) {
@@ -275,7 +276,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                         onChanged: canManage ? (v) => setState(() => _timezone = v ?? 'UTC') : null,
                       ),
                       const SizedBox(height: 16),
-                      SwitchListTile(
+                      AppSwitch(
                         title: const Text('Public Registration'),
                         subtitle: const Text('Allow anyone to create an account'),
                         value: _enablePublicRegistration,
@@ -285,7 +286,7 @@ class _GeneralSettingsBodyState extends State<_GeneralSettingsBody> {
                       if (canManage)
                         SizedBox(
                           width: double.infinity,
-                          child: FilledButton(
+                          child: AppButton(variant: AppButtonVariant.primary, 
                             onPressed: vm.isBusy
                                 ? null
                                 : () => vm.saveOrganization(org.id, {

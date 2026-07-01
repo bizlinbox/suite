@@ -5,6 +5,7 @@ import '../../core/di.dart';
 import '../../core/services/api_service.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../viewmodels/domain_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class DomainScreen extends StatelessWidget {
   const DomainScreen({super.key});
@@ -47,7 +48,7 @@ class _DomainBodyState extends State<_DomainBody> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
+            child: AppCard(
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -67,7 +68,7 @@ class _DomainBodyState extends State<_DomainBody> {
                       style: TextStyle(color: Colors.grey),
                     ),
                     const SizedBox(height: 24),
-                    TextField(
+                    AppTextField(
                       controller: _controller,
                       decoration: InputDecoration(
                         labelText: 'Domain URL',
@@ -88,7 +89,7 @@ class _DomainBodyState extends State<_DomainBody> {
                     const SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: vm.isBusy ? null : () => _save(context, vm),
                         child: vm.isBusy
                             ? const SizedBox(

@@ -7,6 +7,7 @@ import '../../data/models/api_log_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class ApiLogsViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -153,7 +154,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
 
     if (!authVm.can('settings.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('API Logs')),
+        appBar: AppAppBar(title: const Text('API Logs')),
         body: _buildNoPermission(),
       );
     }
@@ -161,15 +162,15 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
     final canClear = authVm.can('settings.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('API Logs'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadLogs(),
           ),
           if (canClear)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.delete_outline),
               onPressed: vm.isBusy ? null : () => vm.clearLogs(),
             ),
@@ -189,7 +190,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
+                      child: AppDropdown<String>(
                         value: vm.direction,
                         isDense: true,
                         items: const [
@@ -211,7 +212,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
                     child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
+                      child: AppDropdown<String>(
                         value: vm.provider,
                         isDense: true,
                         items: const [
@@ -232,7 +233,7 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
           const SizedBox(height: 8),
           Expanded(
             child: vm.isBusy && vm.logs.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppProgressIndicator())
                 : vm.logs.isEmpty
                     ? const Center(child: Text('No API logs found'))
                     : ListView.builder(
@@ -240,8 +241,8 @@ class _ApiLogsBodyState extends State<_ApiLogsBody> {
                         itemCount: vm.logs.length,
                         itemBuilder: (context, index) {
                           final log = vm.logs[index];
-                          return Card(
-                            child: ListTile(
+                          return AppCard(
+                            child: AppListTile(
                               leading: _DirectionBadge(direction: log.direction),
                               title: Text(
                                 log.endpoint,

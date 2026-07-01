@@ -5,6 +5,7 @@ import '../../core/utils/result.dart';
 import '../../data/models/automation_model.dart';
 import '../../data/repositories/automation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class AutomationFormViewModel extends BaseViewModel {
   final AutomationRepository _repo;
@@ -160,7 +161,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
 
   Widget _buildConditionCard(int index) {
     final condition = _conditions[index];
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -169,20 +170,20 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
             Row(
               children: [
                 const Expanded(child: Text('Condition', style: TextStyle(fontWeight: FontWeight.bold))),
-                IconButton(
+                AppIconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _removeCondition(index),
                 ),
               ],
             ),
-            DropdownButtonFormField<String>(
+            AppDropdown<String>(
               initialValue: condition.field,
               decoration: const InputDecoration(labelText: 'Field'),
               items: ['message'].map((f) => DropdownMenuItem(value: f, child: Text(f))).toList(),
               onChanged: (v) => setState(() => condition.field = v ?? 'message'),
             ),
             const SizedBox(height: 8),
-            DropdownButtonFormField<String>(
+            AppDropdown<String>(
               initialValue: condition.operator,
               decoration: const InputDecoration(labelText: 'Operator'),
               items: _operators
@@ -208,7 +209,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
 
   Widget _buildActionCard(int index) {
     final action = _actions[index];
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(12),
@@ -217,13 +218,13 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
             Row(
               children: [
                 const Expanded(child: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
-                IconButton(
+                AppIconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _removeAction(index),
                 ),
               ],
             ),
-            DropdownButtonFormField<String>(
+            AppDropdown<String>(
               initialValue: action.type,
               decoration: const InputDecoration(labelText: 'Action Type'),
               items: _actionTypes
@@ -287,7 +288,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
   Widget build(BuildContext context) {
     final vm = context.watch<AutomationFormViewModel>();
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: Text(widget.automation == null ? 'New Automation' : 'Edit Automation'),
       ),
       body: SingleChildScrollView(
@@ -303,13 +304,13 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                 validator: (v) => v == null || v.isEmpty ? 'Required' : null,
               ),
               const SizedBox(height: 12),
-              SwitchListTile(
+              AppSwitch(
                 title: const Text('Active'),
                 value: _isActive,
                 onChanged: (v) => setState(() => _isActive = v),
               ),
               const SizedBox(height: 12),
-              DropdownButtonFormField<String>(
+              AppDropdown<String>(
                 initialValue: _triggerType,
                 decoration: const InputDecoration(labelText: 'Trigger Type'),
                 items: _triggerTypes
@@ -323,7 +324,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                   const Expanded(
                     child: Text('Conditions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  IconButton(
+                  AppIconButton(
                     icon: const Icon(Icons.add_circle, color: Color(0xFF2563EB)),
                     onPressed: _addCondition,
                   ),
@@ -342,7 +343,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
                   const Expanded(
                     child: Text('Actions', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  IconButton(
+                  AppIconButton(
                     icon: const Icon(Icons.add_circle, color: Color(0xFF2563EB)),
                     onPressed: _addAction,
                   ),
@@ -358,7 +359,7 @@ class _AutomationFormBodyState extends State<_AutomationFormBody> {
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
-                child: FilledButton(
+                child: AppButton(variant: AppButtonVariant.primary, 
                   onPressed: vm.isBusy ? null : () => _submit(vm),
                   child: vm.isBusy
                       ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))

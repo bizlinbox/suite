@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../core/di.dart';
 import '../../core/services/api_service.dart';
 import '../../data/models/quick_reply_model.dart';
+import 'custom/custom_widgets.dart';
 
 class QuickReplyDialog extends StatefulWidget {
   final QuickReply? quickReply;
@@ -313,7 +314,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
   Widget build(BuildContext context) {
     final isEdit = widget.quickReply != null;
 
-    return AlertDialog(
+    return AppAlertDialog(
       title: Text(isEdit ? 'Edit Quick Reply' : 'Create Quick Reply'),
       content: SizedBox(
         width: 600,
@@ -335,7 +336,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                       v == null || v.trim().isEmpty ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
-                DropdownButtonFormField<String>(
+                AppDropdown<String>(
                   initialValue: _messageType,
                   decoration: const InputDecoration(
                     labelText: 'Message Type',
@@ -382,11 +383,11 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        AppButton(variant: AppButtonVariant.ghost, 
           onPressed: () => Navigator.of(context).pop(),
           child: const Text('Cancel'),
         ),
-        FilledButton(
+        AppButton(variant: AppButtonVariant.primary, 
           onPressed: _uploading ? null : _submit,
           child: const Text('Save'),
         ),
@@ -404,7 +405,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
         ),
         const SizedBox(height: 8),
         if (_mediaUrl == null || _mediaUrl!.isEmpty)
-          InkWell(
+          GestureDetector(
             onTap: _uploading ? null : _pickAndUploadFile,
             child: Container(
               width: double.infinity,
@@ -456,7 +457,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                IconButton(
+                AppIconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: _clearMedia,
                   tooltip: 'Remove file',
@@ -511,7 +512,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton(
+                AppIconButton(
                   icon: const Icon(Icons.delete_outline, color: Colors.red),
                   onPressed: () => _removeButton(index),
                 ),
@@ -550,7 +551,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
         ..._listSections.asMap().entries.map((sEntry) {
           final sIndex = sEntry.key;
           final section = sEntry.value;
-          return Card(
+          return AppCard(
             margin: const EdgeInsets.only(bottom: 12),
             child: Padding(
               padding: const EdgeInsets.all(12),
@@ -574,7 +575,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      IconButton(
+                      AppIconButton(
                         icon: const Icon(Icons.delete_outline,
                             color: Colors.red),
                         onPressed: () => _removeListSection(sIndex),
@@ -619,7 +620,7 @@ class _QuickReplyDialogState extends State<QuickReplyDialog> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          IconButton(
+                          AppIconButton(
                             icon: const Icon(Icons.delete_outline,
                                 color: Colors.red),
                             onPressed: () => _removeListRow(sIndex, rIndex),

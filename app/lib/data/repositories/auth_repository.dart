@@ -53,8 +53,8 @@ class AuthRepository {
     try {
       final payload = <String, dynamic>{'name': name};
       if (currentPassword != null && newPassword != null) {
-        payload['currentPassword'] = currentPassword;
-        payload['newPassword'] = newPassword;
+        payload['current_password'] = currentPassword;
+        payload['new_password'] = newPassword;
       }
       final res = await _api.patch('/auth/me', data: payload);
       final user = User.fromJson(res.data['user'] as Map<String, dynamic>);
@@ -65,13 +65,13 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> register(String name, String email, String password, String organizationName) async {
+  Future<Result<void>> register(String name, String email, String password, String orgName) async {
     try {
       await _api.post('/auth/register', data: {
         'name': name,
         'email': email,
         'password': password,
-        'organizationName': organizationName,
+        'org_name': orgName,
       });
       return const Success(null);
     } catch (e) {
@@ -79,13 +79,13 @@ class AuthRepository {
     }
   }
 
-  Future<Result<void>> setup(String name, String email, String password, String organizationName) async {
+  Future<Result<void>> setup(String name, String email, String password, String orgName) async {
     try {
       await _api.post('/auth/setup', data: {
         'name': name,
         'email': email,
         'password': password,
-        'organizationName': organizationName,
+        'org_name': orgName,
       });
       return const Success(null);
     } catch (e) {

@@ -7,6 +7,7 @@ import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class ProfileViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -151,14 +152,14 @@ class _ProfileBodyState extends State<_ProfileBody> {
     final user = authVm.user;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Profile')),
+      appBar: AppAppBar(title: const Text('Profile')),
       body: user == null
           ? const Center(child: Text('Not logged in'))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
                     radius: 40,
                     child: Text(
                       user.name.isNotEmpty ? user.name[0].toUpperCase() : '?',
@@ -171,7 +172,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                   const SizedBox(height: 8),
                   Chip(label: Text(user.role)),
                   const SizedBox(height: 24),
-                  Card(
+                  AppCard(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -182,7 +183,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          TextField(
+                          AppTextField(
                             controller: _nameController,
                             decoration: const InputDecoration(
                               labelText: 'Full Name',
@@ -191,7 +192,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          TextField(
+                          AppTextField(
                             enabled: false,
                             decoration: InputDecoration(
                               labelText: 'Email',
@@ -222,7 +223,7 @@ class _ProfileBodyState extends State<_ProfileBody> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  Card(
+                  AppCard(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
                       child: Column(
@@ -233,13 +234,13 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 16),
-                          TextField(
+                          AppTextField(
                             controller: _currentPasswordController,
                             obscureText: _obscureCurrent,
                             decoration: InputDecoration(
                               labelText: 'Current Password',
                               prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
+                              suffixIcon: AppIconButton(
                                 icon: Icon(_obscureCurrent ? Icons.visibility_off : Icons.visibility),
                                 onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
                               ),
@@ -247,13 +248,13 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          TextField(
+                          AppTextField(
                             controller: _newPasswordController,
                             obscureText: _obscureNew,
                             decoration: InputDecoration(
                               labelText: 'New Password',
                               prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
+                              suffixIcon: AppIconButton(
                                 icon: Icon(_obscureNew ? Icons.visibility_off : Icons.visibility),
                                 onPressed: () => setState(() => _obscureNew = !_obscureNew),
                               ),
@@ -261,13 +262,13 @@ class _ProfileBodyState extends State<_ProfileBody> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          TextField(
+                          AppTextField(
                             controller: _confirmPasswordController,
                             obscureText: _obscureConfirm,
                             decoration: InputDecoration(
                               labelText: 'Confirm New Password',
                               prefixIcon: const Icon(Icons.lock_outline),
-                              suffixIcon: IconButton(
+                              suffixIcon: AppIconButton(
                                 icon: Icon(_obscureConfirm ? Icons.visibility_off : Icons.visibility),
                                 onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
                               ),
@@ -296,14 +297,20 @@ class _ProfileBodyState extends State<_ProfileBody> {
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
-                    child: FilledButton.icon(
+                    child: AppButton(
+                      variant: AppButtonVariant.danger,
                       onPressed: () async {
                         await authVm.logout();
                         if (context.mounted) context.go('/login');
                       },
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Logout'),
-                      style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.logout),
+                          SizedBox(width: 8),
+                          Text('Logout'),
+                        ],
+                      ),
                     ),
                   ),
                 ],

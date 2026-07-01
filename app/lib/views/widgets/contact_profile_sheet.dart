@@ -4,6 +4,7 @@ import '../../core/di.dart';
 import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
+import 'custom/custom_widgets.dart';
 
 class ContactProfileSheet extends StatefulWidget {
   final Contact contact;
@@ -152,7 +153,7 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
             Center(
               child: Column(
                 children: [
-                  CircleAvatar(
+                  AppAvatar(
                     radius: 40,
                     child: Text(
                       widget.contact.name.isNotEmpty ? widget.contact.name[0].toUpperCase() : '?',
@@ -196,7 +197,7 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                       const SizedBox(height: 8),
                       const Text('Birthday', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 4),
-                      InkWell(
+                      GestureDetector(
                         onTap: _pickBirthday,
                         child: InputDecorator(
                           decoration: const InputDecoration(
@@ -210,14 +211,14 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                       Row(
                         children: [
                           Expanded(
-                            child: OutlinedButton(
+                            child: AppButton(variant: AppButtonVariant.secondary, 
                               onPressed: _isSaving ? null : () => setState(() => _isEditing = false),
                               child: const Text('Cancel'),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: FilledButton(
+                            child: AppButton(variant: AppButtonVariant.primary, 
                               onPressed: _isSaving ? null : _save,
                               child: _isSaving
                                   ? const SizedBox(height: 16, width: 16, child: CircularProgressIndicator(strokeWidth: 2))
@@ -272,14 +273,14 @@ class _ContactProfileSheetState extends State<ContactProfileSheet> {
                 children: [
                   if (canEdit)
                     Expanded(
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: () => setState(() => _isEditing = true),
                         child: const Text('Edit'),
                       ),
                     ),
                   if (canEdit) const SizedBox(width: 12),
                   Expanded(
-                    child: OutlinedButton(
+                    child: AppButton(variant: AppButtonVariant.secondary, 
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Close'),
                     ),
@@ -334,7 +335,7 @@ class _EditField extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: TextField(
+      child: AppTextField(
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines ?? 1,

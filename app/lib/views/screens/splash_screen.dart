@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/di.dart';
 import '../../core/services/local_storage_service.dart';
 import '../../data/repositories/auth_repository.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -57,7 +58,7 @@ class _SplashScreenState extends State<SplashScreen> {
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 24),
-            CircularProgressIndicator(),
+            AppProgressIndicator(),
           ],
         ),
       ),

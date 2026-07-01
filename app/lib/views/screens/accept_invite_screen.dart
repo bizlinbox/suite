@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class AcceptInviteViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -56,7 +57,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
+            child: AppCard(
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -88,7 +89,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _tokenController,
                       decoration: InputDecoration(
                         labelText: 'Invitation Token',
@@ -97,7 +98,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Name',
@@ -106,13 +107,13 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
+                        suffixIcon: AppIconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
@@ -122,7 +123,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: vm.isBusy
                             ? null
                             : () => _accept(context, vm),
@@ -136,7 +137,7 @@ class _AcceptInviteBodyState extends State<_AcceptInviteBody> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
+                    AppButton(variant: AppButtonVariant.ghost, 
                       onPressed: () => context.go('/login'),
                       child: const Text('Back to Sign In'),
                     ),

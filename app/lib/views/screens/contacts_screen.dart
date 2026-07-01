@@ -7,6 +7,7 @@ import '../../data/models/contact_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class ContactsViewModel extends BaseViewModel {
   final ContactRepository _repo;
@@ -131,7 +132,7 @@ class _ContactsBody extends StatelessWidget {
 
     if (!authVm.can('contacts.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Contacts')),
+        appBar: AppAppBar(title: const Text('Contacts')),
         body: _buildNoPermission(),
       );
     }
@@ -139,15 +140,15 @@ class _ContactsBody extends StatelessWidget {
     final canManage = authVm.can('contacts.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Contacts'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadContacts(),
           ),
           if (canManage)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.upload_file),
               tooltip: 'Import Contacts',
               onPressed: vm.isBusy ? null : () async {
@@ -161,7 +162,7 @@ class _ContactsBody extends StatelessWidget {
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton.extended(
+          ? AppFloatingActionButton(
               onPressed: () async {
                 final result = await showDialog<bool>(
                   context: context,
@@ -179,7 +180,7 @@ class _ContactsBody extends StatelessWidget {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: TextField(
+            child: AppTextField(
               decoration: InputDecoration(
                 hintText: 'Search contacts...',
                 prefixIcon: const Icon(Icons.search),
@@ -190,7 +191,7 @@ class _ContactsBody extends StatelessWidget {
           ),
           Expanded(
             child: vm.isBusy && vm.contacts.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppProgressIndicator())
                 : vm.filteredContacts.isEmpty
                     ? const Center(child: Text('No contacts found'))
                     : ListView.builder(
@@ -198,9 +199,8 @@ class _ContactsBody extends StatelessWidget {
                         itemCount: vm.filteredContacts.length,
                         itemBuilder: (context, index) {
                           final c = vm.filteredContacts[index];
-                          return Card(
-                            child: InkWell(
-                              borderRadius: BorderRadius.circular(12),
+                          return AppCard(
+                            child: GestureDetector(
                               onTap: canManage
                                   ? () async {
                                       final result = await showDialog<bool>(
@@ -216,7 +216,7 @@ class _ContactsBody extends StatelessWidget {
                                 padding: const EdgeInsets.all(12),
                                 child: Row(
                                   children: [
-                                    CircleAvatar(
+                                    AppAvatar(
                                       child: Text(c.name.isNotEmpty ? c.name[0].toUpperCase() : '?'),
                                     ),
                                     const SizedBox(width: 12),
@@ -241,7 +241,7 @@ class _ContactsBody extends StatelessWidget {
                                       ),
                                     ),
                                     if (canManage)
-                                      IconButton(
+                                      AppIconButton(
                                         icon: const Icon(Icons.delete_outline, color: Colors.red),
                                         onPressed: () => _confirmDelete(context, vm, c.id),
                                       ),
@@ -261,15 +261,15 @@ class _ContactsBody extends StatelessWidget {
   void _confirmDelete(BuildContext context, ContactsViewModel vm, String id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppAlertDialog(
         title: const Text('Delete Contact?'),
         content: const Text('This action cannot be undone.'),
         actions: [
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.primary, 
             onPressed: () {
               Navigator.pop(context);
               vm.deleteContact(id);
@@ -429,7 +429,7 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
   @override
   Widget build(BuildContext context) {
     final isEdit = widget.contact != null;
-    return AlertDialog(
+    return AppAlertDialog(
       title: Text(isEdit ? 'Edit Contact' : 'Add Contact'),
       content: SizedBox(
         width: double.maxFinite,
@@ -530,11 +530,11 @@ class _ContactFormDialogState extends State<ContactFormDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        AppButton(variant: AppButtonVariant.ghost, 
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
+        AppButton(variant: AppButtonVariant.primary, 
           onPressed: _submit,
           child: Text(isEdit ? 'Update' : 'Save'),
         ),

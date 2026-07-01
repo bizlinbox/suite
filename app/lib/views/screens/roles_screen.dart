@@ -5,6 +5,7 @@ import '../../data/models/role_model.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class RolesViewModel extends BaseViewModel {
   final SettingsRepository _repo;
@@ -46,23 +47,23 @@ class _RolesBody extends StatelessWidget {
 
     if (!authVm.can('roles.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Roles')),
+        appBar: AppAppBar(title: const Text('Roles')),
         body: _buildNoPermission(),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Roles'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadRoles(),
           ),
         ],
       ),
       body: vm.isBusy && vm.roles.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.roles.isEmpty
               ? const Center(child: Text('No roles found'))
               : ListView.builder(
@@ -70,8 +71,8 @@ class _RolesBody extends StatelessWidget {
                   itemCount: vm.roles.length,
                   itemBuilder: (context, index) {
                     final r = vm.roles[index];
-                    return Card(
-                      child: ListTile(
+                    return AppCard(
+                      child: AppListTile(
                         title: Text(r.name),
                         subtitle: Text('${r.permissions.length} permissions'),
                         trailing: r.isSystem

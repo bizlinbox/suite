@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'custom/custom_widgets.dart';
 
 class LineChartPainter extends CustomPainter {
   final List<int> values;
@@ -116,7 +117,7 @@ class LineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -235,7 +236,7 @@ class BarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -339,7 +340,7 @@ class DonutChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final total = values.isEmpty ? 0 : values.reduce((a, b) => a + b);
 
-    return Card(
+    return AppCard(
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

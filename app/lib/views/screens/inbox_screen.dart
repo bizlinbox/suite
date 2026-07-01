@@ -12,6 +12,7 @@ import '../../data/repositories/contact_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/contact_profile_sheet.dart';
 import '../widgets/new_chat_dialog.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class InboxViewModel extends BaseViewModel {
   final ConversationRepository _repo;
@@ -239,24 +240,24 @@ class _InboxBodyState extends State<_InboxBody> {
     final vm = context.watch<InboxViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: vm.isSelectionMode
             ? Text('${vm.selectedIds.length} selected')
             : const Text('Inbox'),
         leading: vm.isSelectionMode
-            ? IconButton(
+            ? AppIconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => vm.exitSelectionMode(),
               )
             : null,
         actions: [
           if (vm.isSelectionMode) ...[
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: vm.isBusy ? null : () => _confirmBulkDelete(context, vm),
             ),
           ] else ...[
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.refresh),
               onPressed: vm.isBusy ? null : () => vm.loadConversations(),
             ),
@@ -267,7 +268,7 @@ class _InboxBodyState extends State<_InboxBody> {
         children: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: TextField(
+            child: AppTextField(
               decoration: InputDecoration(
                 hintText: 'Search conversations...',
                 prefixIcon: const Icon(Icons.search),
@@ -278,7 +279,7 @@ class _InboxBodyState extends State<_InboxBody> {
           ),
           Expanded(
             child: vm.isBusy && vm.conversations.isEmpty
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(child: AppProgressIndicator())
                 : vm.conversations.isEmpty
                     ? const Center(child: Text('No conversations found'))
                     : ListView.builder(
@@ -286,7 +287,7 @@ class _InboxBodyState extends State<_InboxBody> {
                         itemBuilder: (context, index) {
                           if (index == vm.conversations.length) {
                             return Center(
-                              child: TextButton(
+                              child: AppButton(variant: AppButtonVariant.ghost, 
                                 onPressed: () => vm.loadConversations(append: true),
                                 child: const Text('Load more'),
                               ),
@@ -317,7 +318,7 @@ class _InboxBodyState extends State<_InboxBody> {
       ),
       floatingActionButton: vm.isSelectionMode
           ? null
-          : FloatingActionButton(
+          : AppFloatingActionButton(
               onPressed: () => _showNewChatDialog(context, vm),
               child: const Icon(Icons.chat_bubble_outline),
             ),
@@ -327,12 +328,12 @@ class _InboxBodyState extends State<_InboxBody> {
   void _confirmBulkDelete(BuildContext context, InboxViewModel vm) {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
+      builder: (_) => AppAlertDialog(
         title: const Text('Delete Conversations'),
         content: Text('Delete ${vm.selectedIds.length} selected conversations?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.ghost, onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          AppButton(variant: AppButtonVariant.primary, 
             onPressed: () {
               Navigator.pop(context);
               vm.deleteSelected();
@@ -369,15 +370,15 @@ class _ConversationTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasUnread = conversation.unreadCount > 0;
 
-    return ListTile(
+    return AppListTile(
       leading: vm.isSelectionMode
-          ? Checkbox(
+          ? AppCheckbox(
               value: vm.isSelected(conversation.id),
               onChanged: (_) => vm.toggleSelection(conversation.id),
             )
           : GestureDetector(
               onTap: () => _showContactProfile(context),
-              child: CircleAvatar(
+              child: AppAvatar(
                 child: Text(
                   conversation.contactName.isNotEmpty ? conversation.contactName[0].toUpperCase() : '?',
                 ),

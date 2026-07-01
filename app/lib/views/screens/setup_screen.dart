@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class SetupViewModel extends BaseViewModel {
   final AuthRepository _repo;
@@ -74,7 +75,7 @@ class _SetupBodyState extends State<_SetupBody> {
           padding: const EdgeInsets.all(24),
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 400),
-            child: Card(
+            child: AppCard(
               elevation: 2,
               child: Padding(
                 padding: const EdgeInsets.all(24),
@@ -106,7 +107,7 @@ class _SetupBodyState extends State<_SetupBody> {
                         ),
                       ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _nameController,
                       decoration: InputDecoration(
                         labelText: 'Name',
@@ -115,7 +116,7 @@ class _SetupBodyState extends State<_SetupBody> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _emailController,
                       decoration: InputDecoration(
                         labelText: 'Email',
@@ -125,13 +126,13 @@ class _SetupBodyState extends State<_SetupBody> {
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
                       decoration: InputDecoration(
                         labelText: 'Password',
                         prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
+                        suffixIcon: AppIconButton(
                           icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
                           onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                         ),
@@ -139,7 +140,7 @@ class _SetupBodyState extends State<_SetupBody> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    TextField(
+                    AppTextField(
                       controller: _orgNameController,
                       decoration: InputDecoration(
                         labelText: 'Organization Name',
@@ -150,7 +151,7 @@ class _SetupBodyState extends State<_SetupBody> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: vm.isBusy
                             ? null
                             : () => _setup(context, vm),
@@ -164,7 +165,7 @@ class _SetupBodyState extends State<_SetupBody> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextButton(
+                    AppButton(variant: AppButtonVariant.ghost, 
                       onPressed: () => context.go('/login'),
                       child: const Text('Already set up? Sign in'),
                     ),

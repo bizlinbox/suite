@@ -7,6 +7,7 @@ import '../../data/models/analytics_model.dart';
 import '../../data/repositories/analytics_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import '../widgets/charts.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class AnalyticsViewModel extends BaseViewModel {
   final AnalyticsRepository _repo;
@@ -47,15 +48,15 @@ class _AnalyticsBody extends StatelessWidget {
     final data = vm.data;
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Analytics'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadAnalytics(),
           ),
           if (data != null)
-            IconButton(
+            AppIconButton(
               icon: const Icon(Icons.download),
               tooltip: 'Export to CSV',
               onPressed: () => _exportCsv(context, data),
@@ -63,7 +64,7 @@ class _AnalyticsBody extends StatelessWidget {
         ],
       ),
       body: vm.isBusy
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : data == null
               ? const Center(child: Text('No data available'))
               : SingleChildScrollView(
@@ -170,7 +171,7 @@ class _AnalyticsBody extends StatelessWidget {
         // Fallback: show dialog with CSV text that user can copy
         showDialog(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => AppAlertDialog(
             title: const Text('Export CSV'),
             content: SizedBox(
               width: double.maxFinite,
@@ -179,7 +180,7 @@ class _AnalyticsBody extends StatelessWidget {
               ),
             ),
             actions: [
-              TextButton(
+              AppButton(variant: AppButtonVariant.ghost, 
                 onPressed: () => Navigator.pop(context),
                 child: const Text('Close'),
               ),
@@ -202,7 +203,7 @@ class _StatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
+    return AppCard(
       margin: const EdgeInsets.only(bottom: 12),
       child: Padding(
         padding: const EdgeInsets.all(16),

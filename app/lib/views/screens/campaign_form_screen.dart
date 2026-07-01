@@ -9,6 +9,7 @@ import '../../data/repositories/campaign_repository.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../data/repositories/settings_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class CampaignFormViewModel extends BaseViewModel {
   final CampaignRepository _campaignRepo;
@@ -204,7 +205,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
         final tempSelection = List<String>.from(_selectedContactIds);
         return StatefulBuilder(
           builder: (context, setDialogState) {
-            return AlertDialog(
+            return AppAlertDialog(
               title: const Text('Select Recipients'),
               content: SizedBox(
                 width: double.maxFinite,
@@ -231,11 +232,11 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                 ),
               ),
               actions: [
-                TextButton(
+                AppButton(variant: AppButtonVariant.ghost, 
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
-                FilledButton(
+                AppButton(variant: AppButtonVariant.primary, 
                   onPressed: () => Navigator.pop(context, tempSelection),
                   child: const Text('Done'),
                 ),
@@ -286,11 +287,11 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
     final vm = context.watch<CampaignFormViewModel>();
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: Text(widget.campaign == null ? 'New Campaign' : 'Edit Campaign'),
       ),
       body: vm.isBusy && vm.templates.isEmpty && vm.contacts.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Form(
@@ -304,7 +305,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       validator: (v) => v == null || v.isEmpty ? 'Required' : null,
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    AppDropdown<String>(
                       initialValue: _messageType,
                       decoration: const InputDecoration(labelText: 'Message Type'),
                       items: _messageTypes
@@ -325,7 +326,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                         final validTemplate = _selectedTemplateName != null &&
                             vm.templates.any((t) => t.templateName == _selectedTemplateName);
                         final templateValue = validTemplate ? _selectedTemplateName : null;
-                        return DropdownButtonFormField<String>(
+                        return AppDropdown<String>(
                           initialValue: templateValue,
                           decoration: const InputDecoration(labelText: 'Template (optional)'),
                           items: [
@@ -354,7 +355,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       }),
                     ],
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    AppDropdown<String>(
                       initialValue: _status,
                       decoration: const InputDecoration(labelText: 'Status'),
                       items: _statuses
@@ -373,8 +374,8 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                       onTap: _pickScheduledAt,
                     ),
                     const SizedBox(height: 12),
-                    Card(
-                      child: ListTile(
+                    AppCard(
+                      child: AppListTile(
                         title: const Text('Recipients'),
                         subtitle: Text('${_selectedContactIds.length} selected'),
                         trailing: const Icon(Icons.chevron_right),
@@ -384,7 +385,7 @@ class _CampaignFormBodyState extends State<_CampaignFormBody> {
                     const SizedBox(height: 24),
                     SizedBox(
                       width: double.infinity,
-                      child: FilledButton(
+                      child: AppButton(variant: AppButtonVariant.primary, 
                         onPressed: vm.isBusy ? null : () => _submit(vm),
                         child: vm.isBusy ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white)) : const Text('Save Campaign'),
                       ),

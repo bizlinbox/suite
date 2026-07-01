@@ -6,6 +6,7 @@ import '../../data/repositories/campaign_repository.dart';
 import '../../viewmodels/auth_viewmodel.dart';
 import '../../viewmodels/base_viewmodel.dart';
 import 'campaign_form_screen.dart';
+import '../widgets/custom/custom_widgets.dart';
 
 class CampaignsViewModel extends BaseViewModel {
   final CampaignRepository _repo;
@@ -79,7 +80,7 @@ class _CampaignsBody extends StatelessWidget {
 
     if (!authVm.can('campaigns.read')) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Campaigns')),
+        appBar: AppAppBar(title: const Text('Campaigns')),
         body: _buildNoPermission(),
       );
     }
@@ -87,17 +88,17 @@ class _CampaignsBody extends StatelessWidget {
     final canManage = authVm.can('campaigns.manage');
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: AppAppBar(
         title: const Text('Campaigns'),
         actions: [
-          IconButton(
+          AppIconButton(
             icon: const Icon(Icons.refresh),
             onPressed: vm.isBusy ? null : () => vm.loadCampaigns(),
           ),
         ],
       ),
       floatingActionButton: canManage
-          ? FloatingActionButton.extended(
+          ? AppFloatingActionButton(
               onPressed: () async {
                 final result = await Navigator.push(
                   context,
@@ -112,7 +113,7 @@ class _CampaignsBody extends StatelessWidget {
             )
           : null,
       body: vm.isBusy && vm.campaigns.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: AppProgressIndicator())
           : vm.campaigns.isEmpty
               ? const Center(child: Text('No campaigns found'))
               : ListView.builder(
@@ -120,9 +121,8 @@ class _CampaignsBody extends StatelessWidget {
                   itemCount: vm.campaigns.length,
                   itemBuilder: (context, index) {
                     final c = vm.campaigns[index];
-                    return Card(
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
+                    return AppCard(
+                      child: GestureDetector(
                         onTap: () async {
                           final result = await Navigator.push(
                             context,
@@ -160,24 +160,24 @@ class _CampaignsBody extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
                                   if (c.status == 'draft' || c.status == 'paused')
-                                    IconButton(
+                                    AppIconButton(
                                       icon: const Icon(Icons.play_arrow, color: Colors.green),
                                       tooltip: 'Start',
                                       onPressed: () => vm.actionCampaign(c.id, 'start'),
                                     ),
                                   if (c.status == 'running')
-                                    IconButton(
+                                    AppIconButton(
                                       icon: const Icon(Icons.pause, color: Colors.orange),
                                       tooltip: 'Pause',
                                       onPressed: () => vm.actionCampaign(c.id, 'pause'),
                                     ),
                                   if (c.status == 'draft' || c.status == 'scheduled' || c.status == 'running' || c.status == 'paused')
-                                    IconButton(
+                                    AppIconButton(
                                       icon: const Icon(Icons.cancel, color: Colors.red),
                                       tooltip: 'Cancel',
                                       onPressed: () => vm.actionCampaign(c.id, 'cancel'),
                                     ),
-                                  IconButton(
+                                  AppIconButton(
                                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                                     tooltip: 'Delete',
                                     onPressed: () => _confirmDelete(context, vm, c.id),
@@ -197,15 +197,15 @@ class _CampaignsBody extends StatelessWidget {
   void _confirmDelete(BuildContext context, CampaignsViewModel vm, String id) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => AppAlertDialog(
         title: const Text('Delete Campaign?'),
         content: const Text('This action cannot be undone.'),
         actions: [
-          TextButton(
+          AppButton(variant: AppButtonVariant.ghost, 
             onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          AppButton(variant: AppButtonVariant.primary, 
             onPressed: () {
               Navigator.pop(context);
               vm.deleteCampaign(id);

@@ -8,6 +8,7 @@ import '../../data/models/conversation_model.dart';
 import '../../data/repositories/contact_repository.dart';
 import '../../data/repositories/conversation_repository.dart';
 import '../../viewmodels/base_viewmodel.dart';
+import 'custom/custom_widgets.dart';
 
 class NewChatViewModel extends BaseViewModel {
   final ContactRepository _contactRepo;
@@ -121,7 +122,7 @@ class _NewChatDialogBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final vm = context.watch<NewChatViewModel>();
 
-    return AlertDialog(
+    return AppAlertDialog(
       title: const Text('New Chat'),
       contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       content: SizedBox(
@@ -129,7 +130,7 @@ class _NewChatDialogBody extends StatelessWidget {
         height: 500,
         child: Column(
           children: [
-            TextField(
+            AppTextField(
               decoration: InputDecoration(
                 hintText: 'Search by name or phone...',
                 prefixIcon: const Icon(Icons.search),
@@ -140,7 +141,7 @@ class _NewChatDialogBody extends StatelessWidget {
             const SizedBox(height: 12),
             Expanded(
               child: vm.isBusy && vm.filteredContacts.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(child: AppProgressIndicator())
                   : vm.filteredContacts.isEmpty
                       ? Center(
                           child: Text(
@@ -153,8 +154,8 @@ class _NewChatDialogBody extends StatelessWidget {
                           itemCount: vm.filteredContacts.length,
                           itemBuilder: (context, index) {
                             final contact = vm.filteredContacts[index];
-                            return ListTile(
-                              leading: CircleAvatar(
+                            return AppListTile(
+                              leading: AppAvatar(
                                 child: Text(
                                   contact.name.isNotEmpty
                                       ? contact.name[0].toUpperCase()
@@ -188,7 +189,7 @@ class _NewChatDialogBody extends StatelessWidget {
         ),
       ),
       actions: [
-        TextButton(
+        AppButton(variant: AppButtonVariant.ghost, 
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
